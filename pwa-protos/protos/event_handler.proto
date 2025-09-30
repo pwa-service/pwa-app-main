@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package eventhandler.v1;
+
+import "google/protobuf/struct.proto";
+
+service EventHandlerService {
+    rpc ViewContent (ViewContentRequest) returns (ViewContentResponse);
+    rpc PrepareInstallLink (PrepareInstallLinkRequest) returns (PrepareInstallLinkResponse);
+    rpc PwaFirstOpen (PwaFirstOpenRequest) returns (GenericSuccess);
+    rpc Lead                 (LeadRequest)                 returns (GenericOk);
+    rpc CompleteRegistration (CompleteRegistrationRequest) returns (GenericOk);
+    rpc Purchase             (PurchaseRequest)             returns (GenericOk);
+    rpc Subscribe            (SubscribeRequest)            returns (GenericOk);
+}
+
+message ViewContentRequest {
+    string userId         = 1;
+    string pwaDomain      = 2;
+    string landingUrl     = 3;
+    string queryStringRaw = 4;
+}
+
+message PrepareInstallLinkRequest {
+    string userId    = 1;
+    string pwaDomain = 2;
+}
+
+message PwaFirstOpenRequest {
+    string userId    = 1;
+    string pwaDomain = 2;
+}
+
+message LeadRequest {
+    string userId         = 1;
+    string pwaDomain      = 2;
+    string landingUrl     = 3;
+    string queryStringRaw = 4;
+}
+
+message CompleteRegistrationRequest {
+    string userId         = 1;
+    string pwaDomain      = 2;
+    string landingUrl     = 3;
+    string queryStringRaw = 4;
+}
+
+message PurchaseRequest {
+    string userId         = 1;
+    string pwaDomain      = 2;
+    string landingUrl     = 3;
+    string queryStringRaw = 4;
+    double value          = 5;
+    string currency       = 6;
+}
+
+message SubscribeRequest {
+    string userId         = 1;
+    string pwaDomain      = 2;
+    string landingUrl     = 3;
+    string queryStringRaw = 4;
+    double value          = 5;
+    string currency       = 6;
+}
+
+message ViewContentResponse {
+    bool success = 1;
+    google.protobuf.Struct fb = 2;
+}
+
+message PrepareInstallLinkResponse {
+    string finalUrl = 1;
+}
+
+message GenericSuccess {
+    bool success = 1;
+}
+
+message GenericOk {
+    string status = 1;
+}

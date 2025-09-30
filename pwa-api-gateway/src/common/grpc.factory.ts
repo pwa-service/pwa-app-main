@@ -1,0 +1,42 @@
+import { ClientProviderOptions, Transport } from '@nestjs/microservices';
+import { join } from 'path';
+
+
+const PROTOS_DIR = join(process.cwd(), 'protos');
+
+export const authGrpcClient: ClientProviderOptions = {
+    name: 'AUTH_GRPC',
+    transport: Transport.GRPC,
+    options: {
+        package: 'auth.v1',
+        protoPath: join(PROTOS_DIR, 'auth.proto'),
+        url: process.env.AUTH_GRPC_URL || 'localhost:50051',
+        loader: {
+            includeDirs: [PROTOS_DIR],
+            keepCase: false,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true,
+        },
+    },
+};
+
+export const eventHandlerClient: ClientProviderOptions = {
+    name: 'EVENT_HANDLER_GRPC',
+    transport: Transport.GRPC,
+    options: {
+        package: 'eventhandler.v1',
+        protoPath: join(PROTOS_DIR, 'event_handler.proto'),
+        url: process.env.EVENT_HANDLER_GRPC || 'localhost:50053',
+        loader: {
+            includeDirs: [PROTOS_DIR],
+            keepCase: false,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true,
+        },
+    },
+};
+

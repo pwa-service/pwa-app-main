@@ -1,0 +1,34 @@
+syntax = "proto3";
+package auth.v1;
+
+import "google/protobuf/empty.proto";
+
+service AuthService {
+  rpc SignIn  (SignInRequest)  returns (AuthResponse);
+  rpc Refresh (RefreshRequest) returns (AuthResponse);
+  rpc SignOut (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Me      (google.protobuf.Empty) returns (User);
+}
+
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+  string otp = 3;
+}
+
+message RefreshRequest {
+  string refreshToken = 1;
+}
+
+message AuthResponse {
+  string accessToken = 1;
+  string refreshToken = 2;
+  int32  expiresIn   = 3;
+  User   user        = 4;
+}
+
+message User {
+  string id    = 1;
+  string email = 2;
+  string name  = 3;
+}

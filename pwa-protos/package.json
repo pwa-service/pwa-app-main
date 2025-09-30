@@ -1,0 +1,10 @@
+{
+  "name": "@pwa/protos",
+  "version": "0.0.1",
+  "private": true,
+  "main": "protos/index.js",
+  "scripts": {
+    "build": "echo 'No build step needed for protos'"
+  }
+}
+
