@@ -2,10 +2,10 @@ import {Body, Controller, Get, HttpCode, Post, Req, UseGuards, UsePipes, Validat
 import { Request } from 'express';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import { AuthGrpcClient } from './auth.grpc.client';
-import { SignInDto } from '../../../../shared/types/auth/dto/sing-in.dto';
-import { RefreshDto } from '../../../../shared/types/auth/dto/refresh.dto';
+import { SignInDto } from '../../../pwa-shared/src/types/auth/dto/sing-in.dto';
+import { RefreshDto } from '../../../pwa-shared/src/types/auth/dto/refresh.dto';
 import {JwtAuthGuard} from "../common/jwt-auth.guard";
-import {SignUpDto} from "../../../../shared/types/auth/dto/sing-up.dto";
+import {SignUpDto} from "../../../pwa-shared/src/types/auth/dto/sing-up.dto";
 
 @Controller('auth')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))

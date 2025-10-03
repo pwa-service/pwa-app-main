@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { lastValueFrom } from 'rxjs';
-import { RefreshDto } from "../../../../shared/types/auth/dto/refresh.dto";
-import {SignInDto} from "../../../../shared/types/auth/dto/sing-in.dto";
-import {SignUpDto} from "../../../../shared/types/auth/dto/sing-up.dto";
+import { RefreshDto } from "../../../pwa-shared/src/types/auth/dto/refresh.dto";
+import {SignInDto} from "../../../pwa-shared/src/types/auth/dto/sing-in.dto";
+import {SignUpDto} from "../../../pwa-shared/src/types/auth/dto/sing-up.dto";
 
 interface AuthService {
     signUp(data: SignUpDto, md?: Metadata, opts?: Record<string, any>): any;

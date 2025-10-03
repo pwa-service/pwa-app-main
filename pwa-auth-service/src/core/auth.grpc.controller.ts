@@ -2,9 +2,9 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthCoreService } from './auth.core.service';
 import { Metadata } from '@grpc/grpc-js';
-import { SignUpDto } from "../../../../shared/types/auth/dto/sing-up.dto";
-import { SignInDto } from "../../../../shared/types/auth/dto/sing-in.dto";
-import { RefreshDto } from "../../../../shared/types/auth/dto/refresh.dto";
+import { SignUpDto } from "../../../pwa-shared/src/types/auth/dto/sing-up.dto";
+import { SignInDto } from "../../../pwa-shared/src/types/auth/dto/sing-in.dto";
+import { RefreshDto } from "../../../pwa-shared/src/types/auth/dto/refresh.dto";
 
 @Controller()
 export class AuthGrpcController {

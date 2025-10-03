@@ -1,15 +1,14 @@
-import { Body, Controller, HttpCode, Post, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { EventHandlerGrpcClient } from './event-handler.grpc.client';
-import { ViewContentDto } from '../../../../shared/types/event-handler/dto/view-content.dto';
-import { PrepareInstallLinkDto } from '../../../../shared/types/event-handler/dto/prepare-install-link.dto';
-import { PwaFirstOpenDto } from '../../../../shared/types/event-handler/dto/first-open.dto';
-import { LeadDto } from '../../../../shared/types/event-handler/dto/lead.dto';
+import { ViewContentDto } from '../../../pwa-shared/src/types/event-handler/dto/view-content.dto';
+import { PrepareInstallLinkDto } from '../../../pwa-shared/src/types/event-handler/dto/prepare-install-link.dto';
+import { PwaFirstOpenDto } from '../../../pwa-shared/src/types/event-handler/dto/first-open.dto';
+import { LeadDto } from '../../../pwa-shared/src/types/event-handler/dto/lead.dto';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
-import {CompleteRegistrationDto} from "../../../../shared/types/event-handler/dto/complete-registration.dto";
-import {PurchaseDto} from "../../../../shared/types/event-handler/dto/purchase.dto";
-import {SubscribeDto} from "../../../../shared/types/event-handler/dto/subscribe.dto";
-import { randomUUID } from 'crypto';
+import {CompleteRegistrationDto} from "../../../pwa-shared/src/types/event-handler/dto/complete-registration.dto";
+import {PurchaseDto} from "../../../pwa-shared/src/types/event-handler/dto/purchase.dto";
+import {SubscribeDto} from "../../../pwa-shared/src/types/event-handler/dto/subscribe.dto";
 
 @Controller('event')
 export class EventHandlerHttpController {

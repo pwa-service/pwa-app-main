@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Status } from '@prisma/client';
 import {CreateEventLogInput, MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
-import {PrismaService} from "../../../../libs/prisma/src";
+import {PrismaService} from "../../../pwa-prisma/src";
 
 @Injectable()
 export class EventHandlerRepository {

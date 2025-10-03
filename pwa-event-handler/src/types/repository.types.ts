@@ -1,5 +1,5 @@
 import { EventType, LogStatus } from '@prisma/client';
-import { DeviceContext, Identifiers } from '../types/common.types';
+import { DeviceContext, Identifiers } from './common.types';
 
 export type InternalEventType = EventType;
 

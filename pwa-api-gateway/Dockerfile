@@ -1,25 +1,37 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-COPY nest-cli.json tsconfig*.json ./
-COPY apps ./apps
-COPY protos ./protos
-RUN npm ci
+FROM node:22-alpine AS base
+WORKDIR /workspace
+RUN apk add --no-cache python3 make g++ libc6-compat
 
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY --from=deps /app /app
-RUN npx nest build api-gateway
-RUN ls -R dist/apps || true
+FROM base AS deps
+WORKDIR /workspace
+
+COPY ./pwa-api-gateway/package*.json ./pwa-api-gateway/
+COPY ./pwa-shared/package*.json      ./pwa-shared/
+COPY ./pwa-protos/package*.json      ./pwa-protos/
+
+WORKDIR /workspace/pwa-api-gateway
+RUN npm install && npm install -g @nestjs/cli
+
+WORKDIR /workspace/pwa-shared
+RUN npm install
+
+FROM deps AS build
+WORKDIR /workspace
+
+COPY ./pwa-api-gateway ./pwa-api-gateway
+COPY ./pwa-shared      ./pwa-shared
+COPY ./pwa-protos      ./pwa-protos
+
+WORKDIR /workspace/pwa-api-gateway
+RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN apk add --no-cache curl
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/protos ./protos
-ENV PORT=3000 AUTH_GRPC_URL=auth-service:50051 AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json AUTH_ISSUER=https://auth.local/ AUTH_AUDIENCE=api
-EXPOSE 3000
-CMD ["node", "dist/apps/api-gateway/main.js"]
+
+COPY --from=build /workspace/pwa-api-gateway/dist ./dist
+COPY --from=build /workspace/pwa-api-gateway/package*.json ./
+RUN npm install --omit=dev
+COPY --from=build /workspace/pwa-protos/protos ./protos
+
+CMD ["node", "dist/pwa-api-gateway/src/main.js"]

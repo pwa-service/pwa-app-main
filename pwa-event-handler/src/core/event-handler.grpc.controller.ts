@@ -3,15 +3,15 @@ import {GrpcMethod, Payload} from '@nestjs/microservices';
 import { EventHandlerCoreService } from './event-handler.core.service';
 import { ViewContentEnrichmentPipe } from '../pipes/view-content.enrichment.pipe';
 import { ViewContentMeta } from '../types/capi.types';
-import { ViewContentDto } from '../../../../shared/types/event-handler/dto/view-content.dto';
-import { PrepareInstallLinkDto } from '../../../../shared/types/event-handler/dto/prepare-install-link.dto';
-import { PwaFirstOpenDto } from '../../../../shared/types/event-handler/dto/first-open.dto';
+import { ViewContentDto } from '../../../pwa-shared/src/types/event-handler/dto/view-content.dto';
+import { PrepareInstallLinkDto } from '../../../pwa-shared/src/types/event-handler/dto/prepare-install-link.dto';
+import { PwaFirstOpenDto } from '../../../pwa-shared/src/types/event-handler/dto/first-open.dto';
 import {
   LeadDto,
-} from '../../../../shared/types/event-handler/dto/lead.dto';
-import {CompleteRegistrationDto} from "../../../../shared/types/event-handler/dto/complete-registration.dto";
-import {PurchaseDto} from "../../../../shared/types/event-handler/dto/purchase.dto";
-import {SubscribeDto} from "../../../../shared/types/event-handler/dto/subscribe.dto";
+} from '../../../pwa-shared/src/types/event-handler/dto/lead.dto';
+import {CompleteRegistrationDto} from "../../../pwa-shared/src/types/event-handler/dto/complete-registration.dto";
+import {PurchaseDto} from "../../../pwa-shared/src/types/event-handler/dto/purchase.dto";
+import {SubscribeDto} from "../../../pwa-shared/src/types/event-handler/dto/subscribe.dto";
 import {GrpcClientMetaInterceptor} from "../common/interceptors/grpc-client-meta.interceptor";
 
 

@@ -1,25 +1,50 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-COPY nest-cli.json tsconfig*.json ./
-COPY apps ./apps
-COPY protos ./protos
-RUN npm ci
+FROM node:22-alpine AS base
+WORKDIR /workspace
+RUN apk add --no-cache python3 make g++ libc6-compat
 
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY --from=deps /app /app
-RUN npx nest build auth-service
-RUN ls -R dist/apps || true
+FROM base AS deps
+WORKDIR /workspace
+
+COPY ./pwa-auth-service/package*.json ./pwa-auth-service/
+COPY ./pwa-prisma/package*.json      ./pwa-prisma/
+COPY ./pwa-shared/package*.json      ./pwa-shared/
+COPY ./pwa-protos/package*.json      ./pwa-protos/
+
+WORKDIR /workspace/pwa-auth-service
+RUN npm install && npm install -g @nestjs/cli
+
+WORKDIR /workspace/pwa-prisma
+RUN npm install
+
+WORKDIR /workspace/pwa-shared
+RUN npm install
+
+FROM deps AS build
+WORKDIR /workspace
+
+COPY ./pwa-auth-service ./pwa-auth-service
+COPY ./pwa-prisma       ./pwa-prisma
+COPY ./pwa-shared       ./pwa-shared
+COPY ./pwa-protos       ./pwa-protos
+
+WORKDIR /workspace/pwa-prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+WORKDIR /workspace/pwa-auth-service
+RUN mkdir -p ./prisma \
+ && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+RUN mkdir -p ./protos \
+ && cp -r ../pwa-protos/protos/* ./protos/
+RUN npx nest build -p tsconfig.build.json
 
 FROM node:22-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-RUN apk add --no-cache curl
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/protos ./protos
-ENV PORT=4000 AUTH_GRPC_URL=0.0.0.0:50051 AUTH_ISSUER=https://auth.local/ AUTH_AUDIENCE=api AUTH_ACCESS_TTL=900 AUTH_REFRESH_TTL=604800
-EXPOSE 4000 50051
-CMD ["node", "dist/apps/auth-service/main.js"]
+WORKDIR /workspace/pwa-auth-service
+
+COPY --from=build /workspace/pwa-auth-service/dist         ./dist
+COPY --from=build /workspace/pwa-auth-service/node_modules ./node_modules
+COPY ./pwa-auth-service/package*.json ./
+COPY --from=build /workspace/pwa-auth-service/protos ./protos
+
+CMD ["node", "dist/pwa-auth-service/src/main.js"]

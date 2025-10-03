@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: pwa-auth-service/Dockerfile
+    working_dir: /workspace/pwa-auth-service
+    container_name: auth-service
+    environment:
+      - PORT=4000
+      - AUTH_GRPC_URL=0.0.0.0:50051
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - AUTH_ISSUER=https://auth.local/
+      - AUTH_AUDIENCE=api
+      - AUTH_ACCESS_TTL=900
+      - AUTH_REFRESH_TTL=604800
+    ports:
+      - "4000:4000"
+      - "50051:50051"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/.well-known/jwks.json"]
+      interval: 10s
+      timeout: 3s
+      retries: 8
+
+  event-handler:
+    build:
+      context: .
+      dockerfile: pwa-event-handler/Dockerfile
+    working_dir: /workspace/pwa-event-handler
+    environment:
+      - PORT=50053
+      - EVENT_GRPC_URL=0.0.0.0:50053
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - TRACKER_BASE_URL=https://tracker.example.com/landing
+    depends_on:
+      - postgres
+    ports:
+      - "50053:50053"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./pwa-api-gateway/Dockerfile
+    environment:
+      - PORT=3000
+      - AUTH_GRPC_URL=auth-service:50051
+      - EVENT_HANDLER_GRPC_URL=event-handler:50053
+      - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
+      - AUTH_ISSUER=https://auth.local/
+      - AUTH_AUDIENCE=api
+    depends_on:
+      - auth-service
+      - event-handler
+    ports:
+      - "3000:3000"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pwa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

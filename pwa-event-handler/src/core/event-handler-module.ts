@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../../../libs/prisma/src';
+import { PrismaModule } from '../../../pwa-prisma/src';
 import { EventHandlerGrpcController } from './event-handler.grpc.controller';
 import { EventHandlerCoreService } from './event-handler.core.service';
 import { EventHandlerRepository } from './event-handler.repository';

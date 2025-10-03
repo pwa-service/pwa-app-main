@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
-import { GrpcErrorInterceptor } from "../../api-gateway/src/global/interceptors/grpc-error.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +15,6 @@ async function bootstrap() {
       loader: { includeDirs: [join(process.cwd(), 'protos')] },
     },
   });
-  app.useGlobalInterceptors(new GrpcErrorInterceptor());
   await app.startAllMicroservices();
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 4200, '0.0.0.0');
 }

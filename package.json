@@ -15,7 +15,27 @@
     "dev": "npm run start:dev --workspaces",
     "lint": "eslint . --ext .ts"
   },
+  "dependencies": {
+    "@nestjs/common": "^11",
+    "@nestjs/core": "^11",
+    "@nestjs/microservices": "^11",
+    "@nestjs/platform-fastify": "^11",
+    "@grpc/grpc-js": "^1.10.6",
+    "@prisma/client": "^6.16.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7",
+    "axios": "^1.7.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "redis": "^4.6.15",
+    "express": "^4.19.2"
+  },
   "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/express": "^4.17.21",
     "typescript": "^5.6.3",
     "eslint": "^9.14.0",
     "prettier": "^3.3.3"

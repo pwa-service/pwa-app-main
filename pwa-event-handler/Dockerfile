@@ -1,26 +1,50 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-COPY nest-cli.json tsconfig*.json ./
-COPY apps ./apps
-COPY protos ./protos
-RUN npm ci
+FROM node:22-alpine AS base
+WORKDIR /workspace
+RUN apk add --no-cache python3 make g++ libc6-compat
 
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY --from=deps /app /app
-RUN npx nest build event-handler
-RUN ls -R dist/apps || true
+FROM base AS deps
+WORKDIR /workspace
+
+COPY ./pwa-event-handler/package*.json ./pwa-event-handler/
+COPY ./pwa-prisma/package*.json      ./pwa-prisma/
+COPY ./pwa-shared/package*.json      ./pwa-shared/
+COPY ./pwa-protos/package*.json      ./pwa-protos/
+
+WORKDIR /workspace/pwa-event-handler
+RUN npm install && npm install -g @nestjs/cli
+
+WORKDIR /workspace/pwa-prisma
+RUN npm install
+
+WORKDIR /workspace/pwa-shared
+RUN npm install
+
+FROM deps AS build
+WORKDIR /workspace
+
+COPY ./pwa-event-handler ./pwa-event-handler
+COPY ./pwa-prisma       ./pwa-prisma
+COPY ./pwa-shared       ./pwa-shared
+COPY ./pwa-protos       ./pwa-protos
+
+WORKDIR /workspace/pwa-prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+WORKDIR /workspace/pwa-event-handler
+RUN mkdir -p ./prisma \
+ && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+RUN mkdir -p ./protos \
+ && cp -r ../pwa-protos/protos/* ./protos/
+RUN npx nest build -p tsconfig.build.json
 
 FROM node:22-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-RUN apk add --no-cache curl
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/protos ./protos
+WORKDIR /workspace/pwa-event-handler
 
-ENV PORT=4200 EVENT_HANDLER_GRPC_URL=0.0.0.0:50053
-EXPOSE 4200 50053
-CMD ["node", "dist/apps/event-handler/main.js"]
+COPY --from=build /workspace/pwa-event-handler/dist         ./dist
+COPY --from=build /workspace/pwa-event-handler/node_modules ./node_modules
+COPY ./pwa-event-handler/package*.json ./
+
+COPY --from=build /workspace/pwa-event-handler/protos ./protos
+CMD ["node", "dist/pwa-event-handler/src/main.js"]

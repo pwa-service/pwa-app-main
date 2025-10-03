@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.next
+**/.cache
+
+.git
+.gitignore
+Dockerfile
+**/Dockerfile
+docker-compose.yml
+**/npm-debug.log*
+**/yarn-error.log*
+**/pnpm-lock.yaml

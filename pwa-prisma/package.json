@@ -1,20 +1,12 @@
 {
   "name": "@pwa/prisma",
-  "version": "0.0.1",
   "private": true,
-  "bin": {
-    "pwa-prisma": "bin/pwa-prisma.js"
-  },
-  "scripts": {
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "build": "echo 'No build step needed for prisma'"
-  },
   "dependencies": {
+    "@nestjs/common": "^11",
     "@prisma/client": "^6.16.2"
   },
   "devDependencies": {
-    "prisma": "^6.16.2"
+    "prisma": "^6.16.3",
+    "typescript": "^5.6.3"
   }
 }
-

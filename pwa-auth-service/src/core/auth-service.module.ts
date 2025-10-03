@@ -3,7 +3,7 @@ import { AuthGrpcController } from './auth.grpc.controller';
 import { AuthCoreService } from './auth.core.service';
 import { RefreshStore } from "../common/refresh.store";
 import { AuthRepository } from "./auth.repository";
-import {PrismaModule} from "../../../../libs/prisma/src";
+import {PrismaModule} from "../../../pwa-prisma/src";
 
 @Module({
   imports: [PrismaModule],
