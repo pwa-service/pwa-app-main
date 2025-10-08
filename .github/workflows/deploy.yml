@@ -45,7 +45,6 @@ jobs:
           EOL
 
           scp -o StrictHostKeyChecking=no .env $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/.env
-          rm .env
 
       - name: Deploy on remote server
         run: |
@@ -75,3 +74,9 @@ jobs:
             echo "*********** Cleaning up ***********"
             docker system prune -f
           EOF
+
+      - name: Delete environment variables
+        run: |
+          echo "*********** Deleting .env file from remote server ***********"
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
+          rm ./pwa-app/.env
