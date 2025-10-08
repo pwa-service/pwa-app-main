@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,17 +22,56 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Sync full repository via rsync
+      - name: Sync repository via rsync
         run: |
           rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/${{ secrets.DEPLOY_USER }}/pwa-app/
+            $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/
+
+      - name: Upload environment variables
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          echo "*********** Uploading .env file to remote server ***********"
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
+
+          cat > .env <<EOL
+          POSTGRES_DB=${POSTGRES_DB}
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          EOL
+
+          scp -o StrictHostKeyChecking=no .env $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/.env
+          rm .env
 
       - name: Deploy on remote server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+            set -e
             cd ~/pwa-app
-            docker compose up -d --remove-orphans
+
+            echo "*********** Starting Docker Compose ***********"
+            docker compose --env-file .env up -d --build --remove-orphans
+
+            echo "*********** Waiting for containers to become healthy ***********"
+            for i in {1..20}; do
+              unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
+              exited=$(docker ps -a --filter "status=exited" --format '{{.Names}}')
+              if [ -z "$unhealthy" ] && [ -z "$exited" ]; then
+                echo "*********** All containers healthy. ***********"
+                break
+              fi
+              if [ $i -eq 20 ]; then
+                echo "*********** Containers unhealthy or exited! ***********"
+                docker compose ps
+                exit 1
+              fi
+              sleep 5
+            done
+
+            echo "*********** Cleaning up ***********"
             docker system prune -f
           EOF
