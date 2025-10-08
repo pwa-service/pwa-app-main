@@ -65,7 +65,7 @@ services:
       test: ["CMD", "grpc_health_probe", "-addr=:50053"]
       interval: 10s
       timeout: 3s
-      retries: 5
+      retries: 3
       start_period: 10s
 
   api-gateway:

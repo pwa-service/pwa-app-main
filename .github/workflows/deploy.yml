@@ -53,7 +53,7 @@ jobs:
             cd ~/pwa-app
 
             echo "*********** Starting Docker Compose ***********"
-            docker compose --env-file .env up -d --build --remove-orphans
+            docker compose up -d --build --remove-orphans
 
             echo "*********** Waiting for containers to become healthy ***********"
             for i in {1..20}; do
@@ -66,6 +66,11 @@ jobs:
               if [ $i -eq 20 ]; then
                 echo "*********** Containers unhealthy or exited! ***********"
                 docker compose ps
+
+                echo "*********** Deleting .env file from remote server ***********"
+                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
+                rm ./pwa-app/.env
+
                 exit 1
               fi
               sleep 5
@@ -74,9 +79,3 @@ jobs:
             echo "*********** Cleaning up ***********"
             docker system prune -f
           EOF
-
-      - name: Delete environment variables
-        run: |
-          echo "*********** Deleting .env file from remote server ***********"
-          ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
-          rm ./pwa-app/.env
