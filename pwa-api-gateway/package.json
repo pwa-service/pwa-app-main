@@ -24,7 +24,6 @@
     "@types/node": "^22.7.4",
     "@types/bcryptjs": "^2.4.2",
     "@types/express": "^4.17.21",
-    "@nestjs/cli": "^11",
     "typescript": "^5.6.2",
     "prisma": "^6.16.2"
   }

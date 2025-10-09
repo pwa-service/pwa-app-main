@@ -154,7 +154,7 @@ export class AuthCoreService {
         });
       }
 
-      const dbUser = await this.repo.findById(Number(payload.sub));
+      const dbUser = await this.repo.findById(payload.sub!);
       if (!dbUser) {
         throw new RpcException({
           code: status.PERMISSION_DENIED,
@@ -242,7 +242,7 @@ export class AuthCoreService {
     const payload = await this.payloadFromMd(md);
     if (!payload) return { id: 'unknown', email: '', name: '' };
 
-    const dbUser = await this.repo.findById(Number(payload.sub));
+    const dbUser = await this.repo.findById(payload.sub!);
     return {
       id: String(dbUser?.id ?? payload.sub ?? 'unknown'),
       email: dbUser?.email ?? (payload['email'] as string) ?? '',

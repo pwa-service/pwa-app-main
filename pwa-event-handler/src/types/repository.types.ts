@@ -1,7 +1,4 @@
-import { EventType, LogStatus } from '@prisma/client';
-import { DeviceContext, Identifiers } from './common.types';
-
-export type InternalEventType = EventType;
+import {EventType, LogStatus} from '.prisma/client';
 
 export type UpsertSessionInput = {
     userId: string;
@@ -20,15 +17,4 @@ export type MarkFirstOpenInput = {
     eventId?: string | null;
     fbStatus?: LogStatus | null;
     finalUrl?: string | null;
-};
-
-export type CreateEventLogInput =
-    Pick<Identifiers, 'userId' | 'pixelId'> &
-    Pick<DeviceContext, 'clientIp'> & {
-    eventType: InternalEventType;
-    eventId: string;
-    revenue?: number | null;
-    responseData?: any;
-    status: LogStatus;
-    country?: string | null;
 };

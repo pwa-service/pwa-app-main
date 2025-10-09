@@ -17,14 +17,13 @@ enum Status {
   inactive
 }
 
-
 enum EventType {
-  viewcontent
-  pageview
-  lead
-  completeregistration
-  purchase
-  subscribe
+  ViewContent
+  PageView
+  Lead
+  CompleteRegistration
+  Purchase
+  Subscribe
 }
 
 enum LogStatus {
@@ -32,15 +31,14 @@ enum LogStatus {
   error
 }
 
-
 model User {
-  id          Int          @id @default(autoincrement())
-  username    String       @unique
-  password    String
-  role        Role         @default(buyer)
-  email       String?
-  createdAt   DateTime     @default(now()) @map("created_at")
-  status      Status       @default(active)
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      Role     @default(buyer)
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  status    Status   @default(active)
 
   pixelTokens PixelToken[]
 
@@ -48,12 +46,12 @@ model User {
 }
 
 model PixelToken {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   pixelId     String   @unique @map("pixel_id")
   accessToken String   @map("access_token")
   name        String?
   description String?
-  userId      Int      @map("user_id")
+  userId      String   @map("user_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   status      Status   @default(active)
@@ -65,17 +63,17 @@ model PixelToken {
 }
 
 model EventLog {
-  id           Int        @id @default(autoincrement())
-  userId       String     @map("user_id")
-  pixelId      String     @map("pixel_id")
-  eventType    EventType  @map("event_type")
-  eventId      String     @map("event_id")
-  revenue      Decimal?   @db.Decimal(18, 8)
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  pixelId      String    @map("pixel_id")
+  eventType    EventType @map("event_type")
+  eventId      String    @map("event_id")
+  revenue      Decimal?  @db.Decimal(18, 8)
   country      String?
-  clientIp    String?    @map("ip_address")
-  responseData String?    @map("response_data")
+  clientIp     String?   @map("ip_address")
+  responseData String?   @map("response_data")
   status       LogStatus
-  createdAt    DateTime   @default(now()) @map("created_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   @@index([userId], map: "idx_eventLogs_userId")
   @@index([pixelId], map: "idx_eventLogs_pixelId")
@@ -84,25 +82,23 @@ model EventLog {
   @@map("event_logs")
 }
 
-
 model PwaSession {
-  userId         String   @id @map("user_id")
-  pwaDomain      String   @map("pwa_domain")
-  landingUrl     String?  @map("landing_url")
-  queryStringRaw String?  @map("query_string_raw")
-  pixelId        String   @map("pixel_id")
-  fbclid         String?  @map("fbclid")
-  offerId        String?  @map("offer_id")
-  utmSource      String?  @map("utm_source")
-  sub1           String?  @map("sub1")
-  finalUrl           String?   @map("final_url")
-  firstOpenAt        DateTime? @map("first_open_at")
-  firstOpenEventId   String?   @map("first_open_event_id")
-  firstOpenFbStatus  LogStatus? @map("first_open_fb_status")
-
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt      @map("updated_at")
+  id                String     @id @default(uuid())
+  userId            String     @unique @map("user_id")
+  pwaDomain         String     @map("pwa_domain")
+  landingUrl        String?    @map("landing_url")
+  queryStringRaw    String?    @map("query_string_raw")
+  pixelId           String     @map("pixel_id")
+  fbclid            String?    @map("fbclid")
+  offerId           String?    @map("offer_id")
+  utmSource         String?    @map("utm_source")
+  sub1              String?    @map("sub1")
+  finalUrl          String?    @map("final_url")
+  firstOpenAt       DateTime?  @map("first_open_at")
+  firstOpenEventId  String?    @map("first_open_event_id")
+  firstOpenFbStatus LogStatus? @map("first_open_fb_status")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
 
   @@map("pwa_sessions")
 }
-

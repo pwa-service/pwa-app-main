@@ -1,22 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { LogStatus } from '@prisma/client';
+import {EventType, LogStatus} from '.prisma/client';
 import { EventHandlerRepository } from './event-handler.repository';
-import { ViewContentMeta, FBPayload } from '../types/capi.types';
-import { ViewContentDto } from '../../../pwa-shared/src/types/event-handler/dto/view-content.dto';
-import { PrepareInstallLinkDto } from '../../../pwa-shared/src/types/event-handler/dto/prepare-install-link.dto';
-import { PwaFirstOpenDto } from '../../../pwa-shared/src/types/event-handler/dto/first-open.dto';
-import { LeadDto } from '../../../pwa-shared/src/types/event-handler/dto/lead.dto';
-import { CompleteRegistrationDto } from '../../../pwa-shared/src/types/event-handler/dto/complete-registration.dto';
-import { PurchaseDto } from '../../../pwa-shared/src/types/event-handler/dto/purchase.dto';
-import { SubscribeDto } from '../../../pwa-shared/src/types/event-handler/dto/subscribe.dto';
+import {EventLogProducer} from "../queues/event-log.producer";
+import {
+  CompleteRegistrationDto, FBPayload,
+  LeadDto,
+  PrepareInstallLinkDto, PurchaseDto,
+  PwaFirstOpenDto, SubscribeDto,
+  ViewContentDto,
+  ViewContentMeta
+} from "../../../pwa-shared/src";
 
 @Injectable()
 export class EventHandlerCoreService {
   private readonly log = new Logger(EventHandlerCoreService.name);
   private readonly graphVersion = process.env.FB_GRAPH_VERSION ?? 'v21.0';
 
-  constructor(private readonly repo: EventHandlerRepository) {}
+  constructor(
+      private readonly repo: EventHandlerRepository,
+      private readonly logs: EventLogProducer
+  ) {}
 
   async viewContent(event: ViewContentDto & { _meta: ViewContentMeta }) {
     this.log.debug({ tag: 'viewContent:input', event });
@@ -34,8 +38,9 @@ export class EventHandlerCoreService {
       sub1: undefined,
     });
 
+    const eventName = 'ViewContent';
     const payload = this.payloadFbBuilder({
-      eventName: 'ViewContent',
+      eventName,
       sourceUrl: event.landingUrl || `https://${event.pwaDomain}`,
       userId: event.userId,
       fbclid,
@@ -43,8 +48,7 @@ export class EventHandlerCoreService {
       utmSource,
     });
     this.log.debug({ tag: 'viewContent:payload', payload });
-
-    const fb = await this.sendToFacebookApi(pixelId, accessToken, payload);
+    const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'viewContent:fb-response', fb });
 
     return { success: true, fb };
@@ -80,9 +84,9 @@ export class EventHandlerCoreService {
 
     const sourceUrl =
         sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
-
+    const eventName = 'ViewContent'
     const built = this.payloadFbBuilder({
-      eventName: 'ViewContent',
+      eventName,
       sourceUrl,
       userId: event.userId,
       fbclid: sess.fbclid || undefined,
@@ -90,11 +94,10 @@ export class EventHandlerCoreService {
       utmSource: sess.utmSource || undefined,
     });
     this.log.debug({ tag: 'pwaFirstOpen:payload', built });
-
     const eventId = (built?.data?.[0] as any)?.event_id as string | undefined;
 
     try {
-      const fb = await this.sendToFacebookApi(sess.pixelId, accessToken, built);
+      const fb = await this.sendToFacebookApi(event.userId, sess.pixelId, eventName, accessToken, built);
       this.log.log({ tag: 'pwaFirstOpen:fb-response', fb });
 
       await this.repo.markFirstOpen({
@@ -123,8 +126,9 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'lead:input', dto });
 
     const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const eventName = 'Lead'
     const payload = this.payloadFbBuilder({
-      eventName: 'Lead',
+      eventName,
       sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
       userId: dto.userId,
       fbclid,
@@ -133,7 +137,7 @@ export class EventHandlerCoreService {
     });
     this.log.debug({ tag: 'lead:payload', payload });
 
-    const fb = await this.sendToFacebookApi(pixelId, accessToken, payload);
+    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'lead:fb-response', fb });
 
     return { status: 'ok' };
@@ -143,8 +147,9 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'completeRegistration:input', dto });
 
     const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const eventName = 'CompleteRegistration'
     const payload = this.payloadFbBuilder({
-      eventName: 'CompleteRegistration',
+      eventName,
       sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
       userId: dto.userId,
       fbclid,
@@ -153,7 +158,7 @@ export class EventHandlerCoreService {
     });
     this.log.debug({ tag: 'completeRegistration:payload', payload });
 
-    const fb = await this.sendToFacebookApi(pixelId, accessToken, payload);
+    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'completeRegistration:fb-response', fb });
 
     return { status: 'ok' };
@@ -163,8 +168,9 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'purchase:input', dto });
 
     const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const eventName = 'Purchase'
     const payload = this.payloadFbBuilder({
-      eventName: 'Purchase',
+      eventName: eventName,
       sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
       userId: dto.userId,
       fbclid,
@@ -175,7 +181,7 @@ export class EventHandlerCoreService {
     });
     this.log.debug({ tag: 'purchase:payload', payload });
 
-    const fb = await this.sendToFacebookApi(pixelId, accessToken, payload);
+    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'purchase:fb-response', fb });
 
     return { status: 'ok' };
@@ -185,8 +191,9 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'subscribe:input', dto });
 
     const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const eventName = 'Subscribe'
     const payload = this.payloadFbBuilder({
-      eventName: 'Subscribe',
+      eventName,
       sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
       userId: dto.userId,
       fbclid,
@@ -197,56 +204,93 @@ export class EventHandlerCoreService {
     });
     this.log.debug({ tag: 'subscribe:payload', payload });
 
-    const fb = await this.sendToFacebookApi(pixelId, accessToken, payload);
+    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'subscribe:fb-response', fb });
 
     return { status: 'ok' };
   }
 
-  private async sendToFacebookApi(pixelId: string, accessToken: string, payload: unknown) {
-    if (process.env.FB_MOCK === '1') {
-      const firstEventId =
-          (payload as any)?.data?.[0]?.event_id ??
-          (payload as any)?.data?.[0]?.eventId ??
-          Math.random().toString(36).slice(2, 12);
+  private async sendToFacebookApi(
+      userId: string,
+      pixelId: string,
+      eventType: EventType,
+      accessToken: string,
+      payload: unknown,
+  ) {
+    const eventId =
+        (payload as any)?.data?.[0]?.event_id ??
+        (payload as any)?.data?.[0]?.eventId ??
+        Math.random().toString(36).slice(2, 12);
 
-      await new Promise(res => setTimeout(res, 100));
+    const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
 
+    let status: LogStatus = LogStatus.success;
+    let responseData: any;
+
+    if (process.env.FB_MOCK) {
+      await new Promise((res) => setTimeout(res, 100));
       const mock = {
         events_received: (payload as any)?.data?.length ?? 1,
         fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
-        echo: { pixel_id: pixelId, first_event_id: firstEventId, version: this.graphVersion },
+        echo: {pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion},
       };
-
-      this.log.debug({ tag: 'fb-capi:mock', mock });
+      this.log.debug({tag: 'fb-capi:mock', mock});
+      responseData = mock;
+      await this.logs.createLog({
+        userId,
+        pixelId,
+        eventType,
+        eventId,
+        status,
+        responseData: mock,
+        revenue: null,
+        clientIp,
+        country: undefined,
+      });
       return mock;
     }
-
-    const url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(
-        pixelId,
-    )}/events`;
+    const url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
 
     try {
-      const { data, status } = await axios.post(url, payload, {
-        params: { access_token: accessToken },
-        headers: { 'Content-Type': 'application/json' },
+      const {data, status: httpStatus} = await axios.post(url, payload, {
+        params: {access_token: accessToken},
+        headers: {'Content-Type': 'application/json'},
         timeout: 7000,
       });
-      this.log.log({ tag: 'fb-capi', status, fbtrace_id: (data as any)?.fbtrace_id });
+      this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
+      responseData = data;
+      status = LogStatus.success;
       return data;
     } catch (e) {
+      status = LogStatus.error;
+
       const err = e as AxiosError;
       if (err.response) {
-        const { status, data } = err.response;
-        this.log.warn({ tag: 'fb-capi', status, body: data });
-        throw new Error(`FB ${status}: ${JSON.stringify(data)}`);
+        const {status: httpStatus, data} = err.response;
+        this.log.warn({tag: 'fb-capi', status: httpStatus, body: data});
+        responseData = {error: `FB ${httpStatus}: ${JSON.stringify(data)}`};
+        throw new Error(responseData.error);
       }
       if (axios.isAxiosError(err)) {
-        this.log.error({ tag: 'fb-capi', stage: 'axios', error: err.message });
-        throw new Error(`FB request failed: ${err.message}`);
+        this.log.error({tag: 'fb-capi', stage: 'axios', error: err.message});
+        responseData = {error: `FB request failed: ${err.message}`};
+        throw new Error(responseData.error);
       }
-      this.log.error({ tag: 'fb-capi', stage: 'unknown', error: String(e) });
+      this.log.error({tag: 'fb-capi', stage: 'unknown', error: String(e)});
+      responseData = {error: String(e)};
       throw e;
+    } finally {
+      await this.logs.createLog({
+        userId,
+        pixelId,
+        eventType,
+        eventId,
+        status,
+        responseData,
+        revenue: null,
+        clientIp,
+        country: undefined,
+      });
     }
   }
 

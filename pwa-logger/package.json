@@ -1,0 +1,26 @@
+{
+  "name": "@pwa/logger",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node dist/pwa-logger/src/main.js",
+    "start:dev": "nest start --watch",
+    "build": "nest build -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@nestjs/bullmq": "^11.0.3",
+    "@nestjs/common": "^11",
+    "@nestjs/core": "^11",
+    "@nestjs/platform-express": "^11",
+    "@prisma/client": "^6.17.0",
+    "bullmq": "^5.60.0",
+    "ioredis": "^5.8.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "prisma": "^6.17.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Status } from '@prisma/client';
-import {CreateEventLogInput, MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
+import {MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
+import {Status} from ".prisma/client";
 import {PrismaService} from "../../../pwa-prisma/src";
 
 @Injectable()
@@ -63,29 +63,5 @@ export class EventHandlerRepository {
                 finalUrl: input.finalUrl ?? undefined,
             },
         });
-    }
-
-
-    async createEventLog(input: CreateEventLogInput): Promise<number> {
-        const rec = await this.prisma.eventLog.create({
-            data: {
-                userId: input.userId,
-                pixelId: input.pixelId,
-                eventType: input.eventType,
-                eventId: input.eventId,
-                revenue: input.revenue != null ? new Prisma.Decimal(input.revenue) : null,
-                country: input.country ?? null,
-                clientIp: input.clientIp ?? null,
-                responseData:
-                    input.responseData != null
-                        ? (typeof input.responseData === 'string'
-                            ? input.responseData
-                            : JSON.stringify(input.responseData))
-                        : null,
-                status: input.status,
-            },
-            select: { id: true },
-        });
-        return rec.id;
     }
 }

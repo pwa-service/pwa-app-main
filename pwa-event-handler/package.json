@@ -8,24 +8,25 @@
     "build": "nest build",
     "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma"
   },
-    "dependencies": {
-      "@nestjs/common": "^11",
-      "@nestjs/core": "^11",
-      "@nestjs/microservices": "^11",
-      "@grpc/grpc-js": "^1.10.6",
-      "@prisma/client": "^6.16.2",
-      "@nestjs/platform-express": "^11",
-      "reflect-metadata": "^0.2.2",
-      "rxjs": "^7",
-      "axios": "^1.7.7",
-      "class-transformer": "^0.5.1",
-      "class-validator": "^0.14.1"
-    },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.10.6",
+    "@nestjs/bullmq": "^11.0.3",
+    "@nestjs/common": "^11",
+    "@nestjs/core": "^11",
+    "@nestjs/microservices": "^11",
+    "@nestjs/platform-express": "^11",
+    "@prisma/client": "^6.17.0",
+    "axios": "^1.7.7",
+    "bullmq": "^5.61.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ioredis": "^5.8.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7"
+  },
   "devDependencies": {
     "@types/node": "^22.7.4",
-    "typescript": "^5.6.3",
-    "prisma": "^6.16.3"
+    "prisma": "^6.17.0",
+    "typescript": "^5.6.3"
   }
 }
-
-

@@ -11,13 +11,13 @@ COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
 
 WORKDIR /workspace/pwa-auth-service
-RUN npm install && npm install -g @nestjs/cli
+RUN npm i && npm i -g @nestjs/cli
 
 WORKDIR /workspace/pwa-prisma
-RUN npm install
+RUN npm i
 
 WORKDIR /workspace/pwa-shared
-RUN npm install
+RUN npm i
 
 FROM deps AS build
 WORKDIR /workspace

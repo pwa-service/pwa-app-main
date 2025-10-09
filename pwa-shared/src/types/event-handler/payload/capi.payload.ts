@@ -1,4 +1,4 @@
-import { CampaignParams, MonetaryParams, DeviceContext, Timing } from './common.types';
+import { CampaignParams, MonetaryParams, DeviceContext, Timing } from '../common.types';
 
 export type BasePayload = {
     sourceUrl: string;

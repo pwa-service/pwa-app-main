@@ -5,9 +5,10 @@ import { EventHandlerCoreService } from './event-handler.core.service';
 import { EventHandlerRepository } from './event-handler.repository';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { GrpcClientMetaInterceptor } from '../common/interceptors/grpc-client-meta.interceptor';
+import {EventLogQueueModule} from "../queues/event-log.queue.module";
 
 @Module({
-    imports: [PrismaModule],
+    imports: [PrismaModule, EventLogQueueModule],
     controllers: [EventHandlerGrpcController],
     providers: [
         EventHandlerCoreService,

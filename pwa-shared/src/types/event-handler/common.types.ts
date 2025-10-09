@@ -19,8 +19,3 @@ export type Timing = {
     eventTime?: number;
     eventId?: string;
 };
-
-export type Identifiers = {
-    userId: string;
-    pixelId: string;
-};

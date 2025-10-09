@@ -2,7 +2,7 @@ import { ClientProviderOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 
 
-const PROTOS_DIR = join(process.cwd(), 'protos');
+const PROTOS_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
 
 export const authGrpcClient: ClientProviderOptions = {
     name: 'AUTH_GRPC',

@@ -1,7 +1,7 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { ViewContentDto } from "../../../pwa-shared/src/types/event-handler/dto/view-content.dto";
-import {ViewContentMeta} from "../types/capi.types";
+import { ViewContentDto } from "../../../pwa-shared/src";
+import {ViewContentMeta} from "../../../pwa-shared/src";
 
 
 @Injectable()

@@ -29,6 +29,8 @@ services:
       - PORT=4000
       - AUTH_GRPC_URL=0.0.0.0:50051
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
       - AUTH_ACCESS_TTL=900
@@ -52,10 +54,14 @@ services:
       dockerfile: pwa-event-handler/Dockerfile
     working_dir: /workspace/pwa-event-handler
     environment:
-      - PORT=50053
+      - PORT=4300
       - EVENT_GRPC_URL=0.0.0.0:50053
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
+      - FB_MOCK=true
+      - FB_GRAPH_VERSION=v21.0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,6 +73,24 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  logger-service:
+    build:
+      context: .
+      dockerfile: pwa-logger/Dockerfile
+    working_dir: /workspace/pwa-logger
+    container_name: logger-service
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_NAME=PWA_EVENTS_QUEUE
+      - WORKER_CONCURRENCY=5
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
 
   api-gateway:
     build:
@@ -92,6 +116,18 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   postgres_data:
