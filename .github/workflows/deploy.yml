@@ -50,6 +50,15 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
             set -e
+
+            cleanup() {
+              echo "*********** Deleting .env file ***********"
+              rm -f ~/pwa-app/.env
+              echo "*********** .env file deleted ***********"
+            }
+
+            trap cleanup EXIT
+
             cd ~/pwa-app
 
             echo "*********** Starting Docker Compose ***********"
@@ -66,16 +75,11 @@ jobs:
               if [ $i -eq 20 ]; then
                 echo "*********** Containers unhealthy or exited! ***********"
                 docker compose ps
-
-                echo "*********** Deleting .env file from remote server ***********"
-                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
-                rm ./pwa-app/.env
-
                 exit 1
               fi
               sleep 5
             done
 
-            echo "*********** Cleaning up ***********"
+            echo "*********** Cleaning up Docker resources ***********"
             docker system prune -f
           EOF
