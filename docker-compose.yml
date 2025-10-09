@@ -93,11 +93,6 @@ services:
       - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
-    depends_on:
-      auth-service:
-        condition: service_healthy
-      event-handler:
-        condition: service_healthy
     ports:
       - "3000:3000"
 
