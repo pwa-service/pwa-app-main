@@ -9,7 +9,7 @@ async function bootstrap() {
     options: {
       package: 'auth.v1',
       protoPath: join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto'),
-      url: process.env.AUTH_GRPC_URL || '0.0.0.0:50051',
+      url: process.env.AUTH_SERVICE_GRPC_URL || '0.0.0.0:50051',
       loader: { includeDirs: [join(process.cwd(), 'protos')] },
     },
   });
