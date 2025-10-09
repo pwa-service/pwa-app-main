@@ -29,8 +29,8 @@ services:
     container_name: auth-service
     environment:
       - PORT=4000
-      - AUTH_GRPC_URL=0.0.0.0:50051
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_ISSUER=https://auth.local/
@@ -53,8 +53,8 @@ services:
       - ./.env
     environment:
       - PORT=4300
-      - EVENT_GRPC_URL=0.0.0.0:50053
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - EVENT_HANDLER_GRPC_URL=event-handler:50053
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
       - FB_MOCK=true
       - FB_GRAPH_VERSION=v21.0
@@ -74,7 +74,7 @@ services:
     container_name: logger-service
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUEUE_NAME=PWA_EVENTS_QUEUE
@@ -90,8 +90,8 @@ services:
       dockerfile: ./pwa-api-gateway/Dockerfile
     environment:
       - PORT=3000
-      - AUTH_GRPC_URL=auth-service:50051
-      - EVENT_HANDLER_GRPC=event-handler:50053
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
@@ -109,6 +109,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  prisma-migrator:
+    build:
+      context: .
+      dockerfile: pwa-prisma/Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   postgres_data:
