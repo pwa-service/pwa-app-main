@@ -49,6 +49,8 @@ services:
       context: .
       dockerfile: pwa-event-handler/Dockerfile
     working_dir: /workspace/pwa-event-handler
+    env_file:
+      - ./.env
     environment:
       - PORT=4300
       - EVENT_GRPC_URL=0.0.0.0:50053
@@ -89,7 +91,7 @@ services:
     environment:
       - PORT=3000
       - AUTH_GRPC_URL=auth-service:50051
-      - EVENT_HANDLER_GRPC_URL=event-handler:50053
+      - EVENT_HANDLER_GRPC=event-handler:50053
       - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
