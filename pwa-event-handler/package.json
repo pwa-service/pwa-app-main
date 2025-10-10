@@ -6,7 +6,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
+    "local": "nest build && node ./dist/pwa-event-handler/src/main.js"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.6",
