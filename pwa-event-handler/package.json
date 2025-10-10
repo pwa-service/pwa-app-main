@@ -17,6 +17,7 @@
     "@nestjs/platform-express": "^11",
     "@prisma/client": "^6.17.0",
     "@types/geoip-country": "^4.0.2",
+    "@nestjs/swagger": "^11.2.0",
     "axios": "^1.7.7",
     "bullmq": "^5.61.0",
     "class-transformer": "^0.5.1",

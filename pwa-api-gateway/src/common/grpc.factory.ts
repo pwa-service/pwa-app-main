@@ -28,7 +28,7 @@ export const eventHandlerClient: ClientProviderOptions = {
     options: {
         package: 'eventhandler.v1',
         protoPath: join(PROTOS_DIR, 'event_handler.proto'),
-        url: process.env.EVENT_HANDLER_GRPC || 'localhost:50053',
+        url: process.env.EVENT_HANDLER_GRPC_URL || 'localhost:50053',
         loader: {
             includeDirs: [PROTOS_DIR],
             keepCase: false,

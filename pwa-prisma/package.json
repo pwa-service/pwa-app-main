@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@nestjs/common": "^11",
+    "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.17.0"
   },
   "devDependencies": {
