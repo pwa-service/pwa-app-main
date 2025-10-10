@@ -16,10 +16,12 @@
     "@nestjs/microservices": "^11",
     "@nestjs/platform-express": "^11",
     "@prisma/client": "^6.17.0",
+    "@types/geoip-country": "^4.0.2",
     "axios": "^1.7.7",
     "bullmq": "^5.61.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "geoip-country": "^5.0.202510072342",
     "ioredis": "^5.8.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7"

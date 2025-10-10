@@ -11,6 +11,7 @@ import {
   ViewContentDto,
   ViewContentMeta
 } from "../../../pwa-shared/src";
+import * as geo from 'geoip-country'
 
 @Injectable()
 export class EventHandlerCoreService {
@@ -289,7 +290,7 @@ export class EventHandlerCoreService {
         responseData,
         revenue: null,
         clientIp,
-        country: undefined,
+        country: clientIp ? geo.lookup(clientIp)?.country : null,
       });
     }
   }
