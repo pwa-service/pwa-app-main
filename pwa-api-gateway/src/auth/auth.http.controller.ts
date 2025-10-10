@@ -2,12 +2,13 @@ import {Body, Controller, Get, HttpCode, Post, Req, UseGuards, UsePipes, Validat
 import { Request } from 'express';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import { AuthGrpcClient } from './auth.grpc.client';
-import { SignInDto } from '../../../pwa-shared/src/types/auth/dto/sing-in.dto';
-import { RefreshDto } from '../../../pwa-shared/src/types/auth/dto/refresh.dto';
+import { SignInDto, RefreshDto, SignUpDto } from '../../../pwa-shared/src';
 import {JwtAuthGuard} from "../common/jwt-auth.guard";
-import {SignUpDto} from "../../../pwa-shared/src/types/auth/dto/sing-up.dto";
+import {ApiTags} from "@nestjs/swagger";
 
 @Controller('auth')
+@ApiTags('Event')
+@Controller('event')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AuthHttpController {
     constructor(private readonly auth: AuthGrpcClient) {}

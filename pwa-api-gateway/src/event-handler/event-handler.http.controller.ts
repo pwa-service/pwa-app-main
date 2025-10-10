@@ -1,14 +1,15 @@
 import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { EventHandlerGrpcClient } from './event-handler.grpc.client';
-import { ViewContentDto } from '../../../pwa-shared/src/types/event-handler/dto/view-content.dto';
-import { PrepareInstallLinkDto } from '../../../pwa-shared/src/types/event-handler/dto/prepare-install-link.dto';
-import { PwaFirstOpenDto } from '../../../pwa-shared/src/types/event-handler/dto/first-open.dto';
-import { LeadDto } from '../../../pwa-shared/src/types/event-handler/dto/lead.dto';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
-import {CompleteRegistrationDto} from "../../../pwa-shared/src/types/event-handler/dto/complete-registration.dto";
-import {PurchaseDto} from "../../../pwa-shared/src/types/event-handler/dto/purchase.dto";
-import {SubscribeDto} from "../../../pwa-shared/src/types/event-handler/dto/subscribe.dto";
+import {
+    CompleteRegistrationDto,
+    LeadDto,
+    PrepareInstallLinkDto, PurchaseDto,
+    PwaFirstOpenDto,
+    SubscribeDto,
+    ViewContentDto
+} from "../../../pwa-shared/src";
 
 @Controller('event')
 export class EventHandlerHttpController {

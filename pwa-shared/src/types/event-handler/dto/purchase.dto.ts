@@ -1,11 +1,31 @@
 import {IsNumber, IsOptional, IsPositive, IsString, IsUrl} from "class-validator";
+import {ApiProperty} from "@nestjs/swagger";
 
 export class PurchaseDto {
-    @IsString() userId!: string;
-    @IsString() pwaDomain!: string;
-    @IsOptional() @IsUrl({ require_protocol: true }) landingUrl?: string;
-    @IsOptional() queryStringRaw?: string;
+    @ApiProperty()
+    @IsString()
+    userId!: string;
 
-    @IsNumber() @IsPositive() value!: number;
-    @IsString() currency!: string;
+    @ApiProperty()
+    @IsString()
+    pwaDomain!: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsUrl({ require_protocol: true })
+    landingUrl?: string;
+
+    @ApiProperty()
+    @IsOptional()
+    queryStringRaw?: string;
+
+    @ApiProperty()
+    @IsNumber()
+    @IsPositive()
+    value!: number;
+
+    @ApiProperty()
+    @IsString()
+    @ApiProperty()
+    currency!: string;
 }
