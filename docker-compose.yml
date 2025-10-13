@@ -132,10 +132,8 @@ services:
     env_file:
       - ./.env
     depends_on:
-      postgres_db:
+      postgres:
         condition: service_healthy
-      server:
-        condition: service_started
 
 volumes:
   postgres_data:
