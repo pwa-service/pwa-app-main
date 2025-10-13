@@ -124,16 +124,18 @@ services:
   prisma-studio:
     image: node:lts-alpine3.17
     working_dir: /usr/src/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
     volumes:
-      - .:/usr/src/app
-    command: npx prisma studio --port 5555 --browser none
+      - ./pwa-prisma:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -c "npm install && npx prisma generate && npx prisma studio --port 5555 --browser none"
     ports:
       - "5555:5555"
-    env_file:
-      - ./.env
     depends_on:
       postgres:
         condition: service_healthy
+
 
 volumes:
   postgres_data:
