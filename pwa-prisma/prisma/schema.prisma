@@ -83,8 +83,8 @@ model EventLog {
 }
 
 model PwaSession {
-  id                String     @id @default(uuid())
-  userId            String     @unique @map("user_id")
+  id                String     @id @unique @default(uuid())
+  userId            String     @map("user_id")
   pwaDomain         String     @map("pwa_domain")
   landingUrl        String?    @map("landing_url")
   queryStringRaw    String?    @map("query_string_raw")
