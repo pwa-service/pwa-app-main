@@ -61,6 +61,9 @@ jobs:
 
             cd ~/pwa-app
 
+            echo "*********** Stopping Docker Compose ***********"
+            docker compose down
+
             echo "*********** Starting Docker Compose ***********"
             docker compose up -d --build --remove-orphans
 
