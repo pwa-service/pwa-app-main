@@ -3,7 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import {LoggerProcessor} from './logger.processor';
 import {LoggerRepository} from "../logger.repository";
 import { PrismaModule } from '../../../../pwa-prisma/src';
-import {PWA_EVENTS_PREFIX, PWA_EVENTS_QUEUE} from "../../../../pwa-shared/src/types/auth/bullmq/queues";
+import {PWA_EVENTS_PREFIX, PWA_EVENTS_QUEUE} from "../../../../pwa-shared/src/types/bullmq/queues";
 
 @Global()
 @Module({

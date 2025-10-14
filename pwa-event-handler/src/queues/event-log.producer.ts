@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {CreateEventLogPayload} from "../../../pwa-shared/src";
-import {PWA_EVENTS_QUEUE} from "../../../pwa-shared/src/types/auth/bullmq/queues";
+import {PWA_EVENTS_QUEUE} from "../../../pwa-shared/src/types/bullmq/queues";
 
 @Injectable()
 export class EventLogProducer {

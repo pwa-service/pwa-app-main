@@ -28,7 +28,7 @@ services:
     working_dir: /workspace/pwa-auth-service
     container_name: auth-service
     environment:
-      - PORT=4000
+      - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - REDIS_HOST=redis
@@ -42,6 +42,7 @@ services:
         condition: service_healthy
     ports:
       - "4000:4000"
+      - "4040:4040"
       - "50051:50051"
 
   event-handler:
@@ -73,7 +74,6 @@ services:
     working_dir: /workspace/pwa-logger
     container_name: logger-service
     environment:
-      - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379

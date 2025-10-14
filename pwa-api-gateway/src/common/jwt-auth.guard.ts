@@ -14,14 +14,7 @@ export class JwtAuthGuard implements CanActivate {
 
         const token = auth.slice(7);
         try {
-            const { payload } = await jwtVerify(token, JWKS, { issuer: ISS, audience: AUD, algorithms: ['RS256'] });
-            req.user = {
-                id: String(payload.sub ?? ''),
-                email: (payload['email'] as string) ?? '',
-                name: (payload['name'] as string) ?? '',
-                roles: (payload['roles'] as string[]) ?? [],
-                raw: payload as JWTPayload,
-            };
+            await jwtVerify(token, JWKS, { issuer: ISS, audience: AUD, algorithms: ['RS256'] });
             return true;
         } catch (e: any) {
             throw new UnauthorizedException('Invalid or expired access token');

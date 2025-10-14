@@ -4,16 +4,24 @@ package auth.v1;
 import "google/protobuf/empty.proto";
 
 service AuthService {
-  rpc SignIn  (SignInRequest)  returns (AuthResponse);
-  rpc Refresh (RefreshRequest) returns (AuthResponse);
-  rpc SignOut (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc Me      (google.protobuf.Empty) returns (User);
+  rpc SignUp            (SignUpRequest)  returns (AuthResponse);
+  rpc SignIn            (SignInRequest)  returns (AuthResponse);
+  rpc RestorePassword   (RestorePassword) returns (AuthResponse);
+  rpc ConfirmEmail      (google.protobuf.Empty) returns (AuthResponse);
+  rpc Refresh           (RefreshRequest) returns (AuthResponse);
+  rpc SignOut           (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Me                (google.protobuf.Empty) returns (User);
+}
+
+message SignUpRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
 }
 
 message SignInRequest {
   string email = 1;
   string password = 2;
-  string otp = 3;
 }
 
 message RefreshRequest {
@@ -31,4 +39,8 @@ message User {
   string id    = 1;
   string email = 2;
   string name  = 3;
+}
+
+message RestorePassword {
+  string newPassword = 1;
 }

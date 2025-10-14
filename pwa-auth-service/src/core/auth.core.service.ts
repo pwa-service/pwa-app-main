@@ -7,14 +7,14 @@ import {
   jwtVerify,
   SignJWT,
 } from 'jose';
-import { Metadata, status } from '@grpc/grpc-js';
+import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
 
-import { RefreshStore } from '../common/refresh.store';
+import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
 import { AuthRepository } from './auth.repository';
 
-type UserPayload = { id: string; email: string; name: string };
+type UserPayload = { id: string; email: string; username: string };
 
 @Injectable()
 export class AuthCoreService {
@@ -82,7 +82,7 @@ export class AuthCoreService {
     return {
       id: String(user.id),
       email: user.email ?? '',
-      name: user.username ?? '',
+      username: user.username ?? '',
     };
   }
 
@@ -98,7 +98,7 @@ export class AuthCoreService {
       const accessToken = await new SignJWT({
         sub: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
         roles: ['user'],
       })
           .setProtectedHeader({ alg: 'RS256', kid: this.kid, typ: 'JWT' })
@@ -165,7 +165,7 @@ export class AuthCoreService {
       const user: UserPayload = {
         id: String(dbUser.id),
         email: dbUser.email ?? '',
-        name: dbUser.username ?? '',
+        username: dbUser.username ?? '',
       };
       return this.issueTokens(user);
     } catch (err: any) {
@@ -175,25 +175,11 @@ export class AuthCoreService {
           message: 'Invalid or expired refresh token',
         });
       }
-      if (typeof err?.code === 'number') throw err; // вже RpcException
+      if (typeof err?.code === 'number') throw err;
       throw new RpcException({
         code: status.UNKNOWN,
         message: 'Token verification failed',
       });
-    }
-  }
-
-  async tryVerifyAccess(accessToken: string) {
-    if (!accessToken) return null;
-    try {
-      const pub = await importJWK(this.publicJwk, 'RS256');
-      const { payload } = await jwtVerify(accessToken, pub, {
-        audience: process.env.AUTH_AUDIENCE ?? 'api',
-        issuer: process.env.AUTH_ISSUER ?? 'https://auth.local/',
-      });
-      return payload;
-    } catch {
-      return null;
     }
   }
 
@@ -209,58 +195,19 @@ export class AuthCoreService {
     const hash = await bcrypt.hash(password, 10);
     const created = await this.repo.createUser({
       email,
-      username: email,
       password: hash,
-      name: name ?? email.split('@')[0],
+      username: name ?? email.split('@')[0],
     });
 
     return this.issueTokens({
       id: String(created.id),
       email: created.email ?? '',
-      name: created.username ?? '',
+      username: created.username ?? '',
     });
   }
 
-  async revokeByUserId(userId: string) {
-    try {
-      await this.store.revoke(userId);
-    } catch {
-      throw new RpcException({
-        code: status.INTERNAL,
-        message: 'Failed to revoke refresh tokens',
-      });
-    }
-  }
-
-  async payloadFromMd(md: Metadata) {
-    const access = this.extractAccessFromMd(md);
-    if (!access) return null;
-    return this.tryVerifyAccess(access);
-  }
-
-  async meFromMd(md: Metadata) {
-    const payload = await this.payloadFromMd(md);
-    if (!payload) return { id: 'unknown', email: '', name: '' };
-
-    const dbUser = await this.repo.findById(payload.sub!);
-    return {
-      id: String(dbUser?.id ?? payload.sub ?? 'unknown'),
-      email: dbUser?.email ?? (payload['email'] as string) ?? '',
-      name: dbUser?.username ?? (payload['name'] as string) ?? '',
-    };
-  }
-
-  async signOutFromMd(md: Metadata) {
-    const payload = await this.payloadFromMd(md);
-    if (payload?.sub) {
-      await this.revokeByUserId(String(payload.sub));
-    }
-    return {};
-  }
-
-  private extractAccessFromMd(md: Metadata): string | null {
-    const h = (md.get('authorization')[0] as string | undefined) ?? '';
-    const token = h.replace(/^Bearer\s+/i, '').trim();
-    return token || null;
+  async singOut(id?: string) {
+    if (!id) throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'Invalid user id' })
+    await this.store.revoke(id)
   }
 }

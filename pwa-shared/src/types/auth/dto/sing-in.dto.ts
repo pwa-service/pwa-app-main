@@ -10,9 +10,4 @@ export class SignInDto {
     @IsString()
     @MinLength(6)
     password!: string;
-
-    @ApiProperty({ example: 'John' })
-    @IsOptional()
-    @IsString()
-    otp?: string;
 }
