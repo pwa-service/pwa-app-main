@@ -9,7 +9,7 @@ export class JwtVerifierService implements OnModuleDestroy {
 
     private getJwks() {
         if (!this.jwks) {
-            const url = new URL(process.env.AUTH_JWKS_URL ?? 'http://auth-service:4000/.well-known/jwks.json');
+            const url = new URL(process.env.AUTH_JWKS_URL ?? 'http://localhost:4040/.well-known/jwks.json');
             this.jwks = createRemoteJWKSet(url);
         }
         return this.jwks;

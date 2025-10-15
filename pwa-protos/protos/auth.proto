@@ -16,7 +16,7 @@ service AuthService {
 message SignUpRequest {
   string email = 1;
   string password = 2;
-  string name = 3;
+  string username = 3;
 }
 
 message SignInRequest {
@@ -38,7 +38,8 @@ message AuthResponse {
 message User {
   string id    = 1;
   string email = 2;
-  string name  = 3;
+  string username  = 3;
+  string role  = 4;
 }
 
 message RestorePassword {

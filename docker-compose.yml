@@ -30,6 +30,7 @@ services:
     environment:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -92,7 +93,7 @@ services:
       - PORT=3000
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
+      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
     ports:

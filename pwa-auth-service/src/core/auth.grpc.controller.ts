@@ -8,6 +8,7 @@ import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/a
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor)
 export class AuthGrpcController {
   constructor(private readonly auth: AuthCoreService) {}
 
@@ -30,13 +31,11 @@ export class AuthGrpcController {
     return this.auth.refreshByToken(dto.refreshToken);
   }
 
-  @UseInterceptors(GrpcAuthInterceptor)
   @GrpcMethod('AuthService', 'SignOut')
   async signOut(_empty: {}, md: Metadata, @GrpcUser() user: UserRecord | null) {
     return this.auth.singOut(user?.id);
   }
 
-  @UseInterceptors(GrpcAuthInterceptor)
   @GrpcMethod('AuthService', 'Me')
   async me(_empty: {}, md: Metadata, @GrpcUser() user: UserRecord | null) {
     return user;

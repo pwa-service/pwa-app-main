@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import {CreateEventLogPayload} from "../../../pwa-shared/src";
-import { PrismaService } from 'pwa-prisma/src/prisma.service'
+import { Prisma } from '@prisma/client'; // 👈 ВАЖЛИВО: Імпорт Prisma для Decimal
+import { CreateEventLogPayload } from '../../../pwa-shared/src';
+import { PrismaService } from 'pwa-prisma/src/prisma.service';
 
 @Injectable()
 export class LoggerRepository {
@@ -9,29 +9,35 @@ export class LoggerRepository {
 
     async createEventLog(input: CreateEventLogPayload) {
         try {
-            const rec = await this.prisma.eventLog.create({
+            const revenueValue = input.revenue != null
+                ? new Prisma.Decimal(input.revenue)
+                : null;
+            const countryValue = input.country || null;
+            const clientIpValue = input.clientIp || null;
+            const responseDataValue =
+                input.responseData != null
+                    ? (typeof input.responseData === 'string'
+                        ? input.responseData
+                        : JSON.stringify(input.responseData))
+                    : null;
+
+            const event = await this.prisma.eventLog.create({
                 data: {
                     userId: input.userId,
                     pixelId: input.pixelId,
                     eventType: input.eventType,
                     eventId: input.eventId,
-                    revenue: input.revenue,
-                    country: input.country ?? null,
-                    clientIp: input.clientIp ?? null,
-                    responseData:
-                        input.responseData != null
-                            ? (typeof input.responseData === 'string'
-                                ? input.responseData
-                                : JSON.stringify(input.responseData))
-                            : null,
+                    revenue: revenueValue,
+                    country: countryValue,
+                    clientIp: clientIpValue,
+                    responseData: responseDataValue,
                     status: input.status,
                 },
                 select: { id: true },
             });
-            console.log("SUCSESS");
-            return rec.id;
+            return event.id;
         } catch (error) {
-            console.log("ERROR", error);
+            throw error;
         }
     }
 }
