@@ -12,18 +12,18 @@ import {
   ViewContentMeta
 } from "../../../pwa-shared/src";
 
-
 @Controller()
 @UseInterceptors(GrpcClientMetaInterceptor)
 export class EventHandlerGrpcController {
   constructor(private readonly core: EventHandlerCoreService) {}
 
   @GrpcMethod('EventHandlerService', 'ViewContent')
-  ViewContent(
+  async ViewContent(
       @Payload(
           new ValidationPipe({ whitelist: true, transform: true }),
           ViewContentEnrichmentPipe
-      ) dto: ViewContentDto & { _meta: ViewContentMeta }) {
+      ) dto: ViewContentDto & { _meta: ViewContentMeta })
+  {
     return this.core.viewContent(dto);
   }
 

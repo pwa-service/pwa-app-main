@@ -51,7 +51,6 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'viewContent:payload', payload });
     const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, accessToken, payload);
     this.log.log({ tag: 'viewContent:fb-response', fb });
-
     return { success: true, fb };
   }
 
@@ -224,10 +223,8 @@ export class EventHandlerCoreService {
         Math.random().toString(36).slice(2, 12);
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
-
     let status: LogStatus = LogStatus.success;
     let responseData: any;
-
     if (process.env.FB_MOCK) {
       await new Promise((res) => setTimeout(res, 100));
       const mock = {
@@ -236,7 +233,6 @@ export class EventHandlerCoreService {
         echo: {pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion},
       };
       this.log.debug({tag: 'fb-capi:mock', mock});
-      responseData = mock;
       await this.logs.createLog({
         userId,
         pixelId,
@@ -248,10 +244,9 @@ export class EventHandlerCoreService {
         clientIp,
         country: undefined,
       });
-      return mock;
+      return JSON.stringify(mock);
     }
     const url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
-
     try {
       const {data, status: httpStatus} = await axios.post(url, payload, {
         params: {access_token: accessToken},
@@ -261,7 +256,7 @@ export class EventHandlerCoreService {
       this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
       responseData = data;
       status = LogStatus.success;
-      return data;
+      return JSON.stringify(data);
     } catch (e) {
       status = LogStatus.error;
 

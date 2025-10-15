@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package eventhandler.v1;
 
-import "google/protobuf/struct.proto";
-
 service EventHandlerService {
-    rpc ViewContent (ViewContentRequest) returns (ViewContentResponse);
-    rpc PrepareInstallLink (PrepareInstallLinkRequest) returns (PrepareInstallLinkResponse);
-    rpc PwaFirstOpen (PwaFirstOpenRequest) returns (GenericSuccess);
+    rpc ViewContent          (ViewContentRequest)          returns (ViewContentResponse);
+    rpc PrepareInstallLink   (PrepareInstallLinkRequest)   returns (PrepareInstallLinkResponse);
+    rpc PwaFirstOpen         (PwaFirstOpenRequest)         returns (GenericSuccess);
     rpc Lead                 (LeadRequest)                 returns (GenericOk);
     rpc CompleteRegistration (CompleteRegistrationRequest) returns (GenericOk);
     rpc Purchase             (PurchaseRequest)             returns (GenericOk);
@@ -65,7 +63,7 @@ message SubscribeRequest {
 
 message ViewContentResponse {
     bool success = 1;
-    google.protobuf.Struct fb = 2;
+    string fb = 2;
 }
 
 message PrepareInstallLinkResponse {

@@ -19,7 +19,7 @@ export class EventHandlerRepository {
         const session = await this.getSessionByUserId(input.userId)
 
         if (!session) {
-            return await this.prisma.pwaSession.create({
+            return this.prisma.pwaSession.create({
                 data: {
                     userId: input.userId,
                     pwaDomain: input.pwaDomain,
@@ -31,11 +31,11 @@ export class EventHandlerRepository {
                     utmSource: input.utmSource ?? null,
                     sub1: input.sub1 ?? null,
                 }
-            })
+            });
         }
 
-        return await this.prisma.pwaSession.update({
-            where: { id: session.id },
+        return this.prisma.pwaSession.update({
+            where: {id: session.id},
             data: {
                 pwaDomain: input.pwaDomain,
                 landingUrl: input.landingUrl ?? undefined,

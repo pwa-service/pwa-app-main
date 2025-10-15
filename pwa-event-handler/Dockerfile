@@ -37,7 +37,7 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN mkdir -p ./protos \
  && cp -r ../pwa-protos/protos/* ./protos/
-RUN npx nest build -p tsconfig.build.json
+RUN npx nest build -p tsconfig.json
 
 FROM node:22-alpine AS runner
 WORKDIR /workspace/pwa-event-handler

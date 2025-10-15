@@ -29,7 +29,7 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 WORKDIR /workspace/pwa-logger
 RUN mkdir -p ./prisma && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
-RUN npx nest build -p tsconfig.build.json
+RUN npx nest build -p tsconfig.json
 
 FROM node:22-alpine AS runner
 WORKDIR /workspace/pwa-logger
