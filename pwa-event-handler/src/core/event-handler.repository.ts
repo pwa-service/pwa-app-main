@@ -16,9 +16,7 @@ export class EventHandlerRepository {
     }
 
     async upsertSession(input: UpsertSessionInput) {
-        const session = await this.getSessionByUserId(input.userId)
-
-        if (!session) {
+        if (!input.sessionId) {
             return this.prisma.pwaSession.create({
                 data: {
                     userId: input.userId,
@@ -35,7 +33,7 @@ export class EventHandlerRepository {
         }
 
         return this.prisma.pwaSession.update({
-            where: {id: session.id},
+            where: {id: input.sessionId},
             data: {
                 pwaDomain: input.pwaDomain,
                 landingUrl: input.landingUrl ?? undefined,
@@ -49,32 +47,26 @@ export class EventHandlerRepository {
         });
     }
 
-    async getSessionByUserId(userId: string) {
-        return this.prisma.pwaSession.findFirst({ where: { userId } });
+    async getSessionById(id: string) {
+        return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
-    async setFinalUrl(userId: string, finalUrl: string): Promise<void> {
-        const session = await this.getSessionByUserId(userId);
-        if (session) {
-            await this.prisma.pwaSession.update({
-                where: { id: session.id },
-                data: { finalUrl },
-            });
-        }
+    async setFinalUrl(id: string, finalUrl: string): Promise<void> {
+        await this.prisma.pwaSession.update({
+            where: { id },
+            data: { finalUrl },
+        });
     }
 
     async markFirstOpen(input: MarkFirstOpenInput): Promise<void> {
-        const session = await this.getSessionByUserId(input.userId);
-        if (session) {
-            await this.prisma.pwaSession.update({
-                where: { id: session.id },
-                data: {
-                    firstOpenAt: new Date(),
-                    firstOpenEventId: input.eventId ?? undefined,
-                    firstOpenFbStatus: input.fbStatus ?? undefined,
-                    finalUrl: input.finalUrl ?? undefined,
-                },
-            });
-        }
+        await this.prisma.pwaSession.update({
+            where: { id: input.sessionId },
+            data: {
+                firstOpenAt: new Date(),
+                firstOpenEventId: input.eventId ?? undefined,
+                firstOpenFbStatus: input.fbStatus ?? undefined,
+                finalUrl: input.finalUrl ?? undefined,
+            },
+        });
     }
 }

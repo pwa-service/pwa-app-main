@@ -3,9 +3,9 @@ syntax = "proto3";
 package eventhandler.v1;
 
 service EventHandlerService {
-    rpc ViewContent          (ViewContentRequest)          returns (ViewContentResponse);
+    rpc ViewContent          (ViewContentRequest)          returns (FirstOpenResponse);
     rpc PrepareInstallLink   (PrepareInstallLinkRequest)   returns (PrepareInstallLinkResponse);
-    rpc PwaFirstOpen         (PwaFirstOpenRequest)         returns (GenericSuccess);
+    rpc PwaFirstOpen         (PwaFirstOpenRequest)         returns (GenericOk);
     rpc Lead                 (LeadRequest)                 returns (GenericOk);
     rpc CompleteRegistration (CompleteRegistrationRequest) returns (GenericOk);
     rpc Purchase             (PurchaseRequest)             returns (GenericOk);
@@ -17,16 +17,19 @@ message ViewContentRequest {
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
+    string sessionId      = 5;
 }
 
 message PrepareInstallLinkRequest {
     string userId    = 1;
     string pwaDomain = 2;
+    string sessionId = 3;
 }
 
 message PwaFirstOpenRequest {
     string userId    = 1;
     string pwaDomain = 2;
+    string sessionId = 3;
 }
 
 message LeadRequest {
@@ -34,6 +37,7 @@ message LeadRequest {
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
+    string sessionId      = 5;
 }
 
 message CompleteRegistrationRequest {
@@ -41,6 +45,7 @@ message CompleteRegistrationRequest {
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
+    string sessionId      = 5;
 }
 
 message PurchaseRequest {
@@ -50,6 +55,7 @@ message PurchaseRequest {
     string queryStringRaw = 4;
     double value          = 5;
     string currency       = 6;
+    string sessionId      = 7;
 }
 
 message SubscribeRequest {
@@ -59,21 +65,20 @@ message SubscribeRequest {
     string queryStringRaw = 4;
     double value          = 5;
     string currency       = 6;
+    string sessionId      = 7;
 }
 
-message ViewContentResponse {
+message FirstOpenResponse {
+    bool success     = 1;
+    string fb        = 2;
+    string sessionId = 3;
+}
+
+message GenericOk {
     bool success = 1;
-    string fb = 2;
+    string fb    = 2;
 }
 
 message PrepareInstallLinkResponse {
     string finalUrl = 1;
-}
-
-message GenericSuccess {
-    bool success = 1;
-}
-
-message GenericOk {
-    string status = 1;
 }

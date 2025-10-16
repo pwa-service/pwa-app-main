@@ -1,4 +1,4 @@
-import {Body, Controller, Get, HttpCode, Post, Req, UseGuards, UsePipes, ValidationPipe} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, Post, Req, UseGuards} from '@nestjs/common';
 import { Request } from 'express';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import { AuthGrpcClient } from './auth.grpc.client';
@@ -9,7 +9,6 @@ import {ApiTags} from "@nestjs/swagger";
 @Controller('auth')
 @ApiTags('Event')
 @Controller('event')
-@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AuthHttpController {
     constructor(private readonly auth: AuthGrpcClient) {}
 

@@ -1,20 +1,3 @@
-import { IsString, IsOptional, IsUrl } from 'class-validator';
-import {ApiProperty} from "@nestjs/swagger";
-export class LeadDto {
-    @ApiProperty()
-    @IsString()
-    userId!: string;
+import {EventSessionDto} from "./event-session.dto";
 
-    @ApiProperty()
-    @IsString()
-    pwaDomain!: string;
-
-    @ApiProperty()
-    @IsOptional()
-    @IsUrl({ require_protocol: true })
-    landingUrl?: string;
-
-    @ApiProperty()
-    @IsOptional()
-    queryStringRaw?: string;
-}
+export class LeadDto extends EventSessionDto {}

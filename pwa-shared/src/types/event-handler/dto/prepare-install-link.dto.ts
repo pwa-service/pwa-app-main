@@ -1,12 +1,3 @@
-import { IsString } from 'class-validator';
-import {ApiProperty} from "@nestjs/swagger";
+import {EventSessionDto} from "./event-session.dto";
 
-export class PrepareInstallLinkDto {
-    @ApiProperty()
-    @IsString()
-    userId: string;
-
-    @ApiProperty()
-    @IsString()
-    pwaDomain: string;
-}
+export class PrepareInstallLinkDto extends EventSessionDto {}

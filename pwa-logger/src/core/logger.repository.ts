@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client'; // 👈 ВАЖЛИВО: Імпорт Prisma для Decimal
+import { Prisma } from '@prisma/client';
 import { CreateEventLogPayload } from '../../../pwa-shared/src';
 import { PrismaService } from 'pwa-prisma/src/prisma.service';
 

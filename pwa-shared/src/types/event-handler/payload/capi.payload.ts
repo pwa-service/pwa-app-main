@@ -20,7 +20,8 @@ export type FBPayload =
     | PurchasePayload
     | SubscribePayload;
 
-export type ViewContentMeta = {
+export type EventMeta = {
     pixelId: string;
-    accessToken: string;
+    clientIp: string;
+    userAgent: string;
 } & Pick<CampaignParams, 'fbclid' | 'offerId' | 'utmSource'>;
