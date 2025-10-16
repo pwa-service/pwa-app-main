@@ -9,7 +9,7 @@ COPY ./pwa-prisma/package*.json ./pwa-prisma/
 COPY ./pwa-shared/package*.json ./pwa-shared/
 
 WORKDIR /workspace/pwa-logger
-RUN npm install && npm i -g @nestjs/cli
+RUN npm ci && npm i -g @nestjs/cli
 
 WORKDIR /workspace/pwa-prisma
 RUN npm install
