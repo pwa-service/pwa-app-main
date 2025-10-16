@@ -9,8 +9,8 @@ export class ViewContentEnrichmentPipe
     implements PipeTransform<AnyEventDto, AnyEventDto> {
     transform(value: AnyEventDto): AnyEventDto {
         const params = this.getSearchParams(value);
-
         const pixelId = params.get('pixel_id');
+
         if (!pixelId) throw new RpcException('pixel_id is required');
 
         let _meta: EventMeta = {
@@ -26,6 +26,7 @@ export class ViewContentEnrichmentPipe
     }
 
     private getSearchParams(v: AnyEventDto): URLSearchParams {
+        console.log(v)
         if (v?.queryStringRaw) return new URLSearchParams(v.queryStringRaw);
         if (v?.landingUrl) {
             try {

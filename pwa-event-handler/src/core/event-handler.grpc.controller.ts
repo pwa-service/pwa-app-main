@@ -19,19 +19,23 @@ export class EventHandlerGrpcController {
   constructor(private readonly core: EventHandlerCoreService) {}
 
   @GrpcMethod('EventHandlerService', 'ViewContent')
-  async ViewContent(@Payload(ViewContentEnrichmentPipe) dto: ViewContentDto & { _meta: EventMeta }) {
+  async ViewContent(@Payload(
+      ViewContentEnrichmentPipe
+    ) dto: ViewContentDto & { _meta: EventMeta }) {
     return this.core.viewContent(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'PrepareInstallLink')
-  PrepareInstallLink(@Payload() dto: PrepareInstallLinkDto) {
+  PrepareInstallLink(
+      @Payload(
+          SessionExistsPipe
+      ) dto: PrepareInstallLinkDto) {
     return this.core.prepareInstallLink(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'PwaFirstOpen')
   PwaFirstOpen(
       @Payload(
-          ViewContentEnrichmentPipe,
           SessionExistsPipe
       ) dto: PwaFirstOpenDto & { _meta: EventMeta }) {
     return this.core.pwaFirstOpen(dto);
@@ -40,7 +44,6 @@ export class EventHandlerGrpcController {
   @GrpcMethod('EventHandlerService', 'Lead')
   Lead(
       @Payload(
-        ViewContentEnrichmentPipe,
         SessionExistsPipe
       ) dto: LeadDto & { _meta: EventMeta }) {
     return this.core.lead(dto);

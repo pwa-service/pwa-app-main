@@ -79,30 +79,30 @@ export class EventHandlerCoreService {
 
   async prepareInstallLink(event: PrepareInstallLinkDto) {
     this.log.debug({ tag: 'prepareInstallLink:input', event });
-    const { userId, pwaDomain } = event;
+    const { sessionId, userId, pwaDomain } = event;
     const base = process.env.TRACKER_BASE_URL || 'https://tracker.example.com/landing';
     const url = new URL(base);
 
     url.searchParams.set('user_id', userId);
     const finalUrl = url.toString();
 
-    await this.repo.setFinalUrl(userId, finalUrl);
+    await this.repo.setFinalUrl(sessionId, finalUrl);
     this.log.log({ event: 'prepare-install-link', userId, pwaDomain, finalUrl });
     return { finalUrl };
   }
-
 
   async pwaFirstOpen(event: PwaFirstOpenDto & { _meta: EventMeta }) {
     this.log.debug({ tag: 'pwaFirstOpen:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
     this.log.debug({ tag: 'pwaFirstOpen:session', sess });
-    if (!sess) return
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) }; // Додано return
 
-    const sourceUrl =
-        sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
-    const eventName = 'ViewContent'
-    const built = this.payloadFbBuilder({
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
+    const eventName = 'ViewContent';
+    const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
       userId: event.userId,
@@ -112,13 +112,13 @@ export class EventHandlerCoreService {
       clientIp: event._meta.clientIp
     });
 
-    this.log.debug({ tag: 'pwaFirstOpen:payload', built });
-    const eventId = (built?.data?.[0] as any)?.event_id as string | undefined;
+    this.log.debug({ tag: 'pwaFirstOpen:payload', payload });
+    const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined; // Виправлено: використовуємо payload
 
     let fbResponse: string;
     let success = true;
     try {
-      fbResponse = await this.sendToFacebookApi(event.userId, sess.pixelId, eventName, built);
+      fbResponse = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
       this.log.log({ tag: 'pwaFirstOpen:fb-response', fb: fbResponse });
     } catch (e: any) {
       success = false;
@@ -141,24 +141,29 @@ export class EventHandlerCoreService {
     return { success, fb: fbResponse };
   }
 
-  async lead(dto: LeadDto & { _meta: EventMeta }) {
-    this.log.debug({ tag: 'lead:input', dto });
+  async lead(event: LeadDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'lead:input', event });
 
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for lead.' }) }; // Додано return
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Lead'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      clientIp
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'lead:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
       this.log.log({ tag: 'lead:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -170,24 +175,29 @@ export class EventHandlerCoreService {
     }
   }
 
-  async completeRegistration(dto: CompleteRegistrationDto & { _meta: EventMeta }) {
-    this.log.debug({ tag: 'completeRegistration:input', dto });
+  async completeRegistration(event: CompleteRegistrationDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'completeRegistration:input', event });
 
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for registration.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'CompleteRegistration'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      clientIp
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'completeRegistration:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
       this.log.log({ tag: 'completeRegistration:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -199,26 +209,31 @@ export class EventHandlerCoreService {
     }
   }
 
-  async purchase(dto: PurchaseDto & { _meta: EventMeta }) {
-    this.log.debug({ tag: 'purchase:input', dto });
+  async purchase(event: PurchaseDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'purchase:input', event });
 
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for purchase.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Purchase'
     const payload = this.payloadFbBuilder({
       eventName: eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      value: dto.value,
-      currency: dto.currency,
-      clientIp
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      value: event.value,
+      currency: event.currency,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'purchase:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
       this.log.log({ tag: 'purchase:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -230,26 +245,31 @@ export class EventHandlerCoreService {
     }
   }
 
-  async subscribe(dto: SubscribeDto & { _meta: EventMeta }) {
-    this.log.debug({ tag: 'subscribe:input', dto });
+  async subscribe(event: SubscribeDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'subscribe:input', event });
 
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for subscribe.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Subscribe'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      value: dto.value,
-      currency: dto.currency,
-      clientIp
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      value: event.value,
+      currency: event.currency,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'subscribe:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
       this.log.log({ tag: 'subscribe:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -358,7 +378,6 @@ export class EventHandlerCoreService {
     const monetary =
         'value' in input || 'currency' in input ? { value: (input as any).value, currency: (input as any).currency } : undefined;
 
-    console.log("IP", input.clientIp)
     const event = {
       event_name: (input as any).eventName,
       event_time: ts,
