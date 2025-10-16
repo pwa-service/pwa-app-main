@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node dist/pwa-logger/src/main.js",
     "start:dev": "nest start --watch",
-    "build": "nest build -p tsconfig.build.json",
+    "build": "nest build -p tsconfig.json",
     "local": "nest build && node ./dist/pwa-logger/src/main.js"
   },
   "dependencies": {
