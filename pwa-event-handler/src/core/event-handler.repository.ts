@@ -7,14 +7,6 @@ import {PrismaService} from "../../../pwa-prisma/src";
 export class EventHandlerRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async getActiveAccessTokenByPixelId(pixelId: string): Promise<string | null> {
-        const rec = await this.prisma.pixelToken.findFirst({
-            where: { pixelId, status: Status.active },
-            select: { accessToken: true },
-        });
-        return rec?.accessToken ?? null;
-    }
-
     async upsertSession(input: UpsertSessionInput) {
         if (!input.sessionId) {
             return this.prisma.pwaSession.create({
