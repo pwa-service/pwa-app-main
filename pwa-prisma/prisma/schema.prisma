@@ -48,7 +48,6 @@ model User {
 model PixelToken {
   id          String   @id @default(uuid())
   pixelId     String   @unique @map("pixel_id")
-  accessToken String   @map("access_token")
   name        String?
   description String?
   userId      String   @map("user_id")
@@ -71,6 +70,7 @@ model EventLog {
   revenue      Decimal?  @db.Decimal(18, 8)
   country      String?
   clientIp     String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
   responseData String?   @map("response_data")
   status       LogStatus
   createdAt    DateTime  @default(now()) @map("created_at")

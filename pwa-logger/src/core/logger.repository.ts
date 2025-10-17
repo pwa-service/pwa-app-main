@@ -30,6 +30,7 @@ export class LoggerRepository {
                     revenue: revenueValue,
                     country: countryValue,
                     clientIp: clientIpValue,
+                    userAgent: input.userAgent,
                     responseData: responseDataValue,
                     status: input.status,
                 },

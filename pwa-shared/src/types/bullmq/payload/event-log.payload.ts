@@ -10,5 +10,6 @@ export interface CreateEventLogPayload {
     responseData?: any;
     country?: string | null;
     clientIp?: string | null;
+    userAgent?: string | null;
     revenue?: number | null;
 }
