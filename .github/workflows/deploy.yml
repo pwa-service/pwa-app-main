@@ -69,7 +69,7 @@ jobs:
             docker compose up -d --build --remove-orphans
 
             echo "*********** Checking migrations status ***********"
-            # Ждем завершения prisma-migrator
+
             for i in {1..30}; do
               STATUS=$(docker inspect pwa-app-prisma-migrator-1 --format='{{.State.Status}}' 2>/dev/null || echo "running")
               
@@ -100,7 +100,6 @@ jobs:
               unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
               starting=$(docker ps --filter "health=starting" --format '{{.Names}}')
               
-              # Проверяем неожиданно остановленные контейнеры (кроме prisma-migrator)
               exited=$(docker ps -a --filter "status=exited" --format '{{.Names}}' | grep -v "prisma-migrator" || true)
               
               if [ -z "$unhealthy" ] && [ -z "$starting" ] && [ -z "$exited" ]; then
@@ -116,7 +115,7 @@ jobs:
                 exit 1
               fi
               
-              echo "⏳ Waiting for services... ($i/30)"
+              echo "Waiting for services... ($i/30)"
               sleep 5
             done
 
