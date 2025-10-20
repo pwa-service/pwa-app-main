@@ -15,11 +15,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pwa_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pwa_db} && psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pwa_db} -c 'SELECT 1'"]
       interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 
   auth-service:
     build:
@@ -41,10 +42,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     ports:
       - "4000:4000"
       - "4040:4040"
       - "50051:50051"
+
 
   event-handler:
     build:
@@ -123,7 +129,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for database to be ready..."
+        sleep 5
+        echo "Running Prisma migrations..."
+        npx prisma migrate deploy
+        echo "Migrations completed successfully"
+    restart: "on-failure"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
 
   prisma-studio:
     image: node:lts-alpine3.17
@@ -142,3 +162,5 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+    name: pwa-app_postgres_data
