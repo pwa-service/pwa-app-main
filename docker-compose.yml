@@ -21,7 +21,6 @@ services:
       retries: 10
       start_period: 10s
 
-
   auth-service:
     build:
       context: .
@@ -51,7 +50,6 @@ services:
       - "4040:4040"
       - "50051:50051"
 
-
   event-handler:
     build:
       context: .
@@ -71,6 +69,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
     ports:
       - "50053:50053"
 
@@ -87,8 +87,12 @@ services:
       - QUEUE_NAME=PWA_EVENTS_QUEUE
       - WORKER_CONCURRENCY=5
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   api-gateway:
@@ -102,6 +106,9 @@ services:
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
+    depends_on:
+      - auth-service
+      - event-handler
     ports:
       - "3000:3000"
 
@@ -111,11 +118,13 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: [ "redis-server", "--appendonly", "yes" ]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -144,21 +153,33 @@ services:
         delay: 5s
         max_attempts: 5
 
-
   prisma-studio:
     image: node:lts-alpine3.17
-    working_dir: /usr/src/app
+    user: node
+    working_dir: /home/node/app
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
-    command: sh -c "npm install && npx prisma generate && npx prisma studio --hostname 0.0.0.0 --port 5555 --browser none"
+      - npm_config_cache=/tmp/.npm
+    volumes:
+      - ./pwa-prisma:/home/node/app:ro
+      - prisma_studio_modules:/home/node/app/node_modules
+    command: sh -c "npm install --prefer-offline && npx prisma generate && npx prisma studio --hostname 0.0.0.0 --port 5555 --browser none"
     ports:
-      - "5555:5555"
+      - 5555:5555
     depends_on:
       postgres:
         condition: service_healthy
-
+      prisma-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
-    name: pwa-app_postgres_data
+    name: pwa_app_postgres_data
+  redis_data:
+    driver: local
+    name: pwa_app_redis_data
+  prisma_studio_modules:
+    driver: local
+    name: pwa_app_prisma_studio_modules

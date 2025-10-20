@@ -25,9 +25,15 @@ jobs:
       - name: Sync repository via rsync
         run: |
           rsync -avz --delete \
+            --exclude='node_modules' \
+            --exclude='**/node_modules' \
+            --exclude='.git' \
+            --exclude='.env' \
+            --exclude='*.log' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/
+
 
       - name: Upload environment variables
         env:
