@@ -155,14 +155,11 @@ services:
 
   prisma-studio:
     image: node:lts-alpine3.17
-    user: node
-    working_dir: /home/node/app
+    working_dir: /usr/src/app
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
-      - npm_config_cache=/tmp/.npm
     volumes:
-      - ./pwa-prisma:/home/node/app:ro
-      - prisma_studio_modules:/home/node/app/node_modules
+      - ./pwa-prisma:/usr/src/app:ro
     command: sh -c "npm install --prefer-offline && npx prisma generate && npx prisma studio --hostname 0.0.0.0 --port 5555 --browser none"
     ports:
       - 5555:5555
@@ -180,6 +177,3 @@ volumes:
   redis_data:
     driver: local
     name: pwa_app_redis_data
-  prisma_studio_modules:
-    driver: local
-    name: pwa_app_prisma_studio_modules
