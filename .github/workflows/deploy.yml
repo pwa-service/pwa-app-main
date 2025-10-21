@@ -25,6 +25,8 @@ jobs:
       - name: Sync repository via rsync
         run: |
           rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.env' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/
@@ -50,32 +52,76 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
             set -e
+
+            cleanup() {
+              echo "*********** Deleting .env file ***********"
+              rm -f ~/pwa-app/.env
+            }
+
+            trap cleanup EXIT
+
             cd ~/pwa-app
+
+            echo "*********** Stopping Docker Compose ***********"
+            docker compose down
 
             echo "*********** Starting Docker Compose ***********"
             docker compose up -d --build --remove-orphans
 
-            echo "*********** Waiting for containers to become healthy ***********"
-            for i in {1..20}; do
-              unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
-              exited=$(docker ps -a --filter "status=exited" --format '{{.Names}}')
-              if [ -z "$unhealthy" ] && [ -z "$exited" ]; then
-                echo "*********** All containers healthy. ***********"
-                break
+            echo "*********** Checking migrations status ***********"
+
+            for i in {1..30}; do
+              STATUS=$(docker inspect pwa-app-prisma-migrator-1 --format='{{.State.Status}}' 2>/dev/null || echo "running")
+              
+              if [ "$STATUS" = "exited" ]; then
+                EXIT_CODE=$(docker inspect pwa-app-prisma-migrator-1 --format='{{.State.ExitCode}}')
+                if [ "$EXIT_CODE" -eq 0 ]; then
+                  echo "Migrations completed successfully"
+                  break
+                else
+                  echo "Migrations FAILED with exit code $EXIT_CODE"
+                  docker compose logs prisma-migrator
+                  exit 1
+                fi
               fi
-              if [ $i -eq 20 ]; then
-                echo "*********** Containers unhealthy or exited! ***********"
-                docker compose ps
-
-                echo "*********** Deleting .env file from remote server ***********"
-                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
-                rm ./pwa-app/.env
-
+              
+              if [ $i -eq 30 ]; then
+                echo "Migrations timed out"
+                docker compose logs prisma-migrator
                 exit 1
               fi
+              
+              echo "Waiting for migrations... ($i/30)"
+              sleep 2
+            done
+
+            echo "*********** Waiting for services to become healthy ***********"
+            for i in {1..30}; do
+              unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
+              starting=$(docker ps --filter "health=starting" --format '{{.Names}}')
+              
+              exited=$(docker ps -a --filter "status=exited" --format '{{.Names}}' | grep -v "prisma-migrator" || true)
+              
+              if [ -z "$unhealthy" ] && [ -z "$starting" ] && [ -z "$exited" ]; then
+                echo "All services healthy"
+                docker compose ps
+                break
+              fi
+              
+              if [ $i -eq 30 ]; then
+                echo "Services failed to start"
+                docker compose ps
+                docker compose logs --tail=100
+                exit 1
+              fi
+              
+              echo "Waiting for services... ($i/30)"
               sleep 5
             done
 
-            echo "*********** Cleaning up ***********"
-            docker system prune -f
+            echo "*********** Cleaning up Docker resources ***********"
+            docker image prune -f
+            docker container prune -f
+            
+            echo "Deployment completed successfully"
           EOF

@@ -1,11 +1,7 @@
-import {IsNumber, IsOptional, IsPositive, IsString, IsUrl} from "class-validator";
+import {ApiProperty} from "@nestjs/swagger";
+import {EventSessionDto} from "./event-session.dto";
 
-export class PurchaseDto {
-    @IsString() userId!: string;
-    @IsString() pwaDomain!: string;
-    @IsOptional() @IsUrl({ require_protocol: true }) landingUrl?: string;
-    @IsOptional() queryStringRaw?: string;
-
-    @IsNumber() @IsPositive() value!: number;
-    @IsString() currency!: string;
+export class PurchaseDto extends EventSessionDto {
+    @ApiProperty() value!: number;
+    @ApiProperty() currency!: string;
 }

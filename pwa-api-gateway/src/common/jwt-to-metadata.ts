@@ -8,7 +8,6 @@ export function buildGrpcMetadata(req: Request & { clientIp?: string }) {
     const reqId = (req.headers['x-request-id'] as string | undefined) || undefined;
     if (auth?.startsWith('Bearer ')) md.add('authorization', auth);
     if (reqId) md.add('x-request-id', reqId);
-
     const ip =
         (req.headers['x-client-ip'] as string | undefined) ||
         (req.clientIp as string | undefined) ||

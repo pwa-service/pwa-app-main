@@ -1,31 +1,39 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { ViewContentDto } from "../../../pwa-shared/src";
-import {ViewContentMeta} from "../../../pwa-shared/src";
+import {EventMeta} from "../../../pwa-shared/src";
 
+type AnyEventDto = { userId: string; pwaDomain: string; landingUrl?: string; queryStringRaw?: string } & { _meta: EventMeta };
 
 @Injectable()
 export class ViewContentEnrichmentPipe
-    implements PipeTransform<ViewContentDto, ViewContentDto & { _meta: ViewContentMeta }>
-{
-    transform(value: ViewContentDto): ViewContentDto & { _meta: ViewContentMeta } {
-        if (!value.queryStringRaw) throw new RpcException('queryStringRaw is required!');
-        const searchParams = new URLSearchParams(value.queryStringRaw);
+    implements PipeTransform<AnyEventDto, AnyEventDto> {
+    transform(value: AnyEventDto): AnyEventDto {
+        const params = this.getSearchParams(value);
+        const pixelId = params.get('pixel_id');
 
-        const pixelId = searchParams.get('pixel_id');
         if (!pixelId) throw new RpcException('pixel_id is required');
 
-        const accessToken = process.env[`FB_TOKEN_${pixelId}`] ?? "testtest";
-        if (!accessToken) throw new RpcException('No access token found for provided pixel_id');
-
-        const _meta: ViewContentMeta = {
+        let _meta: EventMeta = {
             pixelId,
-            accessToken,
-            fbclid: searchParams.get('fbclid') || undefined,
-            offerId: searchParams.get('offer_id') || undefined,
-            utmSource: searchParams.get('utm_source') || undefined,
+            fbclid: params.get('fbclid') || undefined,
+            offerId: params.get('offer_id') || undefined,
+            utmSource: params.get('utm_source') || undefined,
+            clientIp: value._meta.clientIp,
+            userAgent: value._meta.userAgent
         };
 
-        return Object.assign(value, { _meta });
+        return Object.assign(value, {_meta});
+    }
+
+    private getSearchParams(v: AnyEventDto): URLSearchParams {
+        console.log(v)
+        if (v?.queryStringRaw) return new URLSearchParams(v.queryStringRaw);
+        if (v?.landingUrl) {
+            try {
+                return new URL(v.landingUrl).searchParams;
+            } catch (_) {
+            }
+        }
+        throw new RpcException('Either queryStringRaw or landingUrl with query is required');
     }
 }

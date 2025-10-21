@@ -6,7 +6,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
+    "local": "nest build && node ./dist/pwa-auth-service/src/main.js"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
@@ -16,6 +17,7 @@
     "@nestjs/microservices": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/platform-fastify": "^11.1.6",
+    "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.16.2",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",

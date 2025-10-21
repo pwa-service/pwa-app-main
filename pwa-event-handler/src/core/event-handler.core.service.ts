@@ -5,12 +5,26 @@ import { EventHandlerRepository } from './event-handler.repository';
 import {EventLogProducer} from "../queues/event-log.producer";
 import {
   CompleteRegistrationDto, FBPayload,
-  LeadDto,
-  PrepareInstallLinkDto, PurchaseDto,
+  LeadDto, PrepareInstallLinkDto,
+  PurchaseDto,
   PwaFirstOpenDto, SubscribeDto,
   ViewContentDto,
-  ViewContentMeta
+  EventMeta
 } from "../../../pwa-shared/src";
+import * as geo from 'geoip-country'
+
+class FacebookApiError extends Error {
+  fb: string;
+
+  constructor(message: string, fbDetails: any) {
+    const fbJson = typeof fbDetails === 'string' ? fbDetails : JSON.stringify(fbDetails);
+    super(message);
+    this.name = 'FacebookApiError';
+    this.fb = fbJson;
+    Object.setPrototypeOf(this, FacebookApiError.prototype);
+  }
+}
+
 
 @Injectable()
 export class EventHandlerCoreService {
@@ -22,11 +36,12 @@ export class EventHandlerCoreService {
       private readonly logs: EventLogProducer
   ) {}
 
-  async viewContent(event: ViewContentDto & { _meta: ViewContentMeta }) {
+
+  async viewContent(event: ViewContentDto & { _meta: EventMeta }) {
     this.log.debug({ tag: 'viewContent:input', event });
 
-    const { pixelId, accessToken, fbclid, offerId, utmSource } = event._meta;
-    await this.repo.upsertSession({
+    const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
+    const { id: sessionId } = await this.repo.upsertSession({
       userId: event.userId,
       pwaDomain: event.pwaDomain,
       landingUrl: event.landingUrl ?? null,
@@ -37,7 +52,6 @@ export class EventHandlerCoreService {
       utmSource: utmSource ?? null,
       sub1: undefined,
     });
-
     const eventName = 'ViewContent';
     const payload = this.payloadFbBuilder({
       eventName,
@@ -46,175 +60,231 @@ export class EventHandlerCoreService {
       fbclid,
       offerId,
       utmSource,
+      clientIp,
     });
     this.log.debug({ tag: 'viewContent:payload', payload });
-    const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, accessToken, payload);
-    this.log.log({ tag: 'viewContent:fb-response', fb });
 
-    return { success: true, fb };
+    try {
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'viewContent:fb-response', fb });
+      return { success: true, fb, sessionId };
+    } catch (e: any) {
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'viewContent:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb, sessionId: null };
+      }
+      throw e;
+    }
   }
 
   async prepareInstallLink(event: PrepareInstallLinkDto) {
     this.log.debug({ tag: 'prepareInstallLink:input', event });
-
-    const { userId, pwaDomain } = event;
+    const { sessionId, userId, pwaDomain } = event;
     const base = process.env.TRACKER_BASE_URL || 'https://tracker.example.com/landing';
     const url = new URL(base);
+
     url.searchParams.set('user_id', userId);
-
     const finalUrl = url.toString();
-    await this.repo.setFinalUrl(userId, finalUrl);
 
+    await this.repo.setFinalUrl(sessionId, finalUrl);
     this.log.log({ event: 'prepare-install-link', userId, pwaDomain, finalUrl });
     return { finalUrl };
   }
 
-  async pwaFirstOpen(event: PwaFirstOpenDto) {
+  async pwaFirstOpen(event: PwaFirstOpenDto & { _meta: EventMeta }) {
     this.log.debug({ tag: 'pwaFirstOpen:input', event });
 
-    const sess = await this.repo.getSessionByUserId(event.userId);
+    const sess = await this.repo.getSessionById(event.sessionId);
     this.log.debug({ tag: 'pwaFirstOpen:session', sess });
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) }; // Додано return
 
-    if (!sess) return { success: true };
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
 
-    const accessToken = await this.repo.getActiveAccessTokenByPixelId(sess.pixelId);
-    this.log.debug({ tag: 'pwaFirstOpen:accessToken', accessToken });
-
-    if (!accessToken) return { success: true };
-
-    const sourceUrl =
-        sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
-    const eventName = 'ViewContent'
-    const built = this.payloadFbBuilder({
+    const eventName = 'ViewContent';
+    const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
       userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
+      clientIp: event._meta.clientIp
     });
-    this.log.debug({ tag: 'pwaFirstOpen:payload', built });
-    const eventId = (built?.data?.[0] as any)?.event_id as string | undefined;
 
+    this.log.debug({ tag: 'pwaFirstOpen:payload', payload });
+    const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined; // Виправлено: використовуємо payload
+
+    let fbResponse: string;
+    let success = true;
     try {
-      const fb = await this.sendToFacebookApi(event.userId, sess.pixelId, eventName, accessToken, built);
-      this.log.log({ tag: 'pwaFirstOpen:fb-response', fb });
-
-      await this.repo.markFirstOpen({
-        userId: event.userId,
-        eventId: eventId ?? null,
-        fbStatus: LogStatus.success,
-        finalUrl: sourceUrl,
-      });
-
-      return { success: true };
+      fbResponse = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'pwaFirstOpen:fb-response', fb: fbResponse });
     } catch (e: any) {
-      this.log.error({ tag: 'pwaFirstOpen:fb-error', error: e.message });
-
-      await this.repo.markFirstOpen({
-        userId: event.userId,
-        eventId: eventId ?? null,
-        fbStatus: LogStatus.error,
-        finalUrl: sourceUrl,
-      });
-
-      return { success: false, error: e.message };
+      success = false;
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'pwaFirstOpen:fb-error', error: e.message, fb: e.fb });
+        fbResponse = e.fb;
+      } else {
+        this.log.error({ tag: 'pwaFirstOpen:unknown-error', error: e.message });
+        fbResponse = JSON.stringify({ error: e.message });
+      }
     }
+
+    await this.repo.markFirstOpen({
+      userId: event.userId,
+      sessionId: event.sessionId,
+      eventId: eventId ?? null,
+      fbStatus: success ? LogStatus.success : LogStatus.error,
+      finalUrl: sourceUrl,
+    });
+    return { success, fb: fbResponse };
   }
 
-  async lead(dto: LeadDto & { _meta: ViewContentMeta }) {
-    this.log.debug({ tag: 'lead:input', dto });
+  async lead(event: LeadDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'lead:input', event });
 
-    const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for lead.' }) }; // Додано return
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Lead'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'lead:payload', payload });
 
-    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
-    this.log.log({ tag: 'lead:fb-response', fb });
-
-    return { status: 'ok' };
+    try {
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'lead:fb-response', fb });
+      return { success: true, fb };
+    } catch (e: any) {
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'lead:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb };
+      }
+      throw e;
+    }
   }
 
-  async completeRegistration(dto: CompleteRegistrationDto & { _meta: ViewContentMeta }) {
-    this.log.debug({ tag: 'completeRegistration:input', dto });
+  async completeRegistration(event: CompleteRegistrationDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'completeRegistration:input', event });
 
-    const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for registration.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'CompleteRegistration'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'completeRegistration:payload', payload });
 
-    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
-    this.log.log({ tag: 'completeRegistration:fb-response', fb });
-
-    return { status: 'ok' };
+    try {
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'completeRegistration:fb-response', fb });
+      return { success: true, fb };
+    } catch (e: any) {
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'completeRegistration:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb };
+      }
+      throw e;
+    }
   }
 
-  async purchase(dto: PurchaseDto & { _meta: ViewContentMeta }) {
-    this.log.debug({ tag: 'purchase:input', dto });
+  async purchase(event: PurchaseDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'purchase:input', event });
 
-    const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for purchase.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Purchase'
     const payload = this.payloadFbBuilder({
       eventName: eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      value: dto.value,
-      currency: dto.currency,
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      value: event.value,
+      currency: event.currency,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'purchase:payload', payload });
 
-    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
-    this.log.log({ tag: 'purchase:fb-response', fb });
-
-    return { status: 'ok' };
+    try {
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'purchase:fb-response', fb });
+      return { success: true, fb };
+    } catch (e: any) {
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'purchase:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb };
+      }
+      throw e;
+    }
   }
 
-  async subscribe(dto: SubscribeDto & { _meta: ViewContentMeta }) {
-    this.log.debug({ tag: 'subscribe:input', dto });
+  async subscribe(event: SubscribeDto & { _meta: EventMeta }) {
+    this.log.debug({ tag: 'subscribe:input', event });
 
-    const { pixelId, accessToken, fbclid, offerId, utmSource } = dto._meta;
+    const sess = await this.repo.getSessionById(event.sessionId);
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for subscribe.' }) };
+
+    const pixelId = sess.pixelId;
+    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+
     const eventName = 'Subscribe'
     const payload = this.payloadFbBuilder({
       eventName,
-      sourceUrl: dto.landingUrl || `https://${dto.pwaDomain}`,
-      userId: dto.userId,
-      fbclid,
-      offerId,
-      utmSource,
-      value: dto.value,
-      currency: dto.currency,
+      sourceUrl,
+      userId: event.userId,
+      fbclid: sess.fbclid || undefined,
+      offerId: sess.offerId || undefined,
+      utmSource: sess.utmSource || undefined,
+      value: event.value,
+      currency: event.currency,
+      clientIp: event._meta.clientIp
     });
     this.log.debug({ tag: 'subscribe:payload', payload });
 
-    const fb = await this.sendToFacebookApi(dto.userId, pixelId, eventName, accessToken, payload);
-    this.log.log({ tag: 'subscribe:fb-response', fb });
-
-    return { status: 'ok' };
+    try {
+      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      this.log.log({ tag: 'subscribe:fb-response', fb });
+      return { success: true, fb };
+    } catch (e: any) {
+      if (e instanceof FacebookApiError) {
+        this.log.error({ tag: 'subscribe:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb };
+      }
+      throw e;
+    }
   }
 
   private async sendToFacebookApi(
       userId: string,
       pixelId: string,
       eventType: EventType,
-      accessToken: string,
       payload: unknown,
   ) {
     const eventId =
@@ -223,75 +293,74 @@ export class EventHandlerCoreService {
         Math.random().toString(36).slice(2, 12);
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
-
     let status: LogStatus = LogStatus.success;
-    let responseData: any;
+    let responseData: any = null;
+    let finalResult: string | FacebookApiError;
 
-    if (process.env.FB_MOCK) {
-      await new Promise((res) => setTimeout(res, 100));
-      const mock = {
-        events_received: (payload as any)?.data?.length ?? 1,
-        fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
-        echo: {pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion},
-      };
-      this.log.debug({tag: 'fb-capi:mock', mock});
-      responseData = mock;
-      await this.logs.createLog({
-        userId,
-        pixelId,
-        eventType,
-        eventId,
-        status,
-        responseData: mock,
-        revenue: null,
-        clientIp,
-        country: undefined,
-      });
-      return mock;
-    }
     const url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
 
     try {
-      const {data, status: httpStatus} = await axios.post(url, payload, {
-        params: {access_token: accessToken},
-        headers: {'Content-Type': 'application/json'},
-        timeout: 7000,
-      });
-      this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
-      responseData = data;
-      status = LogStatus.success;
-      return data;
+      if (process.env.FB_MOCK) {
+        await new Promise((res) => setTimeout(res, 100));
+        const mock = {
+          events_received: (payload as any)?.data?.length ?? 1,
+          fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
+          echo: {pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion},
+        };
+        this.log.debug({tag: 'fb-capi:mock', mock});
+        responseData = mock;
+        finalResult = JSON.stringify(mock);
+      } else {
+        const {data, status: httpStatus} = await axios.post(url, payload, {
+          headers: {'Content-Type': 'application/json'},
+          timeout: 7000,
+        });
+        this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
+        responseData = data;
+        finalResult = JSON.stringify(data);
+      }
     } catch (e) {
       status = LogStatus.error;
+      let errorMessage: string;
 
       const err = e as AxiosError;
+
       if (err.response) {
         const {status: httpStatus, data} = err.response;
-        this.log.warn({tag: 'fb-capi', status: httpStatus, body: data});
+        this.log.warn({tag: 'fb-capi:response-error', status: httpStatus, body: data});
         responseData = {error: `FB ${httpStatus}: ${JSON.stringify(data)}`};
-        throw new Error(responseData.error);
-      }
-      if (axios.isAxiosError(err)) {
-        this.log.error({tag: 'fb-capi', stage: 'axios', error: err.message});
+        errorMessage = `Facebook API Error ${httpStatus}`;
+      } else if (axios.isAxiosError(err)) {
+        this.log.error({tag: 'fb-capi:axios-error', stage: 'axios', error: err.message});
         responseData = {error: `FB request failed: ${err.message}`};
-        throw new Error(responseData.error);
+        errorMessage = `Request Failed: ${err.message}`;
+      } else {
+        this.log.error({tag: 'fb-capi:unknown-error', stage: 'unknown', error: String(e)});
+        responseData = {error: String(e)};
+        errorMessage = `Unknown Error: ${String(e)}`;
       }
-      this.log.error({tag: 'fb-capi', stage: 'unknown', error: String(e)});
-      responseData = {error: String(e)};
-      throw e;
+      finalResult = new FacebookApiError(errorMessage, responseData);
     } finally {
-      await this.logs.createLog({
-        userId,
-        pixelId,
-        eventType,
-        eventId,
-        status,
-        responseData,
-        revenue: null,
-        clientIp,
-        country: undefined,
-      });
+      try {
+        await this.logs.createLog({
+          userId,
+          pixelId,
+          eventType,
+          eventId,
+          status,
+          responseData,
+          revenue: null,
+          clientIp,
+          country: clientIp ? geo.lookup(clientIp)?.country : null,
+        });
+      } catch(logError) {
+        this.log.error({tag: 'db-logging-error', error: logError});
+      }
     }
+    if (finalResult instanceof FacebookApiError) {
+      throw finalResult;
+    }
+    return finalResult;
   }
 
   private payloadFbBuilder(input: FBPayload) {

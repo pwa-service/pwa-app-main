@@ -1,9 +1,3 @@
-import { IsString } from 'class-validator';
+import {EventSessionDto} from "./event-session.dto";
 
-export class PwaFirstOpenDto {
-    @IsString()
-    userId: string;
-
-    @IsString()
-    pwaDomain: string;
-}
+export class PwaFirstOpenDto extends EventSessionDto {}

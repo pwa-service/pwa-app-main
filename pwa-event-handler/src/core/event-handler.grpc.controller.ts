@@ -9,9 +9,9 @@ import {
   PrepareInstallLinkDto, PurchaseDto,
   PwaFirstOpenDto, SubscribeDto,
   ViewContentDto,
-  ViewContentMeta
+  EventMeta
 } from "../../../pwa-shared/src";
-
+import {SessionExistsPipe} from "../common/interceptors/session.interceptor";
 
 @Controller()
 @UseInterceptors(GrpcClientMetaInterceptor)
@@ -19,61 +19,60 @@ export class EventHandlerGrpcController {
   constructor(private readonly core: EventHandlerCoreService) {}
 
   @GrpcMethod('EventHandlerService', 'ViewContent')
-  ViewContent(
-      @Payload(
-          new ValidationPipe({ whitelist: true, transform: true }),
-          ViewContentEnrichmentPipe
-      ) dto: ViewContentDto & { _meta: ViewContentMeta }) {
+  async ViewContent(@Payload(
+      ViewContentEnrichmentPipe
+    ) dto: ViewContentDto & { _meta: EventMeta }) {
     return this.core.viewContent(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'PrepareInstallLink')
-  PrepareInstallLink(@Payload(
-      new ValidationPipe({ whitelist: true, transform: true })
-  ) dto: PrepareInstallLinkDto) {
+  PrepareInstallLink(
+      @Payload(
+          SessionExistsPipe
+      ) dto: PrepareInstallLinkDto) {
     return this.core.prepareInstallLink(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'PwaFirstOpen')
   PwaFirstOpen(
       @Payload(
-        new ValidationPipe({ whitelist: true, transform: true }),
-      ) dto: PwaFirstOpenDto) {
+          SessionExistsPipe
+      ) dto: PwaFirstOpenDto & { _meta: EventMeta }) {
     return this.core.pwaFirstOpen(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'Lead')
   Lead(
       @Payload(
-        new ValidationPipe({ whitelist: true, transform: true }),
-        ViewContentEnrichmentPipe
-      ) dto: LeadDto & { _meta: ViewContentMeta }) {
+        SessionExistsPipe
+      ) dto: LeadDto & { _meta: EventMeta }) {
     return this.core.lead(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'CompleteRegistration')
   CompleteRegistration(
       @Payload(
-        ViewContentEnrichmentPipe
-      ) dto: CompleteRegistrationDto & { _meta: ViewContentMeta }) {
+          ViewContentEnrichmentPipe,
+          SessionExistsPipe
+      ) dto: CompleteRegistrationDto & { _meta: EventMeta }) {
     return this.core.completeRegistration(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'Purchase')
   Purchase(
       @Payload(
-        new ValidationPipe({ whitelist: true, transform: true }),
-        ViewContentEnrichmentPipe
-      ) dto: PurchaseDto & { _meta: ViewContentMeta }) {
+          ViewContentEnrichmentPipe,
+          SessionExistsPipe
+      ) dto: PurchaseDto & { _meta: EventMeta }) {
     return this.core.purchase(dto);
   }
 
   @GrpcMethod('EventHandlerService', 'Subscribe')
   Subscribe(
       @Payload(
-        new ValidationPipe({ whitelist: true, transform: true }),
-        ViewContentEnrichmentPipe
-      ) dto: SubscribeDto & { _meta: ViewContentMeta }) {
+          ViewContentEnrichmentPipe,
+          SessionExistsPipe
+      ) dto: SubscribeDto & { _meta: EventMeta }) {
     return this.core.subscribe(dto);
   }
 }

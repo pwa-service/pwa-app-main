@@ -28,9 +28,11 @@ services:
     working_dir: /workspace/pwa-auth-service
     container_name: auth-service
     environment:
-      - PORT=4000
+      - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_ISSUER=https://auth.local/
@@ -40,8 +42,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     ports:
-      - "4000:4000"
+      - "4040:4040"
       - "50051:50051"
 
   event-handler:
@@ -49,6 +55,8 @@ services:
       context: .
       dockerfile: pwa-event-handler/Dockerfile
     working_dir: /workspace/pwa-event-handler
+    env_file:
+      - ./.env
     environment:
       - PORT=4300
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
@@ -61,6 +69,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
     ports:
       - "50053:50053"
 
@@ -78,8 +88,12 @@ services:
       - QUEUE_NAME=PWA_EVENTS_QUEUE
       - WORKER_CONCURRENCY=5
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   api-gateway:
@@ -90,7 +104,7 @@ services:
       - PORT=3000
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - AUTH_JWKS_URL=http://auth-service:4000/.well-known/jwks.json
+      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
     ports:
@@ -99,11 +113,16 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    command: [ "redis-server", "--appendonly", "yes" ]
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -117,7 +136,41 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for database to be ready..."
+        sleep 5
+        echo "Running Prisma migrations..."
+        npx prisma migrate deploy
+        echo "Migrations completed successfully"
+    restart: "on-failure"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: pwa-prisma/Dockerfile.studio
+    container_name: prisma-studio
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+    ports:
+      - 5555:5555
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
+    name: pwa_app_postgres_data
+  redis_data:
+    driver: local
+    name: pwa_app_redis_data

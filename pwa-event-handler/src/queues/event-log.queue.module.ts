@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import {EventLogProducer } from './event-log.producer';
-import {PWA_EVENTS_QUEUE, PWA_EVENTS_PREFIX} from "../../../pwa-shared/src/types/auth/bullmq/queues";
+import {PWA_EVENTS_QUEUE, PWA_EVENTS_PREFIX} from "../../../pwa-shared/src/types/bullmq/queues";
 
 @Module({
     imports: [

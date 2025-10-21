@@ -7,18 +7,26 @@ import {PrismaService} from "../../../pwa-prisma/src";
 export class EventHandlerRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async getActiveAccessTokenByPixelId(pixelId: string): Promise<string | null> {
-        const rec = await this.prisma.pixelToken.findFirst({
-            where: { pixelId, status: Status.active },
-            select: { accessToken: true },
-        });
-        return rec?.accessToken ?? null;
-    }
-
     async upsertSession(input: UpsertSessionInput) {
-        return this.prisma.pwaSession.upsert({
-            where: { userId: input.userId },
-            update: {
+        if (!input.sessionId) {
+            return this.prisma.pwaSession.create({
+                data: {
+                    userId: input.userId,
+                    pwaDomain: input.pwaDomain,
+                    landingUrl: input.landingUrl ?? null,
+                    queryStringRaw: input.queryStringRaw ?? null,
+                    pixelId: input.pixelId,
+                    fbclid: input.fbclid ?? null,
+                    offerId: input.offerId ?? null,
+                    utmSource: input.utmSource ?? null,
+                    sub1: input.sub1 ?? null,
+                }
+            });
+        }
+
+        return this.prisma.pwaSession.update({
+            where: {id: input.sessionId},
+            data: {
                 pwaDomain: input.pwaDomain,
                 landingUrl: input.landingUrl ?? undefined,
                 queryStringRaw: input.queryStringRaw ?? undefined,
@@ -27,35 +35,24 @@ export class EventHandlerRepository {
                 offerId: input.offerId ?? undefined,
                 utmSource: input.utmSource ?? undefined,
                 sub1: input.sub1 ?? undefined,
-            },
-            create: {
-                userId: input.userId,
-                pwaDomain: input.pwaDomain,
-                landingUrl: input.landingUrl ?? null,
-                queryStringRaw: input.queryStringRaw ?? null,
-                pixelId: input.pixelId,
-                fbclid: input.fbclid ?? null,
-                offerId: input.offerId ?? null,
-                utmSource: input.utmSource ?? null,
-                sub1: input.sub1 ?? null,
-            },
+            }
         });
     }
 
-    async getSessionByUserId(userId: string) {
-        return this.prisma.pwaSession.findUnique({ where: { userId } });
+    async getSessionById(id: string) {
+        return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
-    async setFinalUrl(userId: string, finalUrl: string): Promise<void> {
+    async setFinalUrl(id: string, finalUrl: string): Promise<void> {
         await this.prisma.pwaSession.update({
-            where: { userId },
+            where: { id },
             data: { finalUrl },
         });
     }
 
     async markFirstOpen(input: MarkFirstOpenInput): Promise<void> {
         await this.prisma.pwaSession.update({
-            where: { userId: input.userId },
+            where: { id: input.sessionId },
             data: {
                 firstOpenAt: new Date(),
                 firstOpenEventId: input.eventId ?? undefined,

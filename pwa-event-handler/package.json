@@ -6,27 +6,34 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
+    "local": "nest build && node ./dist/pwa-event-handler/src/main.js"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.6",
+    "@grpc/proto-loader": "^0.8.0",
     "@nestjs/bullmq": "^11.0.3",
     "@nestjs/common": "^11",
     "@nestjs/core": "^11",
     "@nestjs/microservices": "^11",
     "@nestjs/platform-express": "^11",
-    "@prisma/client": "^6.17.0",
+    "@nestjs/swagger": "^11.2.0",
+    "@prisma/client": "^6.17.1",
+    "@types/geoip-country": "^4.0.2",
     "axios": "^1.7.7",
     "bullmq": "^5.61.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "geoip-country": "^5.0.202510072342",
+    "google-protobuf": "^4.0.0",
     "ioredis": "^5.8.1",
+    "pb-util": "^1.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
-    "prisma": "^6.17.0",
+    "prisma": "^6.17.1",
     "typescript": "^5.6.3"
   }
 }

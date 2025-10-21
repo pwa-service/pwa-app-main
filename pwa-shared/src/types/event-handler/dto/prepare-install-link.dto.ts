@@ -1,9 +1,3 @@
-import { IsString } from 'class-validator';
+import {EventSessionDto} from "./event-session.dto";
 
-export class PrepareInstallLinkDto {
-    @IsString()
-    userId: string;
-
-    @IsString()
-    pwaDomain: string;
-}
+export class PrepareInstallLinkDto extends EventSessionDto {}

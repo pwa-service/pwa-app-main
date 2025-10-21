@@ -4,7 +4,6 @@ import { status } from '@grpc/grpc-js';
 export function mapGrpcError(e: any): HttpException {
     const code = e?.code;
     const msg = e?.details || e?.message || 'Upstream error';
-    console.log(code, msg)
     switch (code) {
         case status.UNAUTHENTICATED:
             return new HttpException(msg, HttpStatus.UNAUTHORIZED);

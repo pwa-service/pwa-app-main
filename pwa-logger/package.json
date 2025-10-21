@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node dist/pwa-logger/src/main.js",
     "start:dev": "nest start --watch",
-    "build": "nest build -p tsconfig.build.json"
+    "build": "nest build -p tsconfig.json",
+    "local": "nest build && node ./dist/pwa-logger/src/main.js"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.3",
@@ -13,6 +14,7 @@
     "@nestjs/core": "^11",
     "@nestjs/platform-express": "^11",
     "@prisma/client": "^6.17.0",
+    "@nestjs/swagger": "^11.2.0",
     "bullmq": "^5.60.0",
     "ioredis": "^5.8.0",
     "reflect-metadata": "^0.2.2",
