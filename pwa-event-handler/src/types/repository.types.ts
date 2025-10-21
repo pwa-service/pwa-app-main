@@ -1,9 +1,8 @@
 import {EventType, LogStatus} from '.prisma/client';
 
 export type UpsertSessionInput = {
-    userId: string;
-    pwaDomain: string;
     sessionId?: string;
+    pwaDomain: string;
     landingUrl?: string | null;
     queryStringRaw?: string | null;
     pixelId: string;
@@ -14,7 +13,6 @@ export type UpsertSessionInput = {
 };
 
 export type MarkFirstOpenInput = {
-    userId: string;
     sessionId: string;
     eventId?: string | null;
     fbStatus?: LogStatus | null;

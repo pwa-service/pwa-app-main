@@ -10,7 +10,6 @@ export class EventHandlerRepository {
         if (!input.sessionId) {
             return this.prisma.pwaSession.create({
                 data: {
-                    userId: input.userId,
                     pwaDomain: input.pwaDomain,
                     landingUrl: input.landingUrl ?? null,
                     queryStringRaw: input.queryStringRaw ?? null,

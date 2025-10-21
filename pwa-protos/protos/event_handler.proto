@@ -13,7 +13,6 @@ service EventHandlerService {
 }
 
 message ViewContentRequest {
-    string userId         = 1;
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
@@ -21,19 +20,16 @@ message ViewContentRequest {
 }
 
 message PrepareInstallLinkRequest {
-    string userId    = 1;
     string pwaDomain = 2;
     string sessionId = 3;
 }
 
 message PwaFirstOpenRequest {
-    string userId    = 1;
     string pwaDomain = 2;
     string sessionId = 3;
 }
 
 message LeadRequest {
-    string userId         = 1;
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
@@ -49,7 +45,6 @@ message CompleteRegistrationRequest {
 }
 
 message PurchaseRequest {
-    string userId         = 1;
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;
@@ -59,7 +54,6 @@ message PurchaseRequest {
 }
 
 message SubscribeRequest {
-    string userId         = 1;
     string pwaDomain      = 2;
     string landingUrl     = 3;
     string queryStringRaw = 4;

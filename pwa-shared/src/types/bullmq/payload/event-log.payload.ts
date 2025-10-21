@@ -2,7 +2,7 @@ type EventType = 'ViewContent' | 'PageView' | 'Lead' | 'CompleteRegistration' | 
 type LogStatus = "success" | "error"
 
 export interface CreateEventLogPayload {
-    userId: string;
+    sessionId: string;
     pixelId: string;
     eventType: EventType;
     eventId: string;

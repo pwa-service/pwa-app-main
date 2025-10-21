@@ -42,7 +42,6 @@ export class EventHandlerCoreService {
 
     const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
     const { id: sessionId } = await this.repo.upsertSession({
-      userId: event.userId,
       pwaDomain: event.pwaDomain,
       landingUrl: event.landingUrl ?? null,
       queryStringRaw: event.queryStringRaw ?? null,
@@ -56,22 +55,22 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl: event.landingUrl || `https://${event.pwaDomain}`,
-      userId: event.userId,
       fbclid,
       offerId,
       utmSource,
       clientIp,
+      sessionId,
     });
     this.log.debug({ tag: 'viewContent:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'viewContent:fb-response', fb });
       return { success: true, fb, sessionId };
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
         this.log.error({ tag: 'viewContent:fb-error', error: e.message, fb: e.fb });
-        return { success: false, fb: e.fb, sessionId: null };
+        return { success: false, fb: e.fb, sessionId }; // ✅ ЗБЕРЕГЛИ sessionId
       }
       throw e;
     }
@@ -79,24 +78,25 @@ export class EventHandlerCoreService {
 
   async prepareInstallLink(event: PrepareInstallLinkDto) {
     this.log.debug({ tag: 'prepareInstallLink:input', event });
-    const { sessionId, userId, pwaDomain } = event;
+    const { sessionId, pwaDomain } = event;
     const base = process.env.TRACKER_BASE_URL || 'https://tracker.example.com/landing';
     const url = new URL(base);
 
-    url.searchParams.set('user_id', userId);
+    url.searchParams.set('session_id', sessionId);
     const finalUrl = url.toString();
 
     await this.repo.setFinalUrl(sessionId, finalUrl);
-    this.log.log({ event: 'prepare-install-link', userId, pwaDomain, finalUrl });
+    this.log.log({ event: 'prepare-install-link', sessionId, pwaDomain, finalUrl });
     return { finalUrl };
   }
+
 
   async pwaFirstOpen(event: PwaFirstOpenDto & { _meta: EventMeta }) {
     this.log.debug({ tag: 'pwaFirstOpen:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
     this.log.debug({ tag: 'pwaFirstOpen:session', sess });
-    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) }; // Додано return
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) };
 
     const pixelId = sess.pixelId;
     const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
@@ -105,20 +105,20 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
-      clientIp: event._meta.clientIp
+      clientIp: event._meta.clientIp,
+      sessionId: event.sessionId,
     });
 
     this.log.debug({ tag: 'pwaFirstOpen:payload', payload });
-    const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined; // Виправлено: використовуємо payload
+    const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined;
 
     let fbResponse: string;
     let success = true;
     try {
-      fbResponse = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      fbResponse = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'pwaFirstOpen:fb-response', fb: fbResponse });
     } catch (e: any) {
       success = false;
@@ -132,7 +132,6 @@ export class EventHandlerCoreService {
     }
 
     await this.repo.markFirstOpen({
-      userId: event.userId,
       sessionId: event.sessionId,
       eventId: eventId ?? null,
       fbStatus: success ? LogStatus.success : LogStatus.error,
@@ -145,7 +144,7 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'lead:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
-    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for lead.' }) }; // Додано return
+    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for lead.' }) };
 
     const pixelId = sess.pixelId;
     const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
@@ -154,16 +153,16 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
-      clientIp: event._meta.clientIp
+      clientIp: event._meta.clientIp,
+      sessionId: event.sessionId,
     });
     this.log.debug({ tag: 'lead:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'lead:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -188,16 +187,16 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
-      clientIp: event._meta.clientIp
+      clientIp: event._meta.clientIp,
+      sessionId: event.sessionId,
     });
     this.log.debug({ tag: 'completeRegistration:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'completeRegistration:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -222,18 +221,18 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName: eventName,
       sourceUrl,
-      userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
       value: event.value,
       currency: event.currency,
-      clientIp: event._meta.clientIp
+      clientIp: event._meta.clientIp,
+      sessionId: event.sessionId,
     });
     this.log.debug({ tag: 'purchase:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'purchase:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -258,18 +257,18 @@ export class EventHandlerCoreService {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      userId: event.userId,
       fbclid: sess.fbclid || undefined,
       offerId: sess.offerId || undefined,
       utmSource: sess.utmSource || undefined,
       value: event.value,
       currency: event.currency,
-      clientIp: event._meta.clientIp
+      clientIp: event._meta.clientIp,
+      sessionId: event.sessionId,
     });
     this.log.debug({ tag: 'subscribe:payload', payload });
 
     try {
-      const fb = await this.sendToFacebookApi(event.userId, pixelId, eventName, payload);
+      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
       this.log.log({ tag: 'subscribe:fb-response', fb });
       return { success: true, fb };
     } catch (e: any) {
@@ -281,8 +280,8 @@ export class EventHandlerCoreService {
     }
   }
 
+
   private async sendToFacebookApi(
-      userId: string,
       pixelId: string,
       eventType: EventType,
       payload: unknown,
@@ -293,6 +292,7 @@ export class EventHandlerCoreService {
         Math.random().toString(36).slice(2, 12);
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
+
     let status: LogStatus = LogStatus.success;
     let responseData: any = null;
     let finalResult: string | FacebookApiError;
@@ -301,7 +301,6 @@ export class EventHandlerCoreService {
 
     try {
       if (process.env.FB_MOCK) {
-        await new Promise((res) => setTimeout(res, 100));
         const mock = {
           events_received: (payload as any)?.data?.length ?? 1,
           fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
@@ -322,7 +321,6 @@ export class EventHandlerCoreService {
     } catch (e) {
       status = LogStatus.error;
       let errorMessage: string;
-
       const err = e as AxiosError;
 
       if (err.response) {
@@ -342,8 +340,10 @@ export class EventHandlerCoreService {
       finalResult = new FacebookApiError(errorMessage, responseData);
     } finally {
       try {
+        const sessionId = (payload as any).sessionId;
+
         await this.logs.createLog({
-          userId,
+          sessionId,
           pixelId,
           eventType,
           eventId,
@@ -363,7 +363,7 @@ export class EventHandlerCoreService {
     return finalResult;
   }
 
-  private payloadFbBuilder(input: FBPayload) {
+  private payloadFbBuilder(input: FBPayload & { sessionId: string }) { // ✅ ОНОВЛЕНО ТИП
     const ts = Number.isFinite(input.eventTime) ? Number(input.eventTime) : Math.floor(Date.now() / 1000);
     const id = input.eventId ?? Math.random().toString(36).slice(2, 12);
     const fbc = input.fbclid ? `fb.1.${ts}.${input.fbclid}` : undefined;
@@ -385,7 +385,7 @@ export class EventHandlerCoreService {
       action_source: 'website',
       event_source_url: input.sourceUrl,
       user_data: {
-        external_id: input.userId,
+        external_id: input.sessionId,
         client_ip_address: input.clientIp,
         client_user_agent: input.userAgent,
         fbc,
