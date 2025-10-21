@@ -2,18 +2,23 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { lastValueFrom } from 'rxjs';
-import { RefreshDto } from "../../../pwa-shared/src/types/auth/dto/refresh.dto";
-import {SignInDto} from "../../../pwa-shared/src/types/auth/dto/sing-in.dto";
-import {SignUpDto} from "../../../pwa-shared/src/types/auth/dto/sing-up.dto";
-import {RestorePasswordDto} from "../../../pwa-shared/src/types/auth/dto/restore-password.dto";
+import {
+    SignUpDto,
+    RefreshDto,
+    SignInDto,
+    RestorePasswordDto,
+    ConfirmEmailDto,
+    RequestRestorePasswordDto
+} from "../../../pwa-shared/src";
 
 interface AuthService {
     signUp(data: SignUpDto, md?: Metadata, opts?: Record<string, any>): any;
     signIn(data: SignInDto, md?: Metadata, opts?: Record<string, any>): any;
     refresh(data: RefreshDto, md?: Metadata, opts?: Record<string, any>): any;
     signOut(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    requestPasswordReset(data: RequestRestorePasswordDto, md?: Metadata, opts?: Record<string, any>): any;
     restorePassword(data: RestorePasswordDto, md?: Metadata, opts?: Record<string, any>): any;
-    confirmEmail(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    confirmEmail(data: ConfirmEmailDto, md?: Metadata, opts?: Record<string, any>): any;
     me(data: any, md?: Metadata, opts?: Record<string, any>): any;
 }
 
@@ -41,14 +46,17 @@ export class AuthGrpcClient {
         return await lastValueFrom(this.svc.signOut({}, metadata));
     }
 
+    async requestPasswordReset(dto: RequestRestorePasswordDto, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.requestPasswordReset(dto, metadata));
+    }
+
     async restorePassword(dto: RestorePasswordDto, metadata?: Metadata) {
         return await lastValueFrom(this.svc.restorePassword(dto, metadata));
     }
 
-    async confirmEmail(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.confirmEmail({}, metadata));
+    async confirmEmail(dto: ConfirmEmailDto, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.confirmEmail(dto, metadata));
     }
-
 
     async me(metadata?: Metadata) {
         return await lastValueFrom(this.svc.me({}, metadata));

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { User, Status } from '@prisma/client';
-import { PrismaService } from "../../../pwa-prisma/src";
+import { PrismaService } from '../../../pwa-prisma/src';
 
 @Injectable()
 export class AuthRepository {
@@ -26,6 +26,21 @@ export class AuthRepository {
         email?: string;
         password: string;
     }): Promise<User> {
-        return this.prisma.user.create({ data });
+        const user = {...data, status: Status.inactive}
+        return this.prisma.user.create({ data: user });
+    }
+
+    async updatePassword(userId: string, passwordHash: string): Promise<User> {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { password: passwordHash },
+        });
+    }
+
+    async markEmailConfirmed(userId: string): Promise<User> {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { status: Status.active },
+        });
     }
 }

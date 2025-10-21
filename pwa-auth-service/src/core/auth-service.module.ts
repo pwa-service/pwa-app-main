@@ -8,15 +8,26 @@ import { JwksController } from './jwks.controller';
 import { AuthCoreService } from './auth.core.service';
 import { AuthRepository } from './auth.repository';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
+import {ConfigModule, ConfigService} from "@nestjs/config";
+import {getMailConfig} from "../mail/mail.config";
+import {MailerModule} from "@nestjs-modules/mailer";
 
 @Module({
-    imports: [PrismaModule, GrpcAuthModule],
+    imports: [
+        PrismaModule,
+        GrpcAuthModule,
+        MailerModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: getMailConfig,
+        }),
+    ],
     controllers: [AuthGrpcController, JwksController],
     providers: [
         AuthCoreService,
         AuthRepository,
         RefreshStore,
-        { provide: USER_LOOKUP_PORT, useClass: AuthRepository },
+        { provide: USER_LOOKUP_PORT, useExisting: AuthRepository },
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
     ],
 })

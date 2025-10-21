@@ -1,17 +1,18 @@
 syntax = "proto3";
 package auth.v1;
-
 import "google/protobuf/empty.proto";
 
 service AuthService {
-  rpc SignUp            (SignUpRequest)  returns (AuthResponse);
-  rpc SignIn            (SignInRequest)  returns (AuthResponse);
-  rpc RestorePassword   (RestorePassword) returns (AuthResponse);
-  rpc ConfirmEmail      (google.protobuf.Empty) returns (AuthResponse);
-  rpc Refresh           (RefreshRequest) returns (AuthResponse);
-  rpc SignOut           (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc Me                (google.protobuf.Empty) returns (User);
+  rpc SignUp                (SignUpRequest)                 returns (AuthResponse);
+  rpc SignIn                (SignInRequest)                 returns (AuthResponse);
+  rpc Refresh               (RefreshRequest)                returns (AuthResponse);
+  rpc SignOut               (google.protobuf.Empty)         returns (google.protobuf.Empty);
+  rpc Me                    (google.protobuf.Empty)         returns (User);
+  rpc RequestPasswordReset  (RequestRestorePasswordRequest) returns (RequestResetResponse); // 👈 ДОДАНО
+  rpc RestorePassword       (RestorePasswordRequest)        returns (AuthResponse);
+  rpc ConfirmEmail          (ConfirmEmailRequest)           returns (AuthResponse);
 }
+
 
 message SignUpRequest {
   string email = 1;
@@ -28,6 +29,20 @@ message RefreshRequest {
   string refreshToken = 1;
 }
 
+message RequestRestorePasswordRequest {
+  string email = 1;
+}
+
+message RestorePasswordRequest {
+  string email = 1;
+  string newPassword = 2;
+  string token = 3;
+}
+
+message ConfirmEmailRequest {
+  string token = 1;
+}
+
 message AuthResponse {
   string accessToken = 1;
   string refreshToken = 2;
@@ -35,13 +50,13 @@ message AuthResponse {
   User   user        = 4;
 }
 
+message RequestResetResponse {
+  string message = 1;
+}
+
 message User {
   string id    = 1;
   string email = 2;
   string username  = 3;
   string role  = 4;
-}
-
-message RestorePassword {
-  string newPassword = 1;
 }

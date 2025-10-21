@@ -2,13 +2,18 @@ import {Body, Controller, Get, HttpCode, Post, Req, UseGuards} from '@nestjs/com
 import { Request } from 'express';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import { AuthGrpcClient } from './auth.grpc.client';
-import { SignInDto, RefreshDto, SignUpDto } from '../../../pwa-shared/src';
+import {
+    SignInDto,
+    RefreshDto,
+    SignUpDto,
+    RestorePasswordDto,
+    ConfirmEmailDto, RequestRestorePasswordDto
+} from '../../../pwa-shared/src';
 import {JwtAuthGuard} from "../common/jwt-auth.guard";
 import {ApiTags} from "@nestjs/swagger";
 
 @Controller('auth')
-@ApiTags('Event')
-@Controller('event')
+@ApiTags('Auth')
 export class AuthHttpController {
     constructor(private readonly auth: AuthGrpcClient) {}
 
@@ -23,6 +28,7 @@ export class AuthHttpController {
     async signIn(@Body() dto: SignInDto, @Req() req: Request) {
         return this.auth.signIn(dto, buildGrpcMetadata(req));
     }
+
 
     @Post('refresh')
     @HttpCode(200)
@@ -40,5 +46,23 @@ export class AuthHttpController {
     @UseGuards(JwtAuthGuard)
     async me(@Req() req: Request) {
         return this.auth.me(buildGrpcMetadata(req));
+    }
+
+    @Post('request-password-reset')
+    @HttpCode(200)
+    async requestPasswordReset(@Body() dto: RequestRestorePasswordDto, @Req() req: Request) {
+        return this.auth.requestPasswordReset(dto, buildGrpcMetadata(req));
+    }
+
+    @Post('restore-password')
+    @HttpCode(200)
+    async restorePassword(@Body() dto: RestorePasswordDto, @Req() req: Request) {
+        return this.auth.restorePassword(dto, buildGrpcMetadata(req));
+    }
+
+    @Post('confirm-email')
+    @HttpCode(200)
+    async confirmEmail(@Body() dto: ConfirmEmailDto, @Req() req: Request) {
+        return this.auth.confirmEmail(dto, buildGrpcMetadata(req));
     }
 }

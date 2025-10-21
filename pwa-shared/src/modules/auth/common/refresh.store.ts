@@ -39,4 +39,27 @@ export class RefreshStore implements OnModuleInit {
         await this.redis.del(`refresh:${userId}`);
         this.data.delete(userId);
     }
+
+    async saveOneTime(tokenHash: string, userId: string, exp: number) {
+        const ttl = exp - Math.floor(Date.now() / 1000);
+        if (ttl > 0) {
+            await this.redis.setEx(`one-time:${tokenHash}`, ttl, userId);
+        }
+    }
+
+
+    async checkAndGetOneTime(tokenHash: string): Promise<string | null> {
+        const key = `one-time:${tokenHash}`;
+        const userId = await this.redis.get(key);
+
+        if (userId) {
+            await this.redis.del(key);
+            return userId;
+        }
+        return null;
+    }
+
+    async revokeOneTime(tokenHash: string) {
+        await this.redis.del(`one-time:${tokenHash}`);
+    }
 }

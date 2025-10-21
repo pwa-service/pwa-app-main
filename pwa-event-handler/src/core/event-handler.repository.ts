@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
-import {Status} from ".prisma/client";
 import {PrismaService} from "../../../pwa-prisma/src";
 
 @Injectable()

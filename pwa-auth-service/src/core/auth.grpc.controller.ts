@@ -1,8 +1,15 @@
-import {Controller, UseInterceptors} from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthCoreService } from './auth.core.service';
 import { Metadata } from '@grpc/grpc-js';
-import { SignUpDto, SignInDto, RefreshDto } from "../../../pwa-shared/src";
+import {
+  SignUpDto,
+  SignInDto,
+  RefreshDto,
+  RestorePasswordDto,
+  ConfirmEmailDto,
+  RequestRestorePasswordDto
+} from "../../../pwa-shared/src";
 import {AllowAnonymous} from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
 import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
@@ -15,14 +22,33 @@ export class AuthGrpcController {
   @AllowAnonymous()
   @GrpcMethod('AuthService', 'SignUp')
   async signUp(dto: SignUpDto) {
-    return this.auth.signUp(dto.email, dto.password, dto.name);
+    return this.auth.signUp(dto);
   }
 
   @AllowAnonymous()
   @GrpcMethod('AuthService', 'SignIn')
   async signIn(dto: SignInDto) {
-    const user = await this.auth.validateUser(dto.email, dto.password);
+    const user = await this.auth.validateUser(dto);
     return this.auth.issueTokens(user);
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'RequestPasswordReset')
+  async requestPasswordReset(dto: RequestRestorePasswordDto) {
+    console.log(dto.email)
+    return this.auth.requestPasswordReset(dto.email);
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'RestorePassword')
+  async restorePassword(dto: RestorePasswordDto) {
+    return this.auth.restorePassword(dto);
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'ConfirmEmail')
+  async confirmEmail(dto: ConfirmEmailDto) {
+    return this.auth.confirmEmail(dto.token);
   }
 
   @AllowAnonymous()
