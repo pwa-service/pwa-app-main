@@ -52,24 +52,32 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
             set -e
-
+              
             cleanup() {
               echo "*********** Deleting .env file ***********"
               rm -f ~/pwa-app/.env
             }
-
+              
             trap cleanup EXIT
-
+              
             cd ~/pwa-app
-
+              
+            echo "*********** Building Docker images ***********"
+            if ! docker compose build; then
+              echo "Build FAILED - keeping existing containers running"
+              exit 1
+            fi
+              
+            echo "Build completed successfully"
+              
             echo "*********** Stopping Docker Compose ***********"
             docker compose down
-
+              
             echo "*********** Starting Docker Compose ***********"
-            docker compose up -d --build --remove-orphans
-
+            docker compose up -d --remove-orphans
+              
             echo "*********** Checking migrations status ***********"
-
+              
             for i in {1..30}; do
               STATUS=$(docker inspect pwa-app-prisma-migrator-1 --format='{{.State.Status}}' 2>/dev/null || echo "running")
               
@@ -94,7 +102,7 @@ jobs:
               echo "Waiting for migrations... ($i/30)"
               sleep 2
             done
-
+              
             echo "*********** Waiting for services to become healthy ***********"
             for i in {1..30}; do
               unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
@@ -118,10 +126,11 @@ jobs:
               echo "Waiting for services... ($i/30)"
               sleep 5
             done
-
+              
             echo "*********** Cleaning up Docker resources ***********"
             docker image prune -f
             docker container prune -f
-            
+              
             echo "Deployment completed successfully"
           EOF
+              
