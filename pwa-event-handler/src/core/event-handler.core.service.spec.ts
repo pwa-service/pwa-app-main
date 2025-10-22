@@ -66,7 +66,6 @@ describe('EventHandlerCoreService', () => {
         jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
         jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
-        // Встановлення моків на інстансі перед кожним тестом
         repo.upsertSession.mockResolvedValue({ id: mockSession.id });
         repo.getSessionById.mockResolvedValue(mockSession);
         jest.clearAllMocks();
@@ -78,7 +77,7 @@ describe('EventHandlerCoreService', () => {
             pixelId: '1000', fbclid: 'fb-test', offerId: 'offer', utmSource: 'src',
             clientIp: '1.1.1.1', userAgent: 'test-agent',
         };
-        const dto: ViewContentDto & { _meta: EventMeta } = {
+        const dto: ViewContentDto = {
             pwaDomain: 'test.app', landingUrl: 'https://test.app/page', queryStringRaw: 'q=1',
             _meta: eventMeta
         };
@@ -106,7 +105,7 @@ describe('EventHandlerCoreService', () => {
 
     describe('lead', () => {
         const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: LeadDto & { _meta: EventMeta } = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
+        const dto: LeadDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should successfully send Lead event and log', async () => {
             mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
@@ -130,7 +129,7 @@ describe('EventHandlerCoreService', () => {
 
     describe('pwaFirstOpen', () => {
         const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: PwaFirstOpenDto & { _meta: EventMeta } = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
+        const dto: PwaFirstOpenDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should successfully send ViewContent (on open) and mark open', async () => {
             mockedAxios.post.mockResolvedValue({ data: { fbtrace_id: 'open-trace' }, status: 200 });
@@ -160,7 +159,7 @@ describe('EventHandlerCoreService', () => {
 
     describe('completeRegistration', () => {
         const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: CompleteRegistrationDto & { _meta: EventMeta } = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
+        const dto: CompleteRegistrationDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should send CompleteRegistration event on session and log success', async () => {
             mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
@@ -184,7 +183,7 @@ describe('EventHandlerCoreService', () => {
 
     describe('purchase', () => {
         const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: PurchaseDto & { _meta: EventMeta } = {
+        const dto: PurchaseDto = {
             sessionId: mockSession.id, pwaDomain: 'test.app', value: 99.99, currency: 'USD', _meta: eventMeta
         };
 
@@ -208,7 +207,7 @@ describe('EventHandlerCoreService', () => {
 
     describe('subscribe', () => {
         const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: SubscribeDto & { _meta: EventMeta } = {
+        const dto: SubscribeDto = {
             sessionId: mockSession.id, pwaDomain: 'test.app', value: 19.99, currency: 'EUR', _meta: eventMeta
         };
 
