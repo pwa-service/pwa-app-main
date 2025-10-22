@@ -9,7 +9,6 @@ import {
   PurchaseDto,
   PwaFirstOpenDto, SubscribeDto,
   ViewContentDto,
-  EventMeta
 } from "../../../pwa-shared/src";
 import * as geo from 'geoip-country'
 
@@ -37,7 +36,7 @@ export class EventHandlerCoreService {
   ) {}
 
 
-  async viewContent(event: ViewContentDto & { _meta: EventMeta }) {
+  async viewContent(event: ViewContentDto) {
     this.log.debug({ tag: 'viewContent:input', event });
 
     const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
@@ -91,7 +90,7 @@ export class EventHandlerCoreService {
   }
 
 
-  async pwaFirstOpen(event: PwaFirstOpenDto & { _meta: EventMeta }) {
+  async pwaFirstOpen(event: PwaFirstOpenDto) {
     this.log.debug({ tag: 'pwaFirstOpen:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
@@ -140,7 +139,7 @@ export class EventHandlerCoreService {
     return { success, fb: fbResponse };
   }
 
-  async lead(event: LeadDto & { _meta: EventMeta }) {
+  async lead(event: LeadDto) {
     this.log.debug({ tag: 'lead:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
@@ -174,7 +173,7 @@ export class EventHandlerCoreService {
     }
   }
 
-  async completeRegistration(event: CompleteRegistrationDto & { _meta: EventMeta }) {
+  async completeRegistration(event: CompleteRegistrationDto) {
     this.log.debug({ tag: 'completeRegistration:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
@@ -208,7 +207,7 @@ export class EventHandlerCoreService {
     }
   }
 
-  async purchase(event: PurchaseDto & { _meta: EventMeta }) {
+  async purchase(event: PurchaseDto) {
     this.log.debug({ tag: 'purchase:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
@@ -244,7 +243,7 @@ export class EventHandlerCoreService {
     }
   }
 
-  async subscribe(event: SubscribeDto & { _meta: EventMeta }) {
+  async subscribe(event: SubscribeDto) {
     this.log.debug({ tag: 'subscribe:input', event });
 
     const sess = await this.repo.getSessionById(event.sessionId);
@@ -363,7 +362,7 @@ export class EventHandlerCoreService {
     return finalResult;
   }
 
-  private payloadFbBuilder(input: FBPayload & { sessionId: string }) { // ✅ ОНОВЛЕНО ТИП
+  private payloadFbBuilder(input: FBPayload) {
     const ts = Number.isFinite(input.eventTime) ? Number(input.eventTime) : Math.floor(Date.now() / 1000);
     const id = input.eventId ?? Math.random().toString(36).slice(2, 12);
     const fbc = input.fbclid ? `fb.1.${ts}.${input.fbclid}` : undefined;

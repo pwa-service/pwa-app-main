@@ -2,7 +2,7 @@ import { CampaignParams, MonetaryParams, DeviceContext, Timing } from '../common
 
 export type BasePayload = {
     sourceUrl: string;
-    userId: string;
+    sessionId: string;
 } & CampaignParams & DeviceContext & Timing;
 
 export type ViewContentPayload            = BasePayload & { eventName: 'ViewContent' };

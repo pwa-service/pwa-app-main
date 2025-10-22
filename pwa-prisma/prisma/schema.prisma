@@ -41,8 +41,6 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   status    Status   @default(active)
 
-  pixelTokens PixelToken[]
-
   @@map("users")
 }
 
@@ -51,14 +49,10 @@ model PixelToken {
   pixelId     String   @unique @map("pixel_id")
   name        String?
   description String?
-  userId      String   @map("user_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   status      Status   @default(active)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "idx_pixelTokens_userId")
   @@map("pixel_tokens")
 }
 

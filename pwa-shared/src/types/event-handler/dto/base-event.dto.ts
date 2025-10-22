@@ -1,5 +1,6 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import {EventMeta} from "../payload/capi.payload";
 
 export class BaseEventDto {
     @ApiProperty() @IsString() pwaDomain!: string;
@@ -13,4 +14,6 @@ export class BaseEventDto {
     @IsOptional()
     @IsString()
     queryStringRaw?: string;
+
+    _meta: EventMeta
 }
