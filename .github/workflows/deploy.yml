@@ -63,7 +63,7 @@ jobs:
             cd ~/pwa-app
               
             echo "*********** Building Docker images ***********"
-            if ! docker compose build; then
+            if ! docker compose build --no-cache; then
               echo "Build FAILED - keeping existing containers running"
               exit 1
             fi
@@ -74,7 +74,7 @@ jobs:
             docker compose down
               
             echo "*********** Starting Docker Compose ***********"
-            docker compose up -d --remove-orphans
+            docker compose up -d --build --remove-orphans
               
             echo "*********** Checking migrations status ***********"
               
