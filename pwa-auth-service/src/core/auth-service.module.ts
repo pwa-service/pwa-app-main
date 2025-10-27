@@ -14,6 +14,7 @@ import {MailerModule} from "@nestjs-modules/mailer";
 
 @Module({
     imports: [
+        ConfigModule.forRoot(),
         PrismaModule,
         GrpcAuthModule,
         MailerModule.forRootAsync({
