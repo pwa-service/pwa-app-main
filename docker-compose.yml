@@ -31,7 +31,7 @@ services:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -61,7 +61,7 @@ services:
     environment:
       - PORT=4300
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
       - FB_MOCK=true
       - FB_GRAPH_VERSION=v21.0
@@ -83,7 +83,7 @@ services:
     container_name: logger-service
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUEUE_NAME=PWA_EVENTS_QUEUE
@@ -133,7 +133,7 @@ services:
       context: .
       dockerfile: pwa-prisma/Dockerfile
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,7 +158,7 @@ services:
       dockerfile: pwa-prisma/Dockerfile.studio
     container_name: prisma-studio
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
     ports:
       - 5555:5555
     depends_on:
