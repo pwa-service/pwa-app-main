@@ -53,12 +53,12 @@ jobs:
           ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
             set -e
               
-            cleanup() {
-              echo "*********** Deleting .env file ***********"
-              rm -f ~/pwa-app/.env
-            }
-              
-            trap cleanup EXIT
+            # cleanup() {
+            #   echo "*********** Deleting .env file ***********"
+            #   rm -f ~/pwa-app/.env
+            # }
+            #   
+            # trap cleanup EXIT
               
             cd ~/pwa-app
               
