@@ -10,10 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "outDir": "./dist-test",
-    // Обов'язкові типи для Jest
     "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
-  // Виключаємо самі файли тестів з основної компіляції програми, але не з компіляції Jest
   "exclude": ["node_modules", "dist"]
 }

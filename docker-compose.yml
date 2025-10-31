@@ -23,12 +23,13 @@ services:
       dockerfile: pwa-auth-service/Dockerfile
     working_dir: /workspace/pwa-auth-service
     container_name: auth-service
+    env_file:
+      - ./.env
     environment:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
-      - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_ISSUER=https://auth.local/
@@ -77,6 +78,8 @@ services:
       dockerfile: pwa-logger/Dockerfile
     working_dir: /workspace/pwa-logger
     container_name: logger-service
+    env_file:
+      - ./.env
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
@@ -97,29 +100,75 @@ services:
     build:
       context: .
       dockerfile: ./pwa-api-gateway/Dockerfile
+    env_file:
+      - ./.env
     environment:
       - PORT=3000
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
+      - GENERATOR_GRPC_URL=pwa-generator:50054
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://auth.local/
       - AUTH_AUDIENCE=api
     ports:
       - "3000:3000"
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
+  pwa-generator:
+    build:
+      context: .
+      dockerfile: pwa-generator/Dockerfile
+    working_dir: /workspace/pwa-generator
+    container_name: pwa-generator
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GENERATOR_GRPC_URL=pwa-generator:50054
+      - QUEUE_NAME=BUILD_QUEUE
+      - QUEUE_PREFIX=pwa
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      - "50055:50055"
+    restart: unless-stopped
+
+  pwa-builder:
+    build:
+      context: .
+      dockerfile: pwa-builder/Dockerfile
+    container_name: pwa-builder
+    env_file:
+      - ./.env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: ["redis-server", "--appendonly", "yes"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    env_file:
+      - ./.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redis_data:/data
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -128,6 +177,8 @@ services:
     build:
       context: .
       dockerfile: pwa-prisma/Dockerfile
+    env_file:
+      - ./.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
     depends_on:
@@ -153,6 +204,8 @@ services:
       context: .
       dockerfile: pwa-prisma/Dockerfile.studio
     container_name: prisma-studio
+    env_file:
+      - ./.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
     ports:

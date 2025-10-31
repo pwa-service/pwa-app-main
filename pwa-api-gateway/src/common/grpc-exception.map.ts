@@ -4,6 +4,7 @@ import { status } from '@grpc/grpc-js';
 export function mapGrpcError(e: any): HttpException {
     const code = e?.code;
     const msg = e?.details || e?.message || 'Upstream error';
+
     switch (code) {
         case status.UNAUTHENTICATED:
             return new HttpException(msg, HttpStatus.UNAUTHORIZED);
@@ -20,6 +21,6 @@ export function mapGrpcError(e: any): HttpException {
         case status.UNAVAILABLE:
             return new HttpException('Upstream unavailable', HttpStatus.SERVICE_UNAVAILABLE);
         default:
-            return new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+            return new HttpException(msg || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -40,8 +40,24 @@ model User {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
   status    Status   @default(active)
+  PwaApp    PwaApp[] @relation("AppCreator")
 
   @@map("users")
+}
+
+model PwaApp {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  domain          String   @unique
+  description     String?
+  templateId      Int?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  status          Status   @default(active)
+  createdByUserId String   @map("created_by_user_id")
+  createdBy       User     @relation("AppCreator", fields: [createdByUserId], references: [id])
+
+  @@map("pwa_apps")
 }
 
 model PixelToken {

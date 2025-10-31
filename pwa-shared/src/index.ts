@@ -15,4 +15,8 @@ export * from './types/event-handler/dto/subscribe.dto';
 export * from './types/event-handler/payload/capi.payload';
 export * from './types/event-handler/common.types';
 
+export * from './types/generator/dto/get-app.dto';
+export * from './types/generator/dto/create-app.dto';
+
 export * from './types/bullmq/payload/event-log.payload';
+export * from './types/bullmq/payload/create-app.payload';
