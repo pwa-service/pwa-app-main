@@ -95,9 +95,8 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     const { fbclId, pixelId } = parseURLParams(currentURL);
 
     const trackerData = {
-      pwaDomain: "pwa.example.com", // currentURL.host,
-      landingUrl:
-        "https://pwa.example.com/?pixel_id=1234567890&fbclid=XYZ123&utm_source=facebook&sub1=aff1&offer_id=777", //currentURL.href,
+      pwaDomain: currentURL.host,
+      landingUrl: currentURL.href,
       queryStringRaw: currentURL.search.slice(1),
     };
 
