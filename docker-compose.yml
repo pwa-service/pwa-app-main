@@ -4,14 +4,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
-    #environment:
-    #  POSTGRES_DB: ${POSTGRES_DB}
-    #  POSTGRES_USER: ${POSTGRES_USER}
-    #  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     env_file:
       - ./.env
-    #ports:
-    #  - "5423:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,6 +14,8 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    networks:
+      - pwa-network
 
   auth-service:
     build:
@@ -31,15 +27,14 @@ services:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
-      - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - AUTH_ISSUER=https://auth.local/
+      - AUTH_ISSUER=https://pwaservice.site/
       - AUTH_AUDIENCE=api
       - AUTH_ACCESS_TTL=900
       - AUTH_REFRESH_TTL=604800
-      - FRONTEND_URL=http://72.60.247.106:3000
+      - FRONTEND_URL=https://pwaservice.site/apps
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,9 +42,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    ports:
-      - "4040:4040"
-      - "50051:50051"
+    networks:
+      - pwa-network
 
   event-handler:
     build:
@@ -61,7 +55,7 @@ services:
     environment:
       - PORT=4300
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
       - FB_MOCK=true
       - FB_GRAPH_VERSION=v21.0
@@ -72,8 +66,8 @@ services:
         condition: service_healthy
       prisma-migrator:
         condition: service_completed_successfully
-    ports:
-      - "50053:50053"
+    networks:
+      - pwa-network
 
   logger-service:
     build:
@@ -83,7 +77,7 @@ services:
     container_name: logger-service
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUEUE_NAME=PWA_EVENTS_QUEUE
@@ -96,21 +90,28 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - pwa-network
 
   api-gateway:
     build:
       context: .
       dockerfile: ./pwa-api-gateway/Dockerfile
+    container_name: pwa-app-api-gateway-1
     environment:
       - PORT=3000
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - GENERATOR_GRPC_URL=pwa-generator:50055
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
-      - AUTH_ISSUER=https://auth.local/
+      - AUTH_ISSUER=https://pwaservice.site/
       - AUTH_AUDIENCE=api
-    ports:
-      - "3000:3000"
+    depends_on:
+      auth-service:
+        condition: service_started
+    networks:
+      - pwa-network
+    # НЕТ ПОРТОВ - только через nginx
 
   pwa-generator:
     build:
@@ -121,7 +122,7 @@ services:
     env_file:
       - ./.env
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - GENERATOR_GRPC_URL=pwa-generator:50054
@@ -134,9 +135,9 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    ports:
-      - "50055:50055"
     restart: unless-stopped
+    networks:
+      - pwa-network
 
   pwa-builder:
     build:
@@ -152,6 +153,8 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - pwa-network
 
   redis:
     image: redis:7-alpine
@@ -162,13 +165,13 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
-    #ports:
-    #  - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - pwa-network
 
   prisma-migrator:
     build:
@@ -193,6 +196,8 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 5
+    networks:
+      - pwa-network
 
   prisma-studio:
     build:
@@ -201,14 +206,14 @@ services:
     container_name: prisma-studio
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
-    ports:
-      - 5555:5555
     depends_on:
       postgres:
         condition: service_healthy
       prisma-migrator:
         condition: service_completed_successfully
     restart: unless-stopped
+    networks:
+      - pwa-network
 
 volumes:
   postgres_data:
@@ -217,3 +222,8 @@ volumes:
   redis_data:
     driver: local
     name: pwa_app_redis_data
+
+networks:
+  pwa-network:
+    external: true
+    name: pwa-network
