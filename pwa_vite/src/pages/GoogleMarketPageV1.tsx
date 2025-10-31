@@ -45,10 +45,14 @@ const GoogleMarketPageV1 = () => {
   };
 
   const handleOpenPWA = () => {
-    const link = "/";
+    const link = "./";
     const protocolLink = "web+myapp:///" + link;
 
-    window.location.href = protocolLink;
+    if (!isPWA) {
+      window.location.href = protocolLink;
+    } else {
+      window.location.href = "/?data=from-standalone";
+    }
   };
 
   if (isPWA) return <Loader />;

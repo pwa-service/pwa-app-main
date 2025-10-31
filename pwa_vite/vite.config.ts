@@ -7,7 +7,7 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vite.dev/config/
 export default defineConfig(async () => {
   return {
-    base: ".",
+    base: "./",
     plugins: [
       react(),
       tailwindcss(),
@@ -36,19 +36,19 @@ export default defineConfig(async () => {
 
           icons: [
             {
-              src: "/favicon.ico",
+              src: "./favicon.ico",
               type: "image/x-icon",
               sizes: "64x64 32x32 24x24 16x16",
             },
 
             {
-              src: "/app_icon_256.png",
+              src: "./app_icon_256.png",
               type: "image/png",
               sizes: "256x256",
             },
 
             {
-              src: "/app_icon_512.png",
+              src: "./app_icon_512.png",
               type: "image/png",
               sizes: "512x512",
             },
@@ -56,14 +56,14 @@ export default defineConfig(async () => {
             {
               purpose: "maskable",
               sizes: "512x512",
-              src: "/app_icon_512_maskable.png",
+              src: "./app_icon_512_maskable.png",
               type: "image/png",
             },
 
             {
               purpose: "any",
               sizes: "512x512",
-              src: "/app_icon_512_rounded.png",
+              src: "./app_icon_512_rounded.png",
               type: "image/png",
             },
           ],

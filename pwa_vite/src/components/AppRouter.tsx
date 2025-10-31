@@ -1,12 +1,13 @@
 import { Routes, Route } from "react-router";
-import { routes } from "../constants/routes";
+
+import GoogleMarketPageV1 from "../pages/GoogleMarketPageV1";
+import HomePage from "../pages/HomePage";
 
 const AppRouter = () => {
   return (
     <Routes>
-      {routes.map(({ path, element: Page }) => (
-        <Route key={path} path={path} element={<Page />} />
-      ))}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/apps/:pwa" element={<GoogleMarketPageV1 />} />
     </Routes>
   );
 };

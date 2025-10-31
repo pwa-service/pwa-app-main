@@ -16,7 +16,7 @@ export const initServiceWorkerForRedirect = () => {
   if (!("serviceWorker" in navigator)) return;
 
   navigator.serviceWorker
-    .register("/service-worker.js")
+    .register("./service-worker.js")
     .then((registration) => {
       console.log("[Main] SW registered:", registration);
 
@@ -29,11 +29,6 @@ export const initServiceWorkerForRedirect = () => {
           tryRedirect();
         }
       });
-
-      // navigator.serviceWorker.addEventListener("controllerchange", () => {
-      //   console.log("[Main] controllerchange event");
-      //   tryRedirect();
-      // });
 
       window.addEventListener("appinstalled", () => {
         console.log("[Main] PWA installed");
