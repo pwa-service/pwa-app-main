@@ -3,7 +3,6 @@ import {
   PIXEL_ID_KEY,
   VIEW_CONTENT_KEY,
   SESSION_ID_KEY,
-  INSTALL_KEY,
   FIRST_OPEN_SENT_KEY,
   REDIRECT_URL_KEY,
 } from "../constants/storage";
@@ -13,10 +12,11 @@ import type { TrackerData } from "../types/tracker";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useUserAgent } from "../hooks/useUserAgent";
 
+import { loadPWAData } from "../helpers/loadPWAData";
 import { parseURLParams } from "../helpers/parseURLParams";
 import { sendRedirectToSW } from "../helpers/sendRedirectToSW";
 
-import { postViewContent, postPrepareInstallLink, postFirstOpen } from "../api/events";
+import { postViewContent, postFirstOpen } from "../api/events";
 
 export interface TrackerState {
   trackerData: TrackerData | null;
@@ -35,7 +35,7 @@ export interface TrackerState {
 }
 
 export interface UseTrackerStoreReturn extends TrackerState {
-  handlePrepareInstallLink: () => Promise<boolean>;
+  handlePrepareInstallLink: () => void;
 }
 
 const persistState = (state: TrackerState) => {
@@ -102,10 +102,8 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
 
     updateState((prev) => ({
       ...prev,
-
       fbclId,
       pixelId,
-
       trackerData,
     }));
 
@@ -161,63 +159,67 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     }
   };
 
-  const handlePrepareInstallLink = async (): Promise<boolean> => {
-    if (localStorage.getItem(INSTALL_KEY)) return false;
-    if (!state.trackerData || !state.sessionId) return false;
-
-    const { pwaDomain, landingUrl, queryStringRaw } = state.trackerData!;
-    console.log({ pwaDomain, landingUrl, queryStringRaw });
+  const handlePrepareInstallLink = () => {
+    if (!state.sessionId) return;
 
     const { fbclId, pixelId, sessionId } = state;
 
-    // const currentURL = new URL(window.location.href);
-    // const { remainingParams } = parseURLParams(currentURL);
+    const currentURL = new URL(window.location.href);
+    const { remainingParams } = parseURLParams(currentURL);
 
-    // const baseUrl = "https://domforpwaalfatest.com/Z2zSjt";
-    // const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
+    const baseUrl = loadPWAData().destination_url;
+    const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
 
-    // localStorage.setItem(INSTALL_KEY, "true");
+    console.log("[Main] Prepared redirect URL:", redirectUrl);
 
-    // console.log("[Main] Prepared redirect URL:", redirectUrl);
-
-    // sendRedirectToSW(redirectUrl);
-    // updateState((prev) => ({ ...prev, redirectUrl }));
-
-    setLoading("install", true);
-
-    try {
-      const { finalUrl } = await postPrepareInstallLink({
-        ...state.trackerData,
-        sessionId,
-      });
-
-      const currentURL = new URL(window.location.href);
-      const { remainingParams } = parseURLParams(currentURL);
-
-      const baseUrl = "https://domforpwaalfatest.com/Z2zSjt";
-      const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
-
-      localStorage.setItem(INSTALL_KEY, "true");
-
-      console.log("[Main] Prepared redirect URL:", redirectUrl);
-      console.log("finalUrl:", finalUrl);
-
-      sendRedirectToSW(redirectUrl);
-      updateState((prev) => ({ ...prev, redirectUrl }));
-
-      return true;
-    } catch (error) {
-      localStorage.removeItem(INSTALL_KEY);
-      localStorage.removeItem(REDIRECT_URL_KEY);
-
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      updateState((prev) => ({ ...prev, error: errorMessage }));
-
-      return false;
-    } finally {
-      setLoading("install", false);
-    }
+    sendRedirectToSW(redirectUrl);
+    updateState((prev) => ({ ...prev, redirectUrl }));
   };
+
+  // const handlePrepareInstallLink = async () => {
+  //   if (localStorage.getItem(INSTALL_KEY)) return false;
+  //   if (!state.trackerData || !state.sessionId) return false;
+
+  //   const { pwaDomain, landingUrl, queryStringRaw } = state.trackerData;
+  //   const { fbclId, pixelId, sessionId } = state;
+
+  //   setLoading("install", true);
+
+  //   try {
+  //     const { finalUrl } = await postPrepareInstallLink({
+  //       pwaDomain,
+  //       landingUrl,
+  //       queryStringRaw,
+  //       sessionId,
+  //     });
+
+  //     const currentURL = new URL(window.location.href);
+  //     const { remainingParams } = parseURLParams(currentURL);
+
+  //     const baseUrl = loadPWAData().destination_url;
+  //     const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
+
+  //     localStorage.setItem(INSTALL_KEY, "true");
+
+  //     console.log("[Main] Prepared redirect URL:", redirectUrl);
+  //     console.log("finalUrl:", finalUrl);
+
+  //     sendRedirectToSW(redirectUrl);
+  //     updateState((prev) => ({ ...prev, redirectUrl }));
+
+  //     return true;
+  //   } catch (error) {
+  //     localStorage.removeItem(INSTALL_KEY);
+  //     localStorage.removeItem(REDIRECT_URL_KEY);
+
+  //     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  //     updateState((prev) => ({ ...prev, error: errorMessage }));
+
+  //     return false;
+  //   } finally {
+  //     setLoading("install", false);
+  //   }
+  // };
 
   const handlePWAFirstOpen = async () => {
     if (localStorage.getItem(FIRST_OPEN_SENT_KEY)) return;

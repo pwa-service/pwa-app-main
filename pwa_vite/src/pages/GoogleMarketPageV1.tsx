@@ -8,9 +8,13 @@ import {
   googleComments,
 } from "../constants/market";
 
-import { usePWAInstallContext } from "../context/pwa-install/usePWAInstallContext";
 import { useTrackerContext } from "../context/tracker/useTrackerContext";
+import { usePWAInstallContext } from "../context/pwa-install/usePWAInstallContext";
+
 import { useUserAgent } from "../hooks/useUserAgent";
+import { useIsWebView } from "../hooks/useIsWebView";
+
+import { redirectFromWebView } from "../helpers/redirectFromWebView";
 
 import gameLogo from "../assets/market/game-logo.svg";
 
@@ -33,14 +37,17 @@ const GoogleMarketPageV1 = () => {
   const [isFullSlider, setIsFullSlider] = useState<boolean>(false);
 
   const { isPWA } = useUserAgent();
+  const { isWebView } = useIsWebView();
   const { loading, handlePrepareInstallLink } = useTrackerContext();
   const { isInstalling, isInstalled, progress, handleInstallStart } = usePWAInstallContext();
 
-  const handleInstall = async () => {
-    const success = await handlePrepareInstallLink();
+  const handleInstall = () => {
+    if (isWebView) {
+      redirectFromWebView();
+      return;
+    }
 
-    if (!success) return;
-
+    handlePrepareInstallLink();
     handleInstallStart();
   };
 
