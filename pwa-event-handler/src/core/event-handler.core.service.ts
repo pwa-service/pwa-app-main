@@ -11,6 +11,8 @@ import {
   ViewContentDto,
 } from "../../../pwa-shared/src";
 import * as geo from 'geoip-country'
+import {RpcException} from "@nestjs/microservices";
+import { status } from '@grpc/grpc-js';
 
 class FacebookApiError extends Error {
   fb: string;
@@ -69,7 +71,7 @@ export class EventHandlerCoreService {
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
         this.log.error({ tag: 'viewContent:fb-error', error: e.message, fb: e.fb });
-        return { success: false, fb: e.fb, sessionId }; // ✅ ЗБЕРЕГЛИ sessionId
+        return { success: false, fb: e.fb, sessionId };
       }
       throw e;
     }
@@ -292,11 +294,11 @@ export class EventHandlerCoreService {
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
 
-    let status: LogStatus = LogStatus.success;
+    let logStatus: LogStatus = LogStatus.success;
     let responseData: any = null;
     let finalResult: string | FacebookApiError;
 
-    const url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
+    let url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
 
     try {
       if (process.env.FB_MOCK) {
@@ -309,6 +311,15 @@ export class EventHandlerCoreService {
         responseData = mock;
         finalResult = JSON.stringify(mock);
       } else {
+        const pixelToken = await this.repo.findPixelTokenId(pixelId);
+        if (!pixelToken) {
+          throw new RpcException({
+            code: status.INVALID_ARGUMENT,
+            message: 'No pixel token fond by pixel id'
+          });
+        }
+
+        url = `${url}?access_token=${pixelToken.token}`;
         const {data, status: httpStatus} = await axios.post(url, payload, {
           headers: {'Content-Type': 'application/json'},
           timeout: 7000,
@@ -318,7 +329,7 @@ export class EventHandlerCoreService {
         finalResult = JSON.stringify(data);
       }
     } catch (e) {
-      status = LogStatus.error;
+      logStatus = LogStatus.error;
       let errorMessage: string;
       const err = e as AxiosError;
 
@@ -340,13 +351,12 @@ export class EventHandlerCoreService {
     } finally {
       try {
         const sessionId = (payload as any).sessionId;
-
         await this.logs.createLog({
           sessionId,
           pixelId,
           eventType,
           eventId,
-          status,
+          status: logStatus,
           responseData,
           revenue: null,
           clientIp,
