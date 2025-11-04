@@ -25,7 +25,7 @@ export class GeneratorCoreService {
             name: data.name,
             appId: "544d922f-9bc4-4826-aba3-732df66a0515",
             templateId: data.templateId,
-
+            buildUrl: `https://pwaservice.site/apps/${data.name}?pixel_id=1234567890&fbclid=XYZ123&utm_source=facebook&sub1=aff1&offer_id=777`
         }
         // this.repo.createApp({
         //     name: data.name,

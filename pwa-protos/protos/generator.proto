@@ -28,5 +28,5 @@ message PwaAppResponse {
     string description = 4;
     string createdByUserId = 5;
     string status = 6;
-    string buildStatus = 7;
+    string buildUrl = 7;
 }

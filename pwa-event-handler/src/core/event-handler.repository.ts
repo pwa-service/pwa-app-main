@@ -41,6 +41,10 @@ export class EventHandlerRepository {
         return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
+    async findPixelTokenId(pixelId: string) {
+        return this.prisma.pixelToken.findFirst({ where: { pixelId } });
+    }
+
     async setFinalUrl(id: string, finalUrl: string): Promise<void> {
         await this.prisma.pwaSession.update({
             where: { id },
