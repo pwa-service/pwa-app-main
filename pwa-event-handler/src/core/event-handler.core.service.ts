@@ -353,7 +353,6 @@ export class EventHandlerCoreService {
         const sessionId = (payload as any).sessionId;
         await this.logs.createLog({
           sessionId,
-          pixelId,
           eventType,
           eventId,
           status: logStatus,
