@@ -21,19 +21,15 @@ const GlobalRedirect = () => {
 
   useEffect(() => {
     const redirectUrl = localStorage.getItem(REDIRECT_URL_KEY);
-
-    if (isPWA && redirectUrl) {
-      setRedirectUrl(redirectUrl);
-    }
+    if (isPWA && redirectUrl) setRedirectUrl(redirectUrl);
   }, [isPWA]);
 
   useEffect(() => {
     if (!redirectUrl) return;
-
     if (window.location.href === redirectUrl) return;
 
     const timeout = setTimeout(() => {
-      window.location.href = redirectUrl!;
+      window.location.href = redirectUrl;
     }, 500);
 
     return () => clearTimeout(timeout);

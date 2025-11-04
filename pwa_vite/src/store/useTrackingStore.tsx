@@ -35,7 +35,7 @@ export interface TrackerState {
 }
 
 export interface UseTrackerStoreReturn extends TrackerState {
-  handlePrepareInstallLink: () => void;
+  handlePreparePWALink: () => void;
 }
 
 const persistState = (state: TrackerState) => {
@@ -159,8 +159,8 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     }
   };
 
-  const handlePrepareInstallLink = () => {
-    if (!state.sessionId) return;
+  const handlePreparePWALink = () => {
+    // if (!state.sessionId) return;
 
     const { fbclId, pixelId, sessionId } = state;
 
@@ -246,6 +246,6 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
 
   return {
     ...state,
-    handlePrepareInstallLink,
+    handlePreparePWALink,
   };
 };

@@ -38,7 +38,7 @@ const GoogleMarketPageV1 = () => {
 
   const { isPWA } = useUserAgent();
   const { isWebView } = useIsWebView();
-  const { loading, handlePrepareInstallLink } = useTrackerContext();
+  const { loading, handlePreparePWALink } = useTrackerContext();
   const { isInstalling, isInstalled, progress, handleInstallStart } = usePWAInstallContext();
 
   const handleInstall = () => {
@@ -47,7 +47,7 @@ const GoogleMarketPageV1 = () => {
       return;
     }
 
-    handlePrepareInstallLink();
+    handlePreparePWALink();
     handleInstallStart();
   };
 
