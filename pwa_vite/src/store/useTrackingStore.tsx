@@ -160,7 +160,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
   };
 
   const handlePreparePWALink = () => {
-    // if (!state.sessionId) return;
+    if (!state.sessionId) return;
 
     const { fbclId, pixelId, sessionId } = state;
 
