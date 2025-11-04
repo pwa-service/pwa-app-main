@@ -30,7 +30,7 @@ type Config struct {
 	SftpHost          string `env:"SFTP_USER" envDefault:"72.60.247.106"`
 	SftpUser          string `env:"SFTP_USER" envDefault:"eliot"`
 	SftpPassword      string `env:"SFTP_PASSWORD" envDefault:"Eliot_Password"`
-	RemoteBaseDir     string `env:"REMOTE_BASE_DIR" envDefault:"/home/eliot/websites/apps"`
+	RemoteBaseDir     string `env:"REMOTE_BASE_DIR" envDefault:"/home/eliot/websites"`
 }
 
 type CreateAppJob struct {
