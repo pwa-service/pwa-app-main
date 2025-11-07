@@ -214,7 +214,7 @@ func runBuild(reactAppPath string, domain string) (string, error) {
 		return "", errors.Wrapf(err, "failed to create build output dir: %s", absLocalBuildDir)
 	}
 
-	nginxConfDest := path.Join(absLocalBuildDir, "nginx.conf")
+	nginxConfDest := path.Join(absLocalBuildDir, "dist/nginx.conf")
 	log.Printf("Copying nginx config to %s", absLocalBuildDir)
 
 	srcInfo, err := os.Stat(nginxConfSrc)
