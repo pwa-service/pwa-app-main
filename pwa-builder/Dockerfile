@@ -3,12 +3,16 @@ FROM golang:1.23.4-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache git ca-certificates
 
+
 COPY pwa-builder/go.mod pwa-builder/go.sum ./
 
 RUN go mod download
-COPY src/ ./src/
 
-RUN cd src && go build -o /app/worker .
+COPY pwa-builder/src/ ./src/
+
+RUN go build -o /app/worker ./src/
+
+
 FROM node:20-alpine
 
 WORKDIR /app
