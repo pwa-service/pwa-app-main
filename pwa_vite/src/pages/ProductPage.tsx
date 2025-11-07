@@ -7,7 +7,7 @@ import Notifications from "../components/notification/Notifications";
 import SubscribeButton from "../components/notification/SubscribeButton";
 import Card from "../ui/Card";
 
-const LandingPage = () => {
+const ProductPage = () => {
   const { state, getToken, toggleSubscription } = usePushNotifications();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ const LandingPage = () => {
       <Notifications />
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold">LANDING PAGE</h1>
+        <h1 className="text-3xl font-semibold">PRODUCT PAGE</h1>
 
         <SubscribeButton
           loading={state.loading}
@@ -46,4 +46,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default ProductPage;

@@ -7,4 +7,6 @@ export const SESSION_ID_KEY = "tracker_session_id";
 export const INSTALL_KEY = "tracker_install_sent";
 export const FIRST_OPEN_SENT_KEY = "tracking_first_open_sent";
 
+export const HAS_VISITED_PWA_KEY = "tracking_has_visited_pwa";
+
 export const REDIRECT_URL_KEY = "tracker_redirect_url";

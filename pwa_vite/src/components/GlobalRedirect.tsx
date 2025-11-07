@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUserAgent } from "../hooks/useUserAgent";
-import { REDIRECT_URL_KEY } from "../constants/storage";
+import { REDIRECT_URL_KEY, HAS_VISITED_PWA_KEY } from "../constants/storage";
 
 const GlobalRedirect = () => {
   const { isPWA } = useUserAgent();
@@ -20,17 +20,32 @@ const GlobalRedirect = () => {
   }, []);
 
   useEffect(() => {
-    const redirectUrl = localStorage.getItem(REDIRECT_URL_KEY);
-    if (isPWA && redirectUrl) setRedirectUrl(redirectUrl);
+    if (!isPWA) return;
+
+    const hasVisited = localStorage.getItem(HAS_VISITED_PWA_KEY);
+    const savedRedirectUrl = localStorage.getItem(REDIRECT_URL_KEY);
+
+    if (!savedRedirectUrl) return;
+
+    if (!hasVisited) {
+      localStorage.setItem(HAS_VISITED_PWA_KEY, "true");
+      setRedirectUrl(savedRedirectUrl);
+      return;
+    }
+
+    const nextUrl = "/product";
+    const currentPath = window.location.pathname;
+
+    if (currentPath !== nextUrl) setRedirectUrl(nextUrl);
   }, [isPWA]);
 
   useEffect(() => {
     if (!redirectUrl) return;
-    if (window.location.href === redirectUrl) return;
+    if (window.location.href === redirectUrl || window.location.pathname === redirectUrl) return;
 
     const timeout = setTimeout(() => {
-      window.location.href = redirectUrl;
-    }, 500);
+      window.location.href = redirectUrl!;
+    }, 0);
 
     return () => clearTimeout(timeout);
   }, [redirectUrl]);

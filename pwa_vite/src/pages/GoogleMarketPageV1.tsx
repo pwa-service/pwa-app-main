@@ -12,9 +12,6 @@ import { useTrackerContext } from "../context/tracker/useTrackerContext";
 import { usePWAInstallContext } from "../context/pwa-install/usePWAInstallContext";
 
 import { useUserAgent } from "../hooks/useUserAgent";
-import { useIsWebView } from "../hooks/useIsWebView";
-
-import { redirectFromWebView } from "../helpers/redirectFromWebView";
 
 import gameLogo from "../assets/market/game-logo.svg";
 
@@ -37,29 +34,22 @@ const GoogleMarketPageV1 = () => {
   const [isFullSlider, setIsFullSlider] = useState<boolean>(false);
 
   const { isPWA } = useUserAgent();
-  const { isWebView } = useIsWebView();
   const { loading, handlePreparePWALink } = useTrackerContext();
   const { isInstalling, isInstalled, progress, handleInstallStart } = usePWAInstallContext();
 
   const handleInstall = () => {
-    if (isWebView) {
-      redirectFromWebView();
-      return;
-    }
-
     handlePreparePWALink();
     handleInstallStart();
   };
 
   const handleOpenPWA = () => {
-    const link = "./";
-    const protocolLink = "web+myapp:///" + link;
+    const url = `${window.location.origin}/?data=from-browser`;
+    const a = document.createElement("a");
 
-    if (!isPWA) {
-      window.location.href = protocolLink;
-    } else {
-      window.location.href = "/?data=from-standalone";
-    }
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
   };
 
   if (isPWA) return <Loader />;
