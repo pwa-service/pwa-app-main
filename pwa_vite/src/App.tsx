@@ -18,7 +18,7 @@ const App = () => {
 
   return (
     <Fragment>
-      <GlobalRedirect />s
+      <GlobalRedirect />
       <AppRouter />
     </Fragment>
   );
