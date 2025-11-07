@@ -20,6 +20,7 @@ export class LoggerProcessor extends WorkerHost {
     }
 
     async process(job: Job<CreateAppPayload>): Promise<void> {
-        this.logger.log(`Processing created app job for App ID: ${job.data.appId}.`);
+        // await this.repo.setActive(job.data.appId!)
+        this.logger.log(`Processed created app job for App ID: ${job.data.appId}.`);
     }
 }

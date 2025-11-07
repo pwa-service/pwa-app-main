@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
+	"time"
 
 	"github.com/caarlos0/env"
 	"github.com/pkg/errors"
@@ -30,13 +31,34 @@ type Config struct {
 	SftpHost          string `env:"SFTP_USER" envDefault:"72.60.247.106"`
 	SftpUser          string `env:"SFTP_USER" envDefault:"eliot"`
 	SftpPassword      string `env:"SFTP_PASSWORD" envDefault:"Eliot_Password"`
-	RemoteBaseDir     string `env:"REMOTE_BASE_DIR" envDefault:"/home/eliot/websites"`
+	RemoteBaseDir     string `env:"REMOTE_BASE_DIR" envDefault:"/home/eliot/websites/apps"`
 }
 
 type CreateAppJob struct {
-	Name       string `json:"name"`
-	AppID      string `json:"appId"`
-	TemplateID int    `json:"templateId"`
+	Domain string `json:"Domain"`
+	AppID  string `json:"appId"`
+}
+
+func keepAlivePinger(ctx context.Context, rdb *redis.Client) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	log.Println("KeepAlive Pinger: Started.")
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := rdb.Ping(ctx).Err(); err != nil {
+				log.Printf("KeepAlive Pinger: Failed to ping Redis: %v", err)
+				return
+			}
+			log.Println("KeepAlive Pinger: PING sent.")
+
+		case <-ctx.Done():
+			log.Println("KeepAlive Pinger: Stopping.")
+			return
+		}
+	}
 }
 
 func main() {
@@ -47,12 +69,15 @@ func main() {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
-		Password: cfg.RedisPassword,
-		DB:       0,
+		Addr:         fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
+		Password:     cfg.RedisPassword,
+		DB:           0,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	})
 
-	_, err := rdb.Ping(ctx).Result()
+	res, err := rdb.Ping(ctx).Result()
+	fmt.Println(res, err)
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis Standalone: %v", err)
 	}
@@ -76,6 +101,10 @@ func main() {
 		}
 
 		var jobData CreateAppJob
+		pingerCtx, cancelPinger := context.WithCancel(context.Background())
+		go keepAlivePinger(pingerCtx, rdb)
+		defer cancelPinger()
+
 		if err := json.Unmarshal([]byte(dataString), &jobData); err != nil {
 			log.Printf("Go Worker: Failed to unmarshal job JSON: %v. Data: %s", err, dataString)
 			return nil, errors.New("cannot unmarshal job JSON")
@@ -83,18 +112,20 @@ func main() {
 
 		fmt.Printf("Processing job %s for App ID: %s\n", job.Id, jobData.AppID)
 
-		localBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Name, jobData.AppID)
+		localBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Domain)
+		localBuildDirToRemove := localBuildDir
+		localBuildDir = path.Join(localBuildDir, "dist")
 		if buildErr != nil {
 			log.Printf("Job %s FAILED build: %v", job.Id, buildErr)
 			return nil, errors.Wrapf(buildErr, "Build process failed")
 		}
 
 		defer func() {
-			log.Printf("Cleaning up local build directory: %s", localBuildDir)
-			if err := os.RemoveAll(localBuildDir); err != nil {
-				log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDir, err)
+			log.Printf("Cleaning up local build directory: %s", localBuildDirToRemove)
+			if err := os.RemoveAll(localBuildDirToRemove); err != nil {
+				log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDirToRemove, err)
 			} else {
-				log.Printf("Build %s has been cleaned out successfully", localBuildDir)
+				log.Printf("Build %s has been cleaned out successfully", localBuildDirToRemove)
 			}
 		}()
 
@@ -104,14 +135,14 @@ func main() {
 			Password: cfg.SftpPassword,
 			Host:     cfg.SftpHost,
 		}
-		remoteUploadPath := path.Join(cfg.RemoteBaseDir, jobData.AppID)
+		remoteUploadPath := path.Join(cfg.RemoteBaseDir, jobData.Domain)
 
-		transporter, err := NewSftpUploader(sftpCreds, localBuildDir, remoteUploadPath)
+		transporter, err := NewSftpUploader(sftpCreds, remoteUploadPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "SFTP connection failed")
 		}
 		defer transporter.Close()
-		if err := transporter.Upload(); err != nil {
+		if err := transporter.Upload(localBuildDir); err != nil {
 			log.Printf("SFTP upload failed for %s: %v", jobData.AppID, err)
 			return nil, errors.Wrap(err, "SFTP upload failed")
 		}

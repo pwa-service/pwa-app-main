@@ -6,9 +6,12 @@ RUN apk add --no-cache git ca-certificates
 COPY pwa-builder/go.mod pwa-builder/go.sum ./
 
 RUN go mod download
+
 COPY pwa-builder/src/ ./src/
 
-RUN cd src && go build -o /app/worker .
+RUN go build -o /app/worker ./src/
+
+
 FROM node:20-alpine
 
 WORKDIR /app
