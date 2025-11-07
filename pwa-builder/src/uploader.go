@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,7 +29,14 @@ type SftpUploader struct {
 	remoteBaseDir string
 }
 
-func NewSftpUploader(creds SftpCredentials, localDir, remoteDir string) (*SftpUploader, error) {
+const numUploadWorkers = 10
+
+type uploadJob struct {
+	localPath  string
+	remotePath string
+}
+
+func NewSftpUploader(creds SftpCredentials, remoteDir string) (*SftpUploader, error) {
 	if creds.Host == "" || creds.User == "" || creds.Password == "" {
 		return nil, errors.New("SFTP_HOST, SFTP_USER, or SFTP_PASSWORD env vars not set")
 	}
@@ -62,61 +70,112 @@ func NewSftpUploader(creds SftpCredentials, localDir, remoteDir string) (*SftpUp
 	return &SftpUploader{
 		client:        client,
 		sshConn:       conn,
-		localBaseDir:  localDir,
 		remoteBaseDir: remoteDir,
 	}, nil
 }
 
-func (u *SftpUploader) Upload() error {
+func (u *SftpUploader) Upload(localBaseDir string) error {
 	if u.client == nil {
 		return errors.New("SFTP client is nil. Cannot upload.")
 	}
-	log.Printf("SFTP: Starting recursive upload from %s to %s", u.localBaseDir, u.remoteBaseDir)
+	log.Printf("SFTP: Starting parallel upload from %s to %s", localBaseDir, u.remoteBaseDir)
 
-	walkFn := func(localPath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return errors.Wrap(err, "error during file walk")
-		}
+	jobs := make(chan uploadJob, numUploadWorkers)
+	errChan := make(chan error, numUploadWorkers)
+	var wg sync.WaitGroup
 
-		if info.IsDir() {
+	for i := 0; i < numUploadWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobs {
+				if err := u.uploadFile(job.localPath, job.remotePath); err != nil {
+					errChan <- err
+				}
+			}
+		}()
+	}
+
+	walkErrCh := make(chan error, 1)
+
+	go func() {
+		defer close(jobs)
+
+		walkFn := func(localPath string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.Wrap(err, "error during file walk")
+			}
+			if info.IsDir() {
+				return nil
+			}
+
+			relativePath, err := filepath.Rel(localBaseDir, localPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to get relative path")
+			}
+
+			remotePath := path.Join(u.remoteBaseDir, filepath.ToSlash(relativePath))
+			jobs <- uploadJob{localPath: localPath, remotePath: remotePath}
 			return nil
 		}
 
-		relativePath, err := filepath.Rel(u.localBaseDir, localPath)
-		if err != nil {
-			return errors.Wrap(err, "failed to get relative path")
+		if err := filepath.Walk(localBaseDir, walkFn); err != nil {
+			walkErrCh <- err
 		}
+		close(walkErrCh)
+	}()
 
-		remotePath := path.Join(u.remoteBaseDir, filepath.ToSlash(relativePath))
-		remoteDir := path.Dir(remotePath)
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
 
-		if err := u.client.MkdirAll(remoteDir); err != nil {
-			return errors.Wrapf(err, "failed to create remote directory %s", remoteDir)
-		}
-
-		localFile, err := os.Open(localPath)
-		if err != nil {
-			return errors.Wrapf(err, "failed to open local file %s", localPath)
-		}
-
-		defer localFile.Close()
-
-		remoteFile, err := u.client.Create(remotePath)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create remote file %s", remotePath)
-		}
-		defer remoteFile.Close()
-
-		_, err = io.Copy(remoteFile, localFile)
-		if err != nil {
-			return errors.Wrapf(err, "failed to copy data to %s", remotePath)
-		}
-
-		log.Printf("SFTP: Uploaded %s", remotePath)
-		return nil
+	if err := <-walkErrCh; err != nil {
+		return errors.Wrap(err, "SFTP Uploader: File scan failed")
 	}
 
-	return filepath.Walk(u.localBaseDir, walkFn)
+	var firstError error
+	for err := range errChan {
+		if err != nil {
+			log.Printf("SFTP: Upload worker failed: %v", err)
+			if firstError == nil {
+				firstError = err
+			}
+		}
+	}
+
+	if firstError != nil {
+		return errors.Wrap(firstError, "SFTP UPLOAD FAILED")
+	}
+
+	log.Printf("SFTP: All files uploaded successfully to %s", u.remoteBaseDir)
+	return nil
+}
+
+func (u *SftpUploader) uploadFile(localPath, remotePath string) error {
+	localFile, err := os.Open(localPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to open local file %s", localPath)
+	}
+	defer localFile.Close()
+
+	remoteDir := path.Dir(remotePath)
+	if err := u.client.MkdirAll(remoteDir); err != nil {
+		return errors.Wrapf(err, "failed to create remote directory %s", remoteDir)
+	}
+
+	remoteFile, err := u.client.Create(remotePath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create remote file %s", remotePath)
+	}
+	defer remoteFile.Close()
+
+	_, err = io.Copy(remoteFile, localFile)
+	if err != nil {
+		return errors.Wrapf(err, "failed to copy data to %s", remotePath)
+	}
+
+	return nil
 }
 
 func (u *SftpUploader) Close() error {
@@ -139,5 +198,7 @@ func (u *SftpUploader) Close() error {
 			return errors.Wrap(err, "failed to close SSH connection")
 		}
 	}
+
+	log.Println("SFTP: Connection closed successfully.")
 	return nil
 }

@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.10
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/v9 v9.12.0
 	go.codycody31.dev/gobullmq v1.0.3
 	golang.org/x/crypto v0.41.0
 

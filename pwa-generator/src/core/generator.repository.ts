@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../pwa-prisma/src';
 import {CreateAppDto} from "../../../pwa-shared/src";
-import { Status } from "@prisma/client";
+import {Status } from "@prisma/client";
 
 
 @Injectable()
@@ -14,6 +14,15 @@ export class GeneratorRepository {
                 ...data,
                 status: Status.inactive
             }
+        });
+    }
+
+    async setActive(id: string) {
+        await this.prisma.user.update({
+            where: { id },
+            data: {
+                status: Status.active,
+            },
         });
     }
 

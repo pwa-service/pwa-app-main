@@ -297,7 +297,6 @@ export class EventHandlerCoreService {
     let logStatus: LogStatus = LogStatus.success;
     let responseData: any = null;
     let finalResult: string | FacebookApiError;
-
     let url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
 
     try {

@@ -24,12 +24,6 @@ export class CreateAppDto {
     @IsString()
     description?: string;
 
-    @ApiProperty({ example: 101 })
-    @IsOptional()
-    @Type(() => Number)
-    @IsInt()
-    @IsPositive()
-    templateId?: number;
 
     @ApiProperty()
     @IsOptional()
