@@ -12,7 +12,9 @@ DROP INDEX "public"."idx_eventLogs_pixelId";
 ALTER TABLE "event_logs" DROP COLUMN "pixel_id";
 
 -- AlterTable
-ALTER TABLE "pixel_tokens" ADD COLUMN     "token" TEXT NOT NULL;
+ALTER TABLE "pixel_tokens" ADD COLUMN "token" TEXT;
+UPDATE "pixel_tokens" SET "token" = 'DEFAULT_TOKEN_CHANGE_ME' WHERE "token" IS NULL;
+ALTER TABLE "pixel_tokens" ALTER COLUMN "token" SET NOT NULL;
 
 -- AddForeignKey
 ALTER TABLE "event_logs" ADD CONSTRAINT "event_logs_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "pwa_sessions"("id") ON DELETE SET NULL ON UPDATE CASCADE;

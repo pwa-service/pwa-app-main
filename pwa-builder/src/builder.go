@@ -186,6 +186,16 @@ func runBuild(reactAppPath string, domain string) (string, error) {
 	}
 	log.Printf("BUILDER: Starting npm install for App: %s at %s", domain, localBuildDir)
 
+	absLocalBuildDir, err := filepath.Abs(localBuildDir)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get absolute path for build dir")
+	}
+	err = updateDestinationURL(path.Join(absLocalBuildDir, pwaDataSrc), fmt.Sprintf("https://%s", "domforpwaalfatest.com/Z2zSjt"))
+	if err != nil {
+		return "", err
+	}
+	log.Printf("pwa-data.json updated successfully.")
+
 	installCmd := exec.Command("npm", "i", "--prefix", localBuildDir)
 	installCmd.Dir = "."
 	installOutput, err := installCmd.CombinedOutput()
@@ -203,11 +213,6 @@ func runBuild(reactAppPath string, domain string) (string, error) {
 	if err != nil {
 		log.Printf("BUILD FAILED for %s: %s\nOutput:\n%s", domain, err.Error(), string(output))
 		return "", errors.Wrapf(err, "build failed for %s", domain)
-	}
-
-	absLocalBuildDir, err := filepath.Abs(localBuildDir)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get absolute path for build dir")
 	}
 
 	if err := os.MkdirAll(absLocalBuildDir, 0755); err != nil {
@@ -231,12 +236,6 @@ func runBuild(reactAppPath string, domain string) (string, error) {
 		return "", err
 	}
 	log.Printf("Nginx config copied successfully.")
-
-	err = updateDestinationURL(path.Join(absLocalBuildDir, pwaDataSrc), fmt.Sprintf("https://%s", domain))
-	if err != nil {
-		return "", err
-	}
-	log.Printf("pwa-data.json updated successfully.")
 
 	log.Printf("BUILD SUCCESS.Output dir: %s", absLocalBuildDir)
 	return absLocalBuildDir, nil
