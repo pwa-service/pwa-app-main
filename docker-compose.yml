@@ -214,6 +214,8 @@ services:
     restart: unless-stopped
     networks:
       - pwa-network
+    ports:
+      - "127.0.0.1:5555:5555"
 
 volumes:
   postgres_data:
