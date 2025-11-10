@@ -28,6 +28,7 @@ export class EventHandlerGrpcController {
   @GrpcMethod('EventHandlerService', 'PrepareInstallLink')
   PrepareInstallLink(
       @Payload(
+          ViewContentEnrichmentPipe,
           SessionExistsPipe
       ) dto: PrepareInstallLinkDto) {
     return this.core.prepareInstallLink(dto);
@@ -36,6 +37,7 @@ export class EventHandlerGrpcController {
   @GrpcMethod('EventHandlerService', 'PwaFirstOpen')
   PwaFirstOpen(
       @Payload(
+          ViewContentEnrichmentPipe,
           SessionExistsPipe
       ) dto: PwaFirstOpenDto & { _meta: EventMeta }) {
     return this.core.pwaFirstOpen(dto);
@@ -44,6 +46,7 @@ export class EventHandlerGrpcController {
   @GrpcMethod('EventHandlerService', 'Lead')
   Lead(
       @Payload(
+          ViewContentEnrichmentPipe,
         SessionExistsPipe
       ) dto: LeadDto & { _meta: EventMeta }) {
     return this.core.lead(dto);

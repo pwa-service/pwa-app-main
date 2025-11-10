@@ -62,7 +62,7 @@ model PwaApp {
 
 model PixelToken {
   id          String       @id @default(uuid())
-  pixelId     String       @unique @map("pixel_id")
+  pixelFbId   String       @unique @map("pixel_id")
   token       String
   name        String?
   description String?

@@ -8,12 +8,17 @@ export class EventHandlerRepository {
 
     async upsertSession(input: UpsertSessionInput) {
         if (!input.sessionId) {
+            const pixelToken = await this.findPixelTokenId(input.pixelId)
+
+            if (!pixelToken) {
+                throw new Error(`PixelToken with pixelFbId ${input.pixelId} not found.`);
+            }
             return this.prisma.pwaSession.create({
                 data: {
                     pwaDomain: input.pwaDomain,
                     landingUrl: input.landingUrl ?? null,
                     queryStringRaw: input.queryStringRaw ?? null,
-                    pixelId: input.pixelId,
+                    pixelId: pixelToken.id,
                     fbclid: input.fbclid ?? null,
                     offerId: input.offerId ?? null,
                     utmSource: input.utmSource ?? null,
@@ -41,8 +46,8 @@ export class EventHandlerRepository {
         return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
-    async findPixelTokenId(pixelId: string) {
-        return this.prisma.pixelToken.findFirst({ where: { pixelId } });
+    async findPixelTokenId(id: string) {
+        return this.prisma.pixelToken.findFirst({ where: { id } });
     }
 
     async setFinalUrl(id: string, finalUrl: string): Promise<void> {

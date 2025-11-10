@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, Post, Query, Req} from '@nestjs/common';
 import { Request } from 'express';
 import { EventHandlerGrpcClient } from './event-handler.grpc.client';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
@@ -33,27 +33,27 @@ export class EventHandlerHttpController {
         return await this.pwa.pwaFirstOpen(dto, buildGrpcMetadata(req));
     }
 
-    @Post('lead')
+    @Get('lead')
     @HttpCode(200)
-    async lead(@Body() dto: LeadDto, @Req() req: Request) {
-        return await this.pwa.lead(dto, buildGrpcMetadata(req));
+    async lead(@Req() req: Request) {
+        return await this.pwa.lead(buildGrpcMetadata(req));
     }
 
-    @Post('complete-registration')
+    @Get('complete-registration')
     @HttpCode(200)
-    async completeRegistration(@Body() dto: CompleteRegistrationDto, @Req() req: Request) {
-        return await this.pwa.completeRegistration(dto, buildGrpcMetadata(req));
+    async completeRegistration(@Req() req: Request) {
+        return await this.pwa.completeRegistration(buildGrpcMetadata(req));
     }
 
-    @Post('purchase')
+    @Get('purchase')
     @HttpCode(200)
-    async purchase(@Body() dto: PurchaseDto, @Req() req: Request) {
-        return await this.pwa.purchase(dto, buildGrpcMetadata(req));
+    async purchase( @Req() req: Request) {
+        return await this.pwa.purchase(buildGrpcMetadata(req));
     }
 
-    @Post('subscribe')
+    @Get('subscribe')
     @HttpCode(200)
-    async subscribe(@Body() dto: SubscribeDto, @Req() req: Request) {
-        return await this.pwa.subscribe(dto, buildGrpcMetadata(req));
+    async subscribe( @Req() req: Request) {
+        return await this.pwa.subscribe(buildGrpcMetadata(req));
     }
 }

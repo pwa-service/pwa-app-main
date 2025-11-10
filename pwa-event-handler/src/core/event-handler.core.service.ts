@@ -42,17 +42,16 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'viewContent:input', event });
 
     const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
-    // const { id: sessionId } = await this.repo.upsertSession({
-    //   pwaDomain: event.pwaDomain,
-    //   landingUrl: event.landingUrl ?? null,
-    //   queryStringRaw: event.queryStringRaw ?? null,
-    //   pixelId,
-    //   fbclid: fbclid ?? null,
-    //   offerId: offerId ?? null,
-    //   utmSource: utmSource ?? null,
-    //   sub1: undefined,
-    // });
-    const sessionId = "a16a6060-527a-40a0-bea8-e6b769ba3ccb"
+    const { id: sessionId } = await this.repo.upsertSession({
+      pwaDomain: event.pwaDomain,
+      landingUrl: event.landingUrl ?? null,
+      queryStringRaw: event.queryStringRaw ?? null,
+      pixelId,
+      fbclid: fbclid ?? null,
+      offerId: offerId ?? null,
+      utmSource: utmSource ?? null,
+      sub1: undefined,
+    });
     const eventName = 'ViewContent';
     const payload = this.payloadFbBuilder({
       eventName,
@@ -284,10 +283,20 @@ export class EventHandlerCoreService {
 
 
   private async sendToFacebookApi(
-      pixelId: string,
+      id: string,
       eventType: EventType,
       payload: unknown,
   ) {
+    const pixelToken = await this.repo.findPixelTokenId(id);
+    if (!pixelToken) {
+      throw new RpcException({
+        code: status.INVALID_ARGUMENT,
+        message: 'No pixel token fond by pixel id'
+      });
+    }
+
+    const pixelId = pixelToken.pixelFbId
+    const fbToken = pixelToken.token
     const eventId =
         (payload as any)?.data?.[0]?.event_id ??
         (payload as any)?.data?.[0]?.eventId ??
@@ -301,7 +310,7 @@ export class EventHandlerCoreService {
     let url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
 
     try {
-      if (process.env.FB_MOCK) {
+      if (process.env.FB_MOCK === 'true') {
         const mock = {
           events_received: (payload as any)?.data?.length ?? 1,
           fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
@@ -311,15 +320,7 @@ export class EventHandlerCoreService {
         responseData = mock;
         finalResult = JSON.stringify(mock);
       } else {
-        const pixelToken = await this.repo.findPixelTokenId(pixelId);
-        if (!pixelToken) {
-          throw new RpcException({
-            code: status.INVALID_ARGUMENT,
-            message: 'No pixel token fond by pixel id'
-          });
-        }
-
-        url = `${url}?access_token=${pixelToken.token}`;
+        url = `${url}?access_token=${fbToken}`;
         const {data, status: httpStatus} = await axios.post(url, payload, {
           headers: {'Content-Type': 'application/json'},
           timeout: 7000,

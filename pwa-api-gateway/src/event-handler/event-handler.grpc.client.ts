@@ -14,10 +14,10 @@ interface EventHandlerService {
     viewContent(data: ViewContentDto, md?: Metadata, opts?: Record<string, any>): any;
     prepareInstallLink(data: PrepareInstallLinkDto, md?: Metadata, opts?: Record<string, any>): any;
     pwaFirstOpen(data: PwaFirstOpenDto, md?: Metadata, opts?: Record<string, any>): any;
-    lead(data: LeadDto, md?: Metadata, opts?: Record<string, any>): any;
-    completeRegistration(data: CompleteRegistrationDto, md?: Metadata, opts?: Record<string, any>): any;
-    purchase(data: PurchaseDto, md?: Metadata, opts?: Record<string, any>): any;
-    subscribe(data: SubscribeDto, md?: Metadata, opts?: Record<string, any>): any;
+    lead(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    completeRegistration(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    purchase(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    subscribe(data: any, md?: Metadata, opts?: Record<string, any>): any;
 }
 
 @Injectable()
@@ -42,19 +42,19 @@ export class EventHandlerGrpcClient implements OnModuleInit {
         return await lastValueFrom(this.svc.pwaFirstOpen(data, metadata)) as any;
     }
 
-    async lead(data: LeadDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.lead(data, metadata)) as any;
+    async lead(metadata?: Metadata) {
+        return await lastValueFrom(this.svc.lead({}, metadata)) as any;
     }
 
-    async completeRegistration(data: CompleteRegistrationDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.completeRegistration(data, metadata)) as any;
+    async completeRegistration(metadata?: Metadata) {
+        return await lastValueFrom(this.svc.completeRegistration({}, metadata)) as any;
     }
 
-    async purchase(data: PurchaseDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.purchase(data, metadata)) as any;
+    async purchase(metadata?: Metadata) {
+        return await lastValueFrom(this.svc.purchase({}, metadata)) as any;
     }
 
-    async subscribe(data: SubscribeDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.subscribe(data, metadata)) as any;
+    async subscribe(metadata?: Metadata) {
+        return await lastValueFrom(this.svc.subscribe({}, metadata)) as any;
     }
 }
