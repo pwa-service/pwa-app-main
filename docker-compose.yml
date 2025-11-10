@@ -57,7 +57,7 @@ services:
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
-      - FB_MOCK=true
+      - FB_MOCK=false
       - FB_GRAPH_VERSION=v21.0
       - REDIS_HOST=redis
       - REDIS_PORT=6379

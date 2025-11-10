@@ -42,16 +42,17 @@ export class EventHandlerCoreService {
     this.log.debug({ tag: 'viewContent:input', event });
 
     const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
-    const { id: sessionId } = await this.repo.upsertSession({
-      pwaDomain: event.pwaDomain,
-      landingUrl: event.landingUrl ?? null,
-      queryStringRaw: event.queryStringRaw ?? null,
-      pixelId,
-      fbclid: fbclid ?? null,
-      offerId: offerId ?? null,
-      utmSource: utmSource ?? null,
-      sub1: undefined,
-    });
+    // const { id: sessionId } = await this.repo.upsertSession({
+    //   pwaDomain: event.pwaDomain,
+    //   landingUrl: event.landingUrl ?? null,
+    //   queryStringRaw: event.queryStringRaw ?? null,
+    //   pixelId,
+    //   fbclid: fbclid ?? null,
+    //   offerId: offerId ?? null,
+    //   utmSource: utmSource ?? null,
+    //   sub1: undefined,
+    // });
+    const sessionId = "a16a6060-527a-40a0-bea8-e6b769ba3ccb"
     const eventName = 'ViewContent';
     const payload = this.payloadFbBuilder({
       eventName,

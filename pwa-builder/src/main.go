@@ -113,21 +113,21 @@ func main() {
 		fmt.Printf("Processing job %s for App ID: %s\n", job.Id, jobData.AppID)
 
 		localBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Domain)
-		localBuildDirToRemove := localBuildDir
+		//localBuildDirToRemove := localBuildDir
 		localBuildDir = path.Join(localBuildDir, "dist")
 		if buildErr != nil {
 			log.Printf("Job %s FAILED build: %v", job.Id, buildErr)
 			return nil, errors.Wrapf(buildErr, "Build process failed")
 		}
 
-		defer func() {
-			log.Printf("Cleaning up local build directory: %s", localBuildDirToRemove)
-			if err := os.RemoveAll(localBuildDirToRemove); err != nil {
-				log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDirToRemove, err)
-			} else {
-				log.Printf("Build %s has been cleaned out successfully", localBuildDirToRemove)
-			}
-		}()
+		//defer func() {
+		//	log.Printf("Cleaning up local build directory: %s", localBuildDirToRemove)
+		//	if err := os.RemoveAll(localBuildDirToRemove); err != nil {
+		//		log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDirToRemove, err)
+		//	} else {
+		//		log.Printf("Build %s has been cleaned out successfully", localBuildDirToRemove)
+		//	}
+		//}()
 
 		log.Println("SFTP: Initializing transporter...")
 		sftpCreds := SftpCredentials{
