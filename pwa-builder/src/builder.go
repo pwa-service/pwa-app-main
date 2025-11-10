@@ -167,7 +167,7 @@ func updateNginxConfig(filePath string, domain string) error {
 	}
 
 	configString := string(content)
-	newConfigString := strings.Replace(configString, "%s", domain, 1)
+	newConfigString := strings.Replace(configString, "%s", domain, 2)
 
 	err = os.WriteFile(filePath, []byte(newConfigString), fileMode)
 	if err != nil {
