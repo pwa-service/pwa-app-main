@@ -1,23 +1,31 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
-import { Metadata } from '@grpc/grpc-js';
-import { lastValueFrom } from 'rxjs';
+import {BadRequestException, Inject, Injectable, OnModuleInit} from '@nestjs/common';
+import {ClientGrpc} from '@nestjs/microservices';
+import {Metadata} from '@grpc/grpc-js';
+import {lastValueFrom} from 'rxjs';
 import {
     CompleteRegistrationDto,
-    LeadDto,
+    FbEventEnum, LeadDto,
     PrepareInstallLinkDto, PurchaseDto,
-    PwaFirstOpenDto, SubscribeDto,
+    PwaFirstOpenDto,
+    SubscribeDto,
     ViewContentDto
 } from "../../../pwa-shared/src";
+import {Request} from 'express';
+import {FbEventDto} from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
 
 interface EventHandlerService {
     viewContent(data: ViewContentDto, md?: Metadata, opts?: Record<string, any>): any;
     prepareInstallLink(data: PrepareInstallLinkDto, md?: Metadata, opts?: Record<string, any>): any;
     pwaFirstOpen(data: PwaFirstOpenDto, md?: Metadata, opts?: Record<string, any>): any;
-    lead(data: any, md?: Metadata, opts?: Record<string, any>): any;
-    completeRegistration(data: any, md?: Metadata, opts?: Record<string, any>): any;
-    purchase(data: any, md?: Metadata, opts?: Record<string, any>): any;
-    subscribe(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    event(data: any, md?: Metadata, opts?: Record<string, any>): any;
+}
+
+interface EventRequest {
+    lead?: LeadDto;
+    completeRegistration?: CompleteRegistrationDto;
+    purchase?: PurchaseDto;
+    subscribe?: SubscribeDto;
+    eventType?: EventRequest;
 }
 
 @Injectable()
@@ -42,19 +50,8 @@ export class EventHandlerGrpcClient implements OnModuleInit {
         return await lastValueFrom(this.svc.pwaFirstOpen(data, metadata)) as any;
     }
 
-    async lead(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.lead({}, metadata)) as any;
-    }
-
-    async completeRegistration(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.completeRegistration({}, metadata)) as any;
-    }
-
-    async purchase(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.purchase({}, metadata)) as any;
-    }
-
-    async subscribe(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.subscribe({}, metadata)) as any;
+    async event(req: Request, metadata?: Metadata) {
+        const query = req.query
+        return await lastValueFrom(this.svc.event({...query, eventType: query.event}, metadata)) as any;
     }
 }

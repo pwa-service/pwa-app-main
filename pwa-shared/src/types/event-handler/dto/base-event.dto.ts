@@ -3,7 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import {EventMeta} from "../payload/capi.payload";
 
 export class BaseEventDto {
-    @ApiProperty() @IsString() pwaDomain!: string;
+    @ApiProperty()
+    @IsOptional()
+    @IsString() pwaDomain!: string;
 
     @ApiProperty({ required: false })
     @IsOptional()

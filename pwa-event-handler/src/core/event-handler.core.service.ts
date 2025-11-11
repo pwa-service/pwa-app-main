@@ -4,7 +4,7 @@ import {EventType, LogStatus} from '.prisma/client';
 import { EventHandlerRepository } from './event-handler.repository';
 import {EventLogProducer} from "../queues/event-log.producer";
 import {
-  CompleteRegistrationDto, FBPayload,
+  CompleteRegistrationDto, FbEventEnum, FBPayload,
   LeadDto, PrepareInstallLinkDto,
   PurchaseDto,
   PwaFirstOpenDto, SubscribeDto,
@@ -13,6 +13,7 @@ import {
 import * as geo from 'geoip-country'
 import {RpcException} from "@nestjs/microservices";
 import { status } from '@grpc/grpc-js';
+import {FbEventDto} from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
 
 class FacebookApiError extends Error {
   fb: string;
@@ -139,6 +140,23 @@ export class EventHandlerCoreService {
       finalUrl: sourceUrl,
     });
     return { success, fb: fbResponse };
+  }
+
+  async event(event: FbEventEnum, dto: FbEventDto) {
+    switch (event) {
+      case FbEventEnum.Lead:
+        return this.lead(dto);
+      case FbEventEnum.Reg:
+        return await this.completeRegistration(dto);
+      case FbEventEnum.Redep:
+        return await this.purchase(dto as PurchaseDto);
+      case FbEventEnum.Dep:
+        return await this.purchase(dto as PurchaseDto);
+      case FbEventEnum.Subscribe:
+        return await this.subscribe(dto as SubscribeDto);
+      default:
+        throw new RpcException('Invalid event name.')
+    }
   }
 
   async lead(event: LeadDto) {

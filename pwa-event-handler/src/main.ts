@@ -10,7 +10,13 @@ async function bootstrap() {
       package: 'eventhandler.v1',
       protoPath: join(process.env.PROTO_DIR || process.cwd(), 'protos', 'event_handler.proto'),
       url: process.env.EVENT_HANDLER_GRPC_URL || '0.0.0.0:50053',
-      loader: { includeDirs: [join(process.cwd(), 'protos')] },
+      loader: {
+        includeDirs: [join(process.cwd(), 'protos')],
+        keepCase: true, longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      },
     },
   });
   await app.listen();

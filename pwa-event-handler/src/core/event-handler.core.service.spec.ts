@@ -11,6 +11,7 @@ import {
     CompleteRegistrationDto, PurchaseDto, SubscribeDto
 } from '../../../pwa-shared/src';
 
+
 const mockSession = {
     id: '544d922f-9bc4-4826-aba3-732df66a0515',
     pixelId: '1000',
@@ -73,7 +74,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('viewContent', () => {
-        const eventMeta: EventMeta = {
+        const eventMeta: any = {
             pixelId: '1000', fbclid: 'fb-test', offerId: 'offer', utmSource: 'src',
             clientIp: '1.1.1.1', userAgent: 'test-agent',
         };
@@ -104,7 +105,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('lead', () => {
-        const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
+        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
         const dto: LeadDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should successfully send Lead event and log', async () => {
@@ -128,7 +129,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('pwaFirstOpen', () => {
-        const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
+        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
         const dto: PwaFirstOpenDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should successfully send ViewContent (on open) and mark open', async () => {
@@ -158,7 +159,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('completeRegistration', () => {
-        const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
+        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
         const dto: CompleteRegistrationDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
 
         it('should send CompleteRegistration event on session and log success', async () => {
@@ -182,7 +183,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('purchase', () => {
-        const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
+        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
         const dto: PurchaseDto = {
             sessionId: mockSession.id, pwaDomain: 'test.app', value: 99.99, currency: 'USD', _meta: eventMeta
         };
@@ -206,7 +207,7 @@ describe('EventHandlerCoreService', () => {
 
 
     describe('subscribe', () => {
-        const eventMeta: EventMeta = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
+        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
         const dto: SubscribeDto = {
             sessionId: mockSession.id, pwaDomain: 'test.app', value: 19.99, currency: 'EUR', _meta: eventMeta
         };

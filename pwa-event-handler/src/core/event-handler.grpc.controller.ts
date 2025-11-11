@@ -1,20 +1,16 @@
-import {Controller, UseInterceptors, ValidationPipe} from '@nestjs/common';
+import {Controller} from '@nestjs/common';
 import {GrpcMethod, Payload} from '@nestjs/microservices';
 import { EventHandlerCoreService } from './event-handler.core.service';
 import { ViewContentEnrichmentPipe } from '../pipes/view-content.enrichment.pipe';
-import {GrpcClientMetaInterceptor} from "../common/interceptors/grpc-client-meta.interceptor";
 import {
-  CompleteRegistrationDto,
-  LeadDto,
-  PrepareInstallLinkDto, PurchaseDto,
-  PwaFirstOpenDto, SubscribeDto,
+  PrepareInstallLinkDto,
+  PwaFirstOpenDto,
   ViewContentDto,
   EventMeta
 } from "../../../pwa-shared/src";
 import {SessionExistsPipe} from "../common/interceptors/session.interceptor";
 
 @Controller()
-@UseInterceptors(GrpcClientMetaInterceptor)
 export class EventHandlerGrpcController {
   constructor(private readonly core: EventHandlerCoreService) {}
 
@@ -43,39 +39,12 @@ export class EventHandlerGrpcController {
     return this.core.pwaFirstOpen(dto);
   }
 
-  @GrpcMethod('EventHandlerService', 'Lead')
-  Lead(
-      @Payload(
-          ViewContentEnrichmentPipe,
-        SessionExistsPipe
-      ) dto: LeadDto & { _meta: EventMeta }) {
-    return this.core.lead(dto);
-  }
-
-  @GrpcMethod('EventHandlerService', 'CompleteRegistration')
-  CompleteRegistration(
+  @GrpcMethod('EventHandlerService', 'Event')
+  Event(
       @Payload(
           ViewContentEnrichmentPipe,
           SessionExistsPipe
-      ) dto: CompleteRegistrationDto & { _meta: EventMeta }) {
-    return this.core.completeRegistration(dto);
-  }
-
-  @GrpcMethod('EventHandlerService', 'Purchase')
-  Purchase(
-      @Payload(
-          ViewContentEnrichmentPipe,
-          SessionExistsPipe
-      ) dto: PurchaseDto & { _meta: EventMeta }) {
-    return this.core.purchase(dto);
-  }
-
-  @GrpcMethod('EventHandlerService', 'Subscribe')
-  Subscribe(
-      @Payload(
-          ViewContentEnrichmentPipe,
-          SessionExistsPipe
-      ) dto: SubscribeDto & { _meta: EventMeta }) {
-    return this.core.subscribe(dto);
+      ) dto: any) {
+    return this.core.event(dto.eventType, dto);
   }
 }

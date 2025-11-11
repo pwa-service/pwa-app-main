@@ -3,11 +3,8 @@ import { Request } from 'express';
 import { EventHandlerGrpcClient } from './event-handler.grpc.client';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import {
-    CompleteRegistrationDto,
-    LeadDto,
-    PrepareInstallLinkDto, PurchaseDto,
+    PrepareInstallLinkDto,
     PwaFirstOpenDto,
-    SubscribeDto,
     ViewContentDto
 } from "../../../pwa-shared/src";
 
@@ -33,27 +30,9 @@ export class EventHandlerHttpController {
         return await this.pwa.pwaFirstOpen(dto, buildGrpcMetadata(req));
     }
 
-    @Get('lead')
+    @Get()
     @HttpCode(200)
-    async lead(@Req() req: Request) {
-        return await this.pwa.lead(buildGrpcMetadata(req));
-    }
-
-    @Get('complete-registration')
-    @HttpCode(200)
-    async completeRegistration(@Req() req: Request) {
-        return await this.pwa.completeRegistration(buildGrpcMetadata(req));
-    }
-
-    @Get('purchase')
-    @HttpCode(200)
-    async purchase( @Req() req: Request) {
-        return await this.pwa.purchase(buildGrpcMetadata(req));
-    }
-
-    @Get('subscribe')
-    @HttpCode(200)
-    async subscribe( @Req() req: Request) {
-        return await this.pwa.subscribe(buildGrpcMetadata(req));
+    async event(@Req() req: Request) {
+        return await this.pwa.event(req, buildGrpcMetadata(req));
     }
 }

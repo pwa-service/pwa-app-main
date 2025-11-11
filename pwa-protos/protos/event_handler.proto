@@ -1,65 +1,68 @@
 syntax = "proto3";
-
 package eventhandler.v1;
 
 service EventHandlerService {
     rpc ViewContent          (ViewContentRequest)          returns (FirstOpenResponse);
     rpc PrepareInstallLink   (PrepareInstallLinkRequest)   returns (PrepareInstallLinkResponse);
     rpc PwaFirstOpen         (PwaFirstOpenRequest)         returns (GenericOk);
-    rpc Lead                 (LeadRequest)                 returns (GenericOk);
-    rpc CompleteRegistration (CompleteRegistrationRequest) returns (GenericOk);
-    rpc Purchase             (PurchaseRequest)             returns (GenericOk);
-    rpc Subscribe            (SubscribeRequest)            returns (GenericOk);
+    rpc Event                (EventRequest)                returns (GenericOk);
 }
 
+message EventRequest {
+    string pixelId        = 1;
+    string sessionId      = 2;
+    string pwaDomain      = 3;
+    string landingUrl     = 4;
+    string queryStringRaw = 5;
+    double value          = 6;
+    string currency       = 7;
+    string eventType      = 8;
+}
+
+
 message ViewContentRequest {
-    string pwaDomain      = 2;
-    string landingUrl     = 3;
-    string queryStringRaw = 4;
-    string sessionId      = 5;
+    string pwaDomain      = 1;
+    string landingUrl     = 2;
+    string queryStringRaw = 3;
+    string pixelId        = 4;
 }
 
 message PrepareInstallLinkRequest {
-    string pwaDomain = 2;
-    string sessionId = 3;
+    string pwaDomain = 1;
+    string sessionId = 2;
 }
 
 message PwaFirstOpenRequest {
-    string pwaDomain = 2;
-    string sessionId = 3;
+    string pwaDomain = 1;
+    string sessionId = 2;
 }
 
 message LeadRequest {
-    string pwaDomain      = 2;
-    string landingUrl     = 3;
-    string queryStringRaw = 4;
-    string sessionId      = 5;
+    string pwaDomain      = 1;
+    string sessionId      = 2;
+    string pixelId        = 3;
 }
 
 message CompleteRegistrationRequest {
-    string userId         = 1;
-    string pwaDomain      = 2;
-    string landingUrl     = 3;
-    string queryStringRaw = 4;
-    string sessionId      = 5;
+    string sessionId      = 1;
+    string pixelId        = 2;
+    string pwaDomain      = 3;
 }
 
 message PurchaseRequest {
     string pwaDomain      = 2;
-    string landingUrl     = 3;
-    string queryStringRaw = 4;
+    string sessionId      = 3;
+    string pixelId        = 4;
     double value          = 5;
     string currency       = 6;
-    string sessionId      = 7;
 }
 
 message SubscribeRequest {
     string pwaDomain      = 2;
-    string landingUrl     = 3;
-    string queryStringRaw = 4;
+    string sessionId      = 3;
+    string pixelId        = 4;
     double value          = 5;
     string currency       = 6;
-    string sessionId      = 7;
 }
 
 message FirstOpenResponse {

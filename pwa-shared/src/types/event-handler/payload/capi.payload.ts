@@ -1,4 +1,4 @@
-import { CampaignParams, MonetaryParams, DeviceContext, Timing } from '../common.types';
+import {CampaignParams, MonetaryParams, DeviceContext, Timing, FbEventEnum} from '../common.types';
 
 export type BasePayload = {
     sourceUrl: string;
@@ -24,4 +24,9 @@ export type EventMeta = {
     pixelId: string;
     clientIp: string;
     userAgent: string;
+    sessionId?: string;
+    pwaDomain: string;
+    value?: number;
+    currency?: string;
+    sub1?: string;
 } & Pick<CampaignParams, 'fbclid' | 'offerId' | 'utmSource'>;

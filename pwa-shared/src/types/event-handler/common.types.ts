@@ -19,3 +19,11 @@ export type Timing = {
     eventTime?: number;
     eventId?: string;
 };
+
+export enum FbEventEnum {
+    Lead ='lead',
+    Dep = 'dep',
+    Redep = 'redep',
+    Reg = 'reg',
+    Subscribe = 'sub'
+}
