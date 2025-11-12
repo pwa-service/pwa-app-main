@@ -265,7 +265,7 @@ export class EventHandlerCoreService {
 
 
   private async sendToFacebookApi(
-      pixelId: number,
+      pixelId: bigint | number,
       eventType: EventType,
       payload: unknown,
   ) {
@@ -287,7 +287,7 @@ export class EventHandlerCoreService {
     let logStatus: LogStatus = LogStatus.success;
     let responseData: any = null;
     let finalResult: string | FacebookApiError;
-    let url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId)}/events`;
+    let url = `https://graph.facebook.com/${this.graphVersion}/${encodeURIComponent(pixelId as number)}/events`;
 
     try {
       if (process.env.FB_MOCK === 'true') {

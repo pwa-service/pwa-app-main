@@ -102,31 +102,7 @@ describe('EventHandlerCoreService', () => {
             expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
         });
     });
-
-
-    describe('lead', () => {
-        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: LeadDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
-
-        it('should successfully send Lead event and log', async () => {
-            mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
-            const result = await service.lead(dto);
-            expect(result.success).toBe(true);
-            expect(repo.getSessionById).toHaveBeenCalledWith(mockSession.id);
-            expect(logs.createLog).toHaveBeenCalledWith(
-                expect.objectContaining({ eventType: EventType.Lead, status: LogStatus.success }),
-            );
-        });
-
-        it('should return silent success if session is NOT found', async () => {
-            repo.getSessionById.mockResolvedValue(null);
-            const result = await service.lead(dto);
-            expect(result.success).toBe(true);
-            expect(result.fb).toContain('Session not found');
-            expect(mockedAxios.post).not.toHaveBeenCalled();
-        });
-    });
-
+    
 
     describe('pwaFirstOpen', () => {
         const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };

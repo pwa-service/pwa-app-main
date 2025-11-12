@@ -46,7 +46,7 @@ export class EventHandlerRepository {
         return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
-    async findPixelTokenId(id: number) {
+    async findPixelTokenId(id: bigint | number) {
         return this.prisma.pixelToken.findFirst({ where: { id } });
     }
 
