@@ -5,7 +5,7 @@ export type UpsertSessionInput = {
     pwaDomain: string;
     landingUrl?: string | null;
     queryStringRaw?: string | null;
-    pixelId: string;
+    pixelId: number;
     fbclid?: string | null;
     offerId?: string | null;
     utmSource?: string | null;

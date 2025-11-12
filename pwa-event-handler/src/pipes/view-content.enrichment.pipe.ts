@@ -8,7 +8,7 @@ type AnyEventDto = {
     landingUrl?: string;
     queryStringRaw?: string;
     sessionId?: string;
-    pixelId?: string;
+    pixelId?: number;
     value?: string;
     currency?: string;
 } & { _meta: EventMeta };

@@ -265,7 +265,7 @@ export class EventHandlerCoreService {
 
 
   private async sendToFacebookApi(
-      pixelId: string,
+      pixelId: number,
       eventType: EventType,
       payload: unknown,
   ) {
