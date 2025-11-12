@@ -61,8 +61,7 @@ model PwaApp {
 }
 
 model PixelToken {
-  id          String       @id @default(uuid())
-  pixelFbId   String       @unique @map("pixel_id")
+  id          BigInt       @id @default(autoincrement())
   token       String
   name        String?
   description String?
@@ -99,7 +98,7 @@ model PwaSession {
   pwaDomain         String     @map("pwa_domain")
   landingUrl        String?    @map("landing_url")
   queryStringRaw    String?    @map("query_string_raw")
-  pixelId           String     @map("pixel_id")
+  pixelId           BigInt     @map("pixel_id")
   pixel             PixelToken @relation("PixelTokens", fields: [pixelId], references: [id])
   fbclid            String?    @map("fbclid")
   offerId           String?    @map("offer_id")
