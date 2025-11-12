@@ -20,6 +20,8 @@ export class ViewContentEnrichmentPipe
 
     transform(value: AnyEventDto): AnyEventDto {
         const params = this.getSearchParams(value);
+        const pixelId = value.pixelId || params.get('pixel_id');
+
         const _meta: EventMeta = {
             clientIp: value._meta.clientIp,
             userAgent: value._meta.userAgent,
@@ -27,7 +29,7 @@ export class ViewContentEnrichmentPipe
             pwaDomain: value.pwaDomain,
             value: value.value ? parseFloat(value.value) : undefined,
             currency: value.currency,
-            pixelId: value.pixelId ? value.pixelId : "",
+            pixelId: pixelId ? pixelId : "",
             fbclid: params.get('fbclid') || undefined,
             offerId: params.get('offer_id') || undefined,
             utmSource: params.get('utm_source') || undefined,
