@@ -269,7 +269,7 @@ export class EventHandlerCoreService {
       eventType: EventType,
       payload: unknown,
   ) {
-    const pixelToken = await this.repo.findPixelTokenId(pixelId.toString());
+    const pixelToken = await this.repo.findPixelTokenId(pixelId);
     if (!pixelToken) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,

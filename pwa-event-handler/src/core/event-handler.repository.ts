@@ -8,7 +8,7 @@ export class EventHandlerRepository {
 
     async upsertSession(input: UpsertSessionInput) {
         if (!input.sessionId) {
-            const pixelToken = await this.findPixelTokenId(input.pixelId.toString());
+            const pixelToken = await this.findPixelTokenId(input.pixelId);
 
             if (!pixelToken) {
                 throw new Error(`PixelToken with pixelFbId ${input.pixelId} not found.`);
