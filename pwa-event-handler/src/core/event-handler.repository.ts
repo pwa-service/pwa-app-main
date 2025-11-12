@@ -47,7 +47,7 @@ export class EventHandlerRepository {
     }
 
     async findPixelTokenId(id: number | bigint | string) {
-        return this.prisma.pixelToken.findFirst({ where: { id: id as string } });
+        return this.prisma.pixelToken.findFirst({ where: { id: id.toString() } });
     }
 
     async setFinalUrl(id: string, finalUrl: string): Promise<void> {
