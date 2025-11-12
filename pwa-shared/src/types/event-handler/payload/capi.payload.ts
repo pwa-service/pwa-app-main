@@ -21,7 +21,7 @@ export type FBPayload =
     | SubscribePayload;
 
 export type EventMeta = {
-    pixelId: number;
+    pixelId: number | bigint | string;
     clientIp: string;
     userAgent: string;
     sessionId?: string;

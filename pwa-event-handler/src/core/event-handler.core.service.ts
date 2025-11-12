@@ -5,7 +5,7 @@ import { EventHandlerRepository } from './event-handler.repository';
 import {EventLogProducer} from "../queues/event-log.producer";
 import {
   CompleteRegistrationDto, FbEventEnum, FBPayload,
-  LeadDto, PrepareInstallLinkDto,
+  PrepareInstallLinkDto,
   PurchaseDto,
   PwaFirstOpenDto, SubscribeDto,
   ViewContentDto,
@@ -265,11 +265,11 @@ export class EventHandlerCoreService {
 
 
   private async sendToFacebookApi(
-      pixelId: bigint | number,
+      pixelId: bigint | number | string,
       eventType: EventType,
       payload: unknown,
   ) {
-    const pixelToken = await this.repo.findPixelTokenId(pixelId);
+    const pixelToken = await this.repo.findPixelTokenId(pixelId.toString());
     if (!pixelToken) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,

@@ -33,7 +33,7 @@ export class ViewContentEnrichmentPipe
             pwaDomain: value.pwaDomain,
             value: value.value ? parseFloat(value.value) : undefined,
             currency: value.currency,
-            pixelId: +pixelId,
+            pixelId: BigInt(pixelId),
             fbclid: params.get('fbclid') || undefined,
             offerId: params.get('offer_id') || undefined,
             utmSource: params.get('utm_source') || undefined,
