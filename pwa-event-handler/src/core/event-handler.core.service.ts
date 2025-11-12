@@ -41,8 +41,12 @@ export class EventHandlerCoreService {
 
   async viewContent(event: ViewContentDto) {
     this.log.debug({ tag: 'viewContent:input', event });
+    const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta
 
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta;
+    if (!pixelId) {
+      throw new RpcException('pixel_id is required in DTO body or query string');
+    }
+
     const { id: sessionId } = await this.repo.upsertSession({
       pwaDomain: event.pwaDomain,
       landingUrl: event.landingUrl ?? null,

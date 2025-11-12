@@ -52,6 +52,6 @@ export class EventHandlerGrpcClient implements OnModuleInit {
 
     async event(req: Request, metadata?: Metadata) {
         const query = req.query
-        return await lastValueFrom(this.svc.event({...query, eventType: query.event}, metadata)) as any;
+        return await lastValueFrom(this.svc.event({...query, sessionId: query.user_id || query.sessionId, eventType: query.event}, metadata)) as any;
     }
 }
