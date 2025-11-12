@@ -188,6 +188,7 @@ services:
         echo "Waiting for database to be ready..."
         sleep 5
         echo "Running Prisma migrations..."
+        npx prisma reset
         npx prisma migrate deploy
         echo "Migrations completed successfully"
     restart: "on-failure"
