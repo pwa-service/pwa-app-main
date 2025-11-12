@@ -103,7 +103,7 @@ export class EventHandlerCoreService {
     const pixelId = sess.pixelId;
     const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
 
-    const eventName = 'ViewContent';
+    const eventName = 'Lead';
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
@@ -144,8 +144,6 @@ export class EventHandlerCoreService {
 
   async event(event: FbEventEnum, dto: FbEventDto) {
     switch (event) {
-      case FbEventEnum.Lead:
-        return this.lead(dto);
       case FbEventEnum.Reg:
         return await this.completeRegistration(dto);
       case FbEventEnum.Redep:
@@ -156,40 +154,6 @@ export class EventHandlerCoreService {
         return await this.subscribe(dto as SubscribeDto);
       default:
         throw new RpcException('Invalid event name.')
-    }
-  }
-
-  async lead(event: LeadDto) {
-    this.log.debug({ tag: 'lead:input', event });
-
-    const sess = await this.repo.getSessionById(event.sessionId);
-    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for lead.' }) };
-
-    const pixelId = sess.pixelId;
-    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
-
-    const eventName = 'Lead'
-    const payload = this.payloadFbBuilder({
-      eventName,
-      sourceUrl,
-      fbclid: sess.fbclid || undefined,
-      offerId: sess.offerId || undefined,
-      utmSource: sess.utmSource || undefined,
-      clientIp: event._meta.clientIp,
-      sessionId: event.sessionId,
-    });
-    this.log.debug({ tag: 'lead:payload', payload });
-
-    try {
-      const fb = await this.sendToFacebookApi(pixelId, eventName, payload);
-      this.log.log({ tag: 'lead:fb-response', fb });
-      return { success: true, fb };
-    } catch (e: any) {
-      if (e instanceof FacebookApiError) {
-        this.log.error({ tag: 'lead:fb-error', error: e.message, fb: e.fb });
-        return { success: false, fb: e.fb };
-      }
-      throw e;
     }
   }
 
@@ -301,19 +265,17 @@ export class EventHandlerCoreService {
 
 
   private async sendToFacebookApi(
-      id: string,
+      pixelId: string,
       eventType: EventType,
       payload: unknown,
   ) {
-    const pixelToken = await this.repo.findPixelTokenId(id);
+    const pixelToken = await this.repo.findPixelTokenId(pixelId);
     if (!pixelToken) {
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
-        message: 'No pixel token fond by pixel id'
+        message: 'No token token fond by pixelId'
       });
     }
-
-    const pixelId = pixelToken.pixelFbId
     const fbToken = pixelToken.token
     const eventId =
         (payload as any)?.data?.[0]?.event_id ??

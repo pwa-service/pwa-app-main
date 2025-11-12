@@ -21,7 +21,6 @@ export type Timing = {
 };
 
 export enum FbEventEnum {
-    Lead ='lead',
     Dep = 'dep',
     Redep = 'redep',
     Reg = 'reg',

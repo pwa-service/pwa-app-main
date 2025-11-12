@@ -46,7 +46,7 @@ export class EventHandlerRepository {
         return this.prisma.pwaSession.findFirst({ where: { id } });
     }
 
-    async findPixelTokenId(id: string) {
+    async findPixelTokenId(id: number) {
         return this.prisma.pixelToken.findFirst({ where: { id } });
     }
 
@@ -58,8 +58,11 @@ export class EventHandlerRepository {
     }
 
     async markFirstOpen(input: MarkFirstOpenInput): Promise<void> {
-        await this.prisma.pwaSession.update({
-            where: { id: input.sessionId },
+        await this.prisma.pwaSession.updateMany({
+            where: {
+                id: input.sessionId,
+                firstOpenAt: null,
+            },
             data: {
                 firstOpenAt: new Date(),
                 firstOpenEventId: input.eventId ?? undefined,
