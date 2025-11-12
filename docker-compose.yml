@@ -16,6 +16,11 @@ services:
       start_period: 5s
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "4g"
 
   auth-service:
     build:
@@ -44,6 +49,11 @@ services:
         condition: service_healthy
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
 
   event-handler:
     build:
@@ -68,6 +78,11 @@ services:
         condition: service_completed_successfully
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "1g"
 
   logger-service:
     build:
@@ -92,6 +107,11 @@ services:
     restart: unless-stopped
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "0.6g"
 
   api-gateway:
     build:
@@ -111,7 +131,11 @@ services:
         condition: service_started
     networks:
       - pwa-network
-    # НЕТ ПОРТОВ - только через nginx
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "0.6g"
 
   pwa-generator:
     build:
@@ -138,23 +162,33 @@ services:
     restart: unless-stopped
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: "0.6g"
 
-  pwa-builder:
-    build:
-      context: .
-      dockerfile: pwa-builder/Dockerfile
-    container_name: pwa-builder
-    env_file:
-      - ./.env
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - pwa-network
+  #pwa-builder:
+  #  build:
+  #    context: .
+  #    dockerfile: pwa-builder/Dockerfile
+  #  container_name: pwa-builder
+  #  env_file:
+  #    - ./.env
+  #  environment:
+  #    - REDIS_HOST=redis
+  #    - REDIS_PORT=6379
+  #  depends_on:
+  #    redis:
+  #      condition: service_healthy
+  #  restart: unless-stopped
+  #  networks:
+  #    - pwa-network
+  #  deploy:
+  #    resources:
+  #      limits:
+  #        cpus: "1.5"
+  #        memory: "5g"
 
   redis:
     image: redis:7-alpine
@@ -172,6 +206,11 @@ services:
       retries: 10
     networks:
       - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "4g"
 
   prisma-migrator:
     build:
@@ -192,12 +231,10 @@ services:
         echo "Migrations completed successfully"
     restart: "on-failure"
     deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 5
-    networks:
-      - pwa-network
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: "0.4g"
 
   prisma-studio:
     build:
@@ -216,6 +253,11 @@ services:
       - pwa-network
     ports:
       - "127.0.0.1:5555:5555"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "0.5g"
 
 volumes:
   postgres_data:
