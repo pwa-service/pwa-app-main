@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { PWA_EVENTS_PREFIX } from "../../../pwa-shared/src/types/bullmq/queues";
-import {GeneratorPublisher} from "./generator.subscriber";
+import {GeneratorPublisher} from "./generator.publisher";
 import { GeneratorRepository } from "../core/generator.repository";
 import {RedisPubSubModule} from "../../../pwa-shared/src/modules/redis/pub-sub.module";
-import {GeneratorSubscriber} from "./generator.publisher";
+import {GeneratorSubscriber} from "./generator.subscriber";
 
 @Module({
     imports: [

@@ -33,7 +33,7 @@ type Config struct {
 }
 
 type CreateAppJob struct {
-	Domain string `json:"Domain"`
+	Domain string `json:"domain"`
 	AppID  string `json:"appId"`
 }
 
