@@ -8,27 +8,25 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/caarlos0/env"
-	"github.com/pkg/errors"
+	_ "github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	"go.codycody31.dev/gobullmq"
-	"go.codycody31.dev/gobullmq/types"
 )
 
-const CREATE_APP_QUEUE = "CREATE_APP_QUEUE"
+const BUILD_STATUS_NEW = "BUILD_PWA_CHANNEL:CREATE_APP_EVENT"
+const BUILD_STATUS_FINISHED = "BUILD_PWA_CHANNEL:BUILD_FINISHED_EVENT"
 
 type Config struct {
-	QueueName         string `env:"QUEUE_NAME" envDefault:"BUILD_QUEUE"`
 	ReactAppPath      string `env:"REACT_APP_PATH" envDefault:"../../pwa_vite"`
-	QueuePrefix       string `env:"QUEUE_PREFIX" envDefault:"pwa"`
 	WorkerConcurrency int    `env:"WORKER_CONCURRENCY" envDefault:"10"`
 	RedisHost         string `env:"REDIS_HOST" envDefault:"localhost"`
 	RedisPort         string `env:"REDIS_PORT" envDefault:"6379"`
 	RedisPassword     string `env:"REDIS_PASSWORD" envDefault:""`
-	SftpHost          string `env:"SFTP_USER" envDefault:"72.60.247.106"`
+	SftpHost          string `env:"SFTP_HOST" envDefault:"72.60.247.106"`
 	SftpUser          string `env:"SFTP_USER" envDefault:"eliot"`
 	SftpPassword      string `env:"SFTP_PASSWORD" envDefault:"Eliot_Password"`
 	RemoteBaseDir     string `env:"REMOTE_BASE_DIR" envDefault:"/home/eliot/websites/apps"`
@@ -37,6 +35,12 @@ type Config struct {
 type CreateAppJob struct {
 	Domain string `json:"Domain"`
 	AppID  string `json:"appId"`
+}
+
+type BuildStatusUpdate struct {
+	AppID  string `json:"appId"`
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
 }
 
 func keepAlivePinger(ctx context.Context, rdb *redis.Client) {
@@ -68,7 +72,7 @@ func main() {
 		log.Fatalf("%+v", err)
 	}
 
-	rdb := redis.NewClient(&redis.Options{
+	rdbClient := redis.NewClient(&redis.Options{
 		Addr:         fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
 		Password:     cfg.RedisPassword,
 		DB:           0,
@@ -76,116 +80,152 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	})
 
-	res, err := rdb.Ping(ctx).Result()
-	fmt.Println(res, err)
+	rdbListener := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
+		Password: cfg.RedisPassword,
+		DB:       0,
+	})
+
+	_, err := rdbClient.Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis Standalone: %v", err)
 	}
 	fmt.Println("Connected to Redis Standalone")
 
-	queue, err := gobullmq.NewQueue(ctx, CREATE_APP_QUEUE, rdb,
-		gobullmq.WithKeyPrefix("pwa"),
-	)
+	pingerCtx, cancelPinger := context.WithCancel(context.Background())
+	go keepAlivePinger(pingerCtx, rdbClient)
+
+	pubsub := rdbListener.Subscribe(ctx, BUILD_STATUS_NEW)
+	defer pubsub.Close()
+
+	_, err = pubsub.Receive(ctx)
 	if err != nil {
-		log.Fatalf("Failed to create queue: %v", err)
+		log.Fatalf("Failed to subscribe to channel '%s': %v", BUILD_STATUS_NEW, err)
 	}
 
-	workerProcess := func(ctx context.Context, job *types.Job, api gobullmq.WorkerProcessAPI) (interface{}, error) {
-		fmt.Printf("WORKER: Processing job %s. Data type: %T\n", job.Id, job.Data)
-		fmt.Println(job.ToJsonData())
+	ch := pubsub.Channel()
+	fmt.Printf("Starting Pub/Sub worker with concurrency limit %d... Waiting for jobs on channel '%s'\n", cfg.WorkerConcurrency, BUILD_STATUS_NEW)
 
-		dataString, ok := job.Data.(string)
-		if !ok {
-			log.Printf("Failed to assert job.Data to string. Type is: %T", job.Data)
-			return nil, errors.New("job data is not a string")
-		}
-
-		var jobData CreateAppJob
-		pingerCtx, cancelPinger := context.WithCancel(context.Background())
-		go keepAlivePinger(pingerCtx, rdb)
-		defer cancelPinger()
-
-		if err := json.Unmarshal([]byte(dataString), &jobData); err != nil {
-			log.Printf("Go Worker: Failed to unmarshal job JSON: %v. Data: %s", err, dataString)
-			return nil, errors.New("cannot unmarshal job JSON")
-		}
-
-		fmt.Printf("Processing job %s for App ID: %s\n", job.Id, jobData.AppID)
-
-		localBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Domain)
-		//localBuildDirToRemove := localBuildDir
-		localBuildDir = path.Join(localBuildDir, "dist")
-		if buildErr != nil {
-			log.Printf("Job %s FAILED build: %v", job.Id, buildErr)
-			return nil, errors.Wrapf(buildErr, "Build process failed")
-		}
-
-		//defer func() {
-		//	log.Printf("Cleaning up local build directory: %s", localBuildDirToRemove)
-		//	if err := os.RemoveAll(localBuildDirToRemove); err != nil {
-		//		log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDirToRemove, err)
-		//	} else {
-		//		log.Printf("Build %s has been cleaned out successfully", localBuildDirToRemove)
-		//	}
-		//}()
-
-		log.Println("SFTP: Initializing transporter...")
-		sftpCreds := SftpCredentials{
-			User:     cfg.SftpUser,
-			Password: cfg.SftpPassword,
-			Host:     cfg.SftpHost,
-		}
-		remoteUploadPath := path.Join(cfg.RemoteBaseDir, jobData.Domain)
-
-		transporter, err := NewSftpUploader(sftpCreds, remoteUploadPath)
-		if err != nil {
-			return nil, errors.Wrap(err, "SFTP connection failed")
-		}
-		defer transporter.Close()
-		if err := transporter.Upload(localBuildDir); err != nil {
-			log.Printf("SFTP upload failed for %s: %v", jobData.AppID, err)
-			return nil, errors.Wrap(err, "SFTP upload failed")
-		}
-
-		log.Printf("Job %s for App %s completed successfully.", job.Id, jobData.AppID)
-
-		queue.Add(ctx, "APP_CREATED", jobData)
-		return "Build and SFTP upload complete", nil
-	}
-
-	worker, err := gobullmq.NewWorker(ctx, cfg.QueueName, gobullmq.WorkerOptions{
-		Concurrency:     cfg.WorkerConcurrency,
-		StalledInterval: 30000,
-		Prefix:          cfg.QueuePrefix,
-		LockDuration:    3000000,
-	}, rdb, workerProcess)
-
-	if err != nil {
-		log.Fatalf("Failed to create worker: %v", err)
-	}
-
-	fmt.Println("Starting gobullmq worker with concurrency 10...")
-	fmt.Printf("Waiting for 'job' tasks in queue %s...", cfg.QueueName)
-
-	worker.On("error", func(args ...interface{}) {
-		fmt.Printf("Worker error: %v\n", args)
-	})
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	workerPool := make(chan struct{}, cfg.WorkerConcurrency)
+	var wg sync.WaitGroup
+	workerCtx, cancelWorkers := context.WithCancel(context.Background())
 
 	go func() {
-		if err := worker.Run(); err != nil {
-			log.Printf("Worker error: %v", err)
+		for msg := range ch {
+			workerPool <- struct{}{}
+			wg.Add(1)
+
+			go func(payload string) {
+				defer wg.Done()
+				defer func() { <-workerPool }()
+				processMessage(workerCtx, rdbClient, cfg, payload)
+			}(msg.Payload)
 		}
 	}()
-	<-c
 
-	fmt.Println("\nShutting down worker...")
-	worker.Close()
-	err = rdb.Close()
-	if err != nil {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	<-sigChan
+
+	fmt.Println("\nShutting down worker... Stopping job intake.")
+	pubsub.Close()
+
+	cancelWorkers()
+	fmt.Println("Waiting for active jobs to complete...")
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		fmt.Println("All jobs completed.")
+	case <-time.After(30 * time.Second):
+		fmt.Println("Warning: Shutdown timeout reached. Some jobs might be incomplete.")
+	}
+
+	cancelPinger()
+	rdbClient.Close()
+	rdbListener.Close()
+	fmt.Println("Worker shut down gracefully")
+}
+
+func processMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON string) {
+	var jobData CreateAppJob
+	if err := json.Unmarshal([]byte(jobJSON), &jobData); err != nil {
+		log.Printf("Go Worker: Failed to unmarshal job JSON: %v. Data: %s", err, jobJSON)
 		return
 	}
-	fmt.Println("Worker shut down gracefully")
+
+	select {
+	case <-ctx.Done():
+		log.Printf("Job %s skipped due to worker shutdown.", jobData.AppID)
+		return
+	default:
+	}
+
+	fmt.Printf("Processing job for App ID: %s (Domain: %s)\n", jobData.AppID, jobData.Domain)
+
+	publishStatus(ctx, rdb, jobData.AppID, "PENDING", "")
+
+	sftpCreds := SftpCredentials{
+		User:     cfg.SftpUser,
+		Password: cfg.SftpPassword,
+		Host:     cfg.SftpHost,
+	}
+	transporter, err := NewSftpUploader(sftpCreds, path.Join(cfg.RemoteBaseDir, jobData.Domain))
+	if err != nil {
+		publishStatus(ctx, rdb, jobData.AppID, "ERROR", fmt.Sprintf("SFTP connection failed: %v", err))
+		return
+	}
+	defer transporter.Close()
+
+	absLocalBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Domain)
+	localBuildDirToRemove := absLocalBuildDir
+	localBuildDir := path.Join(absLocalBuildDir, "dist")
+
+	defer func() {
+		if localBuildDirToRemove != "" {
+			log.Printf("Cleaning up local build directory: %s", localBuildDirToRemove)
+			if err := os.RemoveAll(localBuildDirToRemove); err != nil {
+				log.Printf("Warning: Failed to remove local build directory %s: %v", localBuildDirToRemove, err)
+			} else {
+				log.Printf("Build %s has been cleaned out successfully", localBuildDirToRemove)
+			}
+		}
+	}()
+
+	if buildErr != nil {
+		log.Printf("Job %s FAILED build: %v", jobData.AppID, buildErr)
+		publishStatus(ctx, rdb, jobData.AppID, "ERROR", fmt.Sprintf("Build process failed: %v", buildErr))
+		return
+	}
+
+	if err := transporter.Upload(localBuildDir); err != nil {
+		log.Printf("SFTP upload failed for %s: %v", jobData.AppID, err)
+		publishStatus(ctx, rdb, jobData.AppID, "ERROR", fmt.Sprintf("SFTP upload failed: %v", err))
+		return
+	}
+
+	log.Printf("Job %s for App %s completed successfully.", jobData.AppID, jobData.AppID)
+	publishStatus(ctx, rdb, jobData.AppID, "SUCCESS", "")
+}
+
+func publishStatus(ctx context.Context, rdb *redis.Client, appId string, status string, errMsg string) {
+	payload := BuildStatusUpdate{
+		AppID:  appId,
+		Status: status,
+		Error:  errMsg,
+	}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Failed to marshal status payload: %v", err)
+		return
+	}
+
+	if err := rdb.Publish(ctx, BUILD_STATUS_FINISHED, jsonPayload).Err(); err != nil {
+		log.Printf("Failed to publish status update to channel %s: %v", BUILD_STATUS_FINISHED, err)
+	}
 }

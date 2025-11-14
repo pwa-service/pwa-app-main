@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GeneratorRepository } from './generator.repository';
 import { CreateAppDto } from '../../../pwa-shared/src'
-import {GeneratorProducer} from "../bullmq/generator.producer";
+import {GeneratorPublisher} from "../bullmq/generator.subscriber";
 
 
 @Injectable()
@@ -10,7 +10,7 @@ export class GeneratorCoreService {
 
     constructor(
         private readonly repo: GeneratorRepository,
-        private readonly builder: GeneratorProducer
+        private readonly builderPub: GeneratorPublisher
     ) {}
 
     async createApp(data: CreateAppDto) {
@@ -22,7 +22,7 @@ export class GeneratorCoreService {
         //     createdByUserId: data.createdByUserId,
         // });
 
-        await this.builder.createApp({
+        await this.builderPub.createApp({
             domain: data.domain,
             appId: "test",
 

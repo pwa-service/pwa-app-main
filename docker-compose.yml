@@ -168,27 +168,35 @@ services:
           cpus: "0.3"
           memory: "0.6g"
 
-  #pwa-builder:
-  #  build:
-  #    context: .
-  #    dockerfile: pwa-builder/Dockerfile
-  #  container_name: pwa-builder
-  #  env_file:
-  #    - ./.env
-  #  environment:
-  #    - REDIS_HOST=redis
-  #    - REDIS_PORT=6379
-  #  depends_on:
-  #    redis:
-  #      condition: service_healthy
-  #  restart: unless-stopped
-  #  networks:
-  #    - pwa-network
-  #  deploy:
-  #    resources:
-  #      limits:
-  #        cpus: "1.5"
-  #        memory: "5g"
+  pwa-builder:
+    build:
+      context: .
+      dockerfile: pwa-builder/Dockerfile
+    container_name: pwa-builder
+    env_file:
+      - ./.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKER_CONCURRENCY=10
+      - SFTP_HOST=72.60.247.106
+      - SFTP_USER=eliot
+      - SFTP_PASSWORD=Eliot_Password
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REACT_APP_PATH=../../pwa_vite
+      - REMOTE_BASE_DIR=/home/eliot/websites/apps
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: "5g"
 
   redis:
     image: redis:7-alpine
