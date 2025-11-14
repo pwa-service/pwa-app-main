@@ -19,8 +19,8 @@ export default defineConfig(async () => {
         scope: "/",
 
         manifest: {
-          short_name: "PWA Skeleton",
-          name: "React PWA Skeleton",
+          short_name: "Kino Casino",
+          name: "Kino Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
@@ -42,29 +42,9 @@ export default defineConfig(async () => {
             },
 
             {
-              src: "./app_icon_256.png",
-              type: "image/png",
-              sizes: "256x256",
-            },
-
-            {
-              src: "./app_icon_512.png",
-              type: "image/png",
+              src: "./app_icon_512.webp",
+              type: "image/webp",
               sizes: "512x512",
-            },
-
-            {
-              purpose: "maskable",
-              sizes: "512x512",
-              src: "./app_icon_512_maskable.png",
-              type: "image/png",
-            },
-
-            {
-              purpose: "any",
-              sizes: "512x512",
-              src: "./app_icon_512_rounded.png",
-              type: "image/png",
             },
           ],
         },

@@ -176,51 +176,6 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     updateState((prev) => ({ ...prev, redirectUrl }));
   };
 
-  // const handlePrepareInstallLink = async () => {
-  //   if (localStorage.getItem(INSTALL_KEY)) return false;
-  //   if (!state.trackerData || !state.sessionId) return false;
-
-  //   const { pwaDomain, landingUrl, queryStringRaw } = state.trackerData;
-  //   const { fbclId, pixelId, sessionId } = state;
-
-  //   setLoading("install", true);
-
-  //   try {
-  //     const { finalUrl } = await postPrepareInstallLink({
-  //       pwaDomain,
-  //       landingUrl,
-  //       queryStringRaw,
-  //       sessionId,
-  //     });
-
-  //     const currentURL = new URL(window.location.href);
-  //     const { remainingParams } = parseURLParams(currentURL);
-
-  //     const baseUrl = loadPWAData().destination_url;
-  //     const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
-
-  //     localStorage.setItem(INSTALL_KEY, "true");
-
-  //     console.log("[Main] Prepared redirect URL:", redirectUrl);
-  //     console.log("finalUrl:", finalUrl);
-
-  //     sendRedirectToSW(redirectUrl);
-  //     updateState((prev) => ({ ...prev, redirectUrl }));
-
-  //     return true;
-  //   } catch (error) {
-  //     localStorage.removeItem(INSTALL_KEY);
-  //     localStorage.removeItem(REDIRECT_URL_KEY);
-
-  //     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-  //     updateState((prev) => ({ ...prev, error: errorMessage }));
-
-  //     return false;
-  //   } finally {
-  //     setLoading("install", false);
-  //   }
-  // };
-
   const handlePWAFirstOpen = async () => {
     if (localStorage.getItem(FIRST_OPEN_SENT_KEY)) return;
     if (!state.trackerData || !state.sessionId) return;

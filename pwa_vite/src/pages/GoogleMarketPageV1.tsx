@@ -1,19 +1,14 @@
 import { useState } from "react";
 
-import {
-  googleProductSummary,
-  sliderImagesV1,
-  aboutTexts,
-  aboutTags,
-  googleComments,
-} from "../constants/market";
-
+import { googleProductSummary, aboutTags, googleComments } from "../constants/market";
+import { kinoCasinoSlider } from "../constants/kino-casino/images";
+import { description } from "../constants/kino-casino/description";
 import { useTrackerContext } from "../context/tracker/useTrackerContext";
 import { usePWAInstallContext } from "../context/pwa-install/usePWAInstallContext";
 
 import { useUserAgent } from "../hooks/useUserAgent";
 
-import gameLogo from "../assets/market/game-logo.svg";
+import gameLogo from "../assets/kino-casino/kino_pwa_2.1.webp";
 
 import Loader from "../ui/Loader";
 import InstructionsModal from "../components/modal/InstructionsModal";
@@ -63,12 +58,7 @@ const GoogleMarketPageV1 = () => {
           <ProductImage image={gameLogo} />
         </div>
 
-        <ProductDescription
-          image={gameLogo}
-          name="Coin Volcano"
-          creator="BETONWIN"
-          subtitle="Contiene ADS - Compras en la aplication"
-        />
+        <ProductDescription image={gameLogo} name="Kino Casino" creator="BetonWin" />
 
         <ProductSummary productSummary={googleProductSummary} />
 
@@ -103,14 +93,14 @@ const GoogleMarketPageV1 = () => {
       <ProductSlider
         setSelectedPicture={setSelectedPicture}
         setIsFullSlider={setIsFullSlider}
-        pictures={sliderImagesV1}
+        pictures={kinoCasinoSlider}
         variant="google"
       />
 
-      <ProductAboutSection texts={aboutTexts} tags={aboutTags} variant="google" />
+      <ProductAboutSection texts={description} tags={aboutTags} variant="google" />
 
       <ProductReviews
-        rating="4,9"
+        rating="4,8"
         reviews="126 thousand reviews"
         percentA={95}
         percentB={13}
@@ -124,7 +114,7 @@ const GoogleMarketPageV1 = () => {
       {isFullSlider && (
         <FullPictures
           selectedPicture={selectedPicture}
-          pictures={sliderImagesV1}
+          pictures={kinoCasinoSlider}
           variant="apple"
           setIsFullSlider={setIsFullSlider}
         />
