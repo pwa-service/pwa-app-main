@@ -9,10 +9,9 @@ async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
         new FastifyAdapter(),
+        { cors: false }
     );
-    app.enableCors({
-        origin: '*',
-    });
+
     app.setGlobalPrefix('api');
     const config = new DocumentBuilder()
         .setTitle('PWA Gateway API')
