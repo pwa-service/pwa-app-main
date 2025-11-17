@@ -33,7 +33,7 @@ const GlobalRedirect = () => {
       return;
     }
 
-    const nextUrl = "/product";
+    const nextUrl = import.meta.env.VITE_APP_PRODUCT_URL || "https://beton.win";
     const currentPath = window.location.pathname;
 
     if (currentPath !== nextUrl) setRedirectUrl(nextUrl);
