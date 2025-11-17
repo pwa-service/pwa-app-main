@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kino Casino</title>
   </head>
+
   <body>
+    <script>
+      window.__IS_PWA__ =
+        window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

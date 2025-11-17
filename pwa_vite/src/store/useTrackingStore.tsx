@@ -27,8 +27,9 @@ export interface TrackerState {
   sessionId?: string | null;
 
   loading: {
-    tracker: boolean;
+    viewContent: boolean;
     install: boolean;
+    visitingPWA: boolean;
   };
 
   error: string | null;
@@ -59,8 +60,9 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     trackerData: null,
     ...restoreState(),
     loading: {
-      tracker: false,
+      viewContent: false,
       install: false,
+      visitingPWA: false,
     },
     error: null,
   });
@@ -115,7 +117,6 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     if (initializedRef.current) return;
 
     initializedRef.current = true;
-    setLoading("tracker", true);
 
     const init = async () => {
       try {
@@ -130,8 +131,6 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         updateState((prev) => ({ ...prev, error: errorMessage }));
-      } finally {
-        setLoading("tracker", false);
       }
     };
 
@@ -142,7 +141,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
   const handleViewContent = async (data: TrackerData) => {
     if (localStorage.getItem(VIEW_CONTENT_KEY)) return;
 
-    setLoading("tracker", true);
+    setLoading("viewContent", true);
 
     try {
       const { sessionId } = await postViewContent(data);
@@ -155,7 +154,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       updateState((prev) => ({ ...prev, error: errorMessage }));
     } finally {
-      setLoading("tracker", false);
+      setLoading("viewContent", false);
     }
   };
 
@@ -180,7 +179,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     if (localStorage.getItem(FIRST_OPEN_SENT_KEY)) return;
     if (!state.trackerData || !state.sessionId) return;
 
-    setLoading("tracker", true);
+    setLoading("visitingPWA", true);
 
     try {
       await postFirstOpen({
@@ -195,7 +194,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       updateState((prev) => ({ ...prev, error: errorMessage }));
     } finally {
-      setLoading("tracker", false);
+      setLoading("visitingPWA", false);
     }
   };
 

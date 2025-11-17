@@ -28,8 +28,9 @@ const GoogleMarketPageV1 = () => {
   const [selectedPicture, setSelectedPicture] = useState<string>("");
   const [isFullSlider, setIsFullSlider] = useState<boolean>(false);
 
+  const isPWAEarly = window.__IS_PWA__;
   const { isPWA } = useUserAgent();
-  const { loading, handlePreparePWALink } = useTrackerContext();
+  const { handlePreparePWALink } = useTrackerContext();
   const { isInstalling, isInstalled, progress, handleInstallStart } = usePWAInstallContext();
 
   const handleInstall = () => {
@@ -47,7 +48,7 @@ const GoogleMarketPageV1 = () => {
     a.click();
   };
 
-  if (isPWA) return <Loader />;
+  if (isPWAEarly || isPWA) return <Loader />;
 
   return (
     <GoogleMarketLayout>
@@ -67,7 +68,6 @@ const GoogleMarketPageV1 = () => {
             <InstallButton
               text="Instalar"
               variant="google"
-              loading={loading.install}
               onClick={handleInstall}
               className="max-w-[200px]"
             />
