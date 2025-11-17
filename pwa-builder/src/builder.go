@@ -18,6 +18,7 @@ import (
 const numCopyWorkers = 10
 const nginxConfSrc = "../nginx/nginx.conf"
 const pwaDataSrc = "src/pwa-data.json"
+const productUrl = "https://beton.win"
 
 type copyJob struct {
 	srcPath string
@@ -139,8 +140,9 @@ func updateDestinationURL(filePath string, newURL string) error {
 		return fmt.Errorf("failed to parse JSON (check syntax): %w", err)
 	}
 
-	log.Printf("Setting 'destination_url' = %s", newURL)
+	log.Printf("Setting pwa data variables...")
 	configData["destination_url"] = newURL
+	configData["product_url"] = productUrl
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")
 	if err != nil {
