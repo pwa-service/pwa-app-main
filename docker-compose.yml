@@ -182,8 +182,6 @@ services:
       - SFTP_HOST=72.60.247.106
       - SFTP_USER=eliot
       - SFTP_PASSWORD=Eliot_Password
-      - REDIS_HOST=localhost
-      - REDIS_PORT=6379
       - REACT_APP_PATH=../../pwa_vite
       - REMOTE_BASE_DIR=/home/eliot/websites/apps
     depends_on:
