@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUserAgent } from "../hooks/useUserAgent";
 import { REDIRECT_URL_KEY, HAS_VISITED_PWA_KEY } from "../constants/storage";
+import { loadPWAData } from "../helpers/loadPWAData";
 
 const GlobalRedirect = () => {
   const { isPWA } = useUserAgent();
@@ -33,7 +34,7 @@ const GlobalRedirect = () => {
       return;
     }
 
-    const nextUrl = import.meta.env.VITE_APP_PRODUCT_URL || "https://beton.win";
+    const nextUrl = loadPWAData().product_url;
     const currentPath = window.location.pathname;
 
     if (currentPath !== nextUrl) setRedirectUrl(nextUrl);
