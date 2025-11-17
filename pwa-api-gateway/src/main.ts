@@ -10,7 +10,9 @@ async function bootstrap() {
         AppModule,
         new FastifyAdapter(),
     );
-
+    app.enableCors({
+        origin: '*',
+    });
     app.setGlobalPrefix('api');
     const config = new DocumentBuilder()
         .setTitle('PWA Gateway API')
