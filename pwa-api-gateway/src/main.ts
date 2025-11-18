@@ -8,7 +8,9 @@ import {GrpcErrorInterceptor} from "./global/interceptors/grpc-error.interceptor
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
         AppModule,
-        new FastifyAdapter(),
+        new FastifyAdapter({
+            trustProxy: true,
+        }),
         { cors: false }
     );
 

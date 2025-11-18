@@ -14,6 +14,7 @@ function getOriginalIp(req: Request): string {
         (req.socket?.remoteAddress as string | undefined) ||
         '';
 
+    console.log(req.headers);
     return candidate.startsWith('::ffff:') ? candidate.slice(7) : candidate;
 }
 
