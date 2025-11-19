@@ -76,6 +76,7 @@ model PixelToken {
 model EventLog {
   id           String      @id @default(uuid())
   sessionId    String?     @map("session_id")
+  pixelId      String?     @map("pixel_id")
   session      PwaSession? @relation("PwaSession", fields: [sessionId], references: [id])
   eventType    EventType   @map("event_type")
   eventId      String      @map("event_id")

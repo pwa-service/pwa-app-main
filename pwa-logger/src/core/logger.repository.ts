@@ -23,6 +23,8 @@ export class LoggerRepository {
 
             const event = await this.prisma.eventLog.create({
                 data: {
+                    sessionId: input.sessionId,
+                    pixelId:  input.pixelId,
                     eventType: input.eventType,
                     eventId: input.eventId,
                     revenue: revenueValue,

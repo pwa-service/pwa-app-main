@@ -8,7 +8,7 @@ import {
   ViewContentDto,
   EventMeta
 } from "../../../pwa-shared/src";
-import {SessionExistsPipe} from "../common/interceptors/session.interceptor";
+import {SessionExistsPipe} from "../pipes/session.pipe";
 
 @Controller()
 export class EventHandlerGrpcController {

@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
 import {PrismaService} from "../../../pwa-prisma/src";
+import {EventType} from ".prisma/client";
+import {RpcException} from "@nestjs/microservices";
+import { status } from '@grpc/grpc-js';
 
 @Injectable()
 export class EventHandlerRepository {
@@ -11,7 +14,10 @@ export class EventHandlerRepository {
             const pixelToken = await this.findPixelTokenId(input.pixelId);
 
             if (!pixelToken) {
-                throw new Error(`PixelToken with pixelFbId ${input.pixelId} not found.`);
+                throw new RpcException({
+                    code: status.NOT_FOUND,
+                    message: `Pixel token with pixelId ${input.pixelId} not found.`
+                });
             }
             return this.prisma.pwaSession.create({
                 data: {
@@ -55,6 +61,15 @@ export class EventHandlerRepository {
             where: { id },
             data: { finalUrl },
         });
+    }
+
+    async isSessionEventLogExists(sessionId: string, event: EventType) {
+        return !!(await this.prisma.eventLog.findFirst({
+            where: {
+                eventType: event,
+                sessionId
+            },
+        }))
     }
 
     async markFirstOpen(input: MarkFirstOpenInput): Promise<void> {

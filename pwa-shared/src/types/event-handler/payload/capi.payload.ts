@@ -30,3 +30,15 @@ export type EventMeta = {
     currency?: string;
     sub1?: string;
 } & Pick<CampaignParams, 'fbclid' | 'offerId' | 'utmSource'>;
+
+
+export type AnyEventDto = {
+    eventType: FbEventEnum;
+    pwaDomain: string;
+    landingUrl?: string;
+    queryStringRaw?: string;
+    sessionId?: string;
+    pixelId?: number;
+    value?: string;
+    currency?: string;
+} & { _meta: EventMeta };

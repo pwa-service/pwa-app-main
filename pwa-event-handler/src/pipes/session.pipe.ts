@@ -1,15 +1,16 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import {EventHandlerRepository} from "../../core/event-handler.repository";
+import {EventHandlerRepository} from "../core/event-handler.repository";
 import { status } from '@grpc/grpc-js';
+import {AnyEventDto} from "../../../pwa-shared/src";
+import {EventType} from ".prisma/client";
 
-type BodyWithSession = { sessionId?: string; userId?: string, eventType?: string };
 
 @Injectable()
-export class SessionExistsPipe implements PipeTransform<BodyWithSession, any> {
+export class SessionExistsPipe implements PipeTransform<AnyEventDto, any> {
     constructor(private readonly repo: EventHandlerRepository) {}
 
-    async transform(value: BodyWithSession) {
+    async transform(value: AnyEventDto) {
         const { sessionId } = value ?? {};
         if (!sessionId) {
             throw new RpcException({
@@ -25,15 +26,6 @@ export class SessionExistsPipe implements PipeTransform<BodyWithSession, any> {
                 message: 'Session not found'
             });
         }
-
-        const isExist = await this.repo.isSessionEventLogExists(sessionId);
-        if (!isExist) {
-            throw new RpcException({
-                code: status.NOT_FOUND,
-                message: 'You can not use this session for this type of event'
-            });
-        }
-
         return Object.assign(value);
     }
 }

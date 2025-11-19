@@ -3,6 +3,7 @@ type LogStatus = "success" | "error"
 
 export interface CreateEventLogPayload {
     sessionId: string;
+    pixelId: string;
     eventType: EventType;
     eventId: string;
     status: LogStatus;

@@ -1,18 +1,5 @@
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
-import {EventMeta, FbEventEnum} from '../../../pwa-shared/src';
-
-type AnyEventDto = {
-    event: FbEventEnum;
-    pwaDomain: string;
-    landingUrl?: string;
-    queryStringRaw?: string;
-    sessionId?: string;
-    pixelId?: number;
-    value?: string;
-    currency?: string;
-} & { _meta: EventMeta };
-
+import {AnyEventDto, EventMeta } from '../../../pwa-shared/src';
 
 @Injectable()
 export class ViewContentEnrichmentPipe
