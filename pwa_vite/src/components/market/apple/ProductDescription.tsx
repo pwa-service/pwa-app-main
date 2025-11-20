@@ -14,7 +14,7 @@ interface IProductDescriptionProps {
 }
 
 const ProductDescription = ({ image, name, creator }: IProductDescriptionProps) => {
-  const { handleInstallStart, isInstalling, isInstalled, progress } = usePWAInstallContext();
+  const { isInstalling, isInstalled, progress } = usePWAInstallContext();
 
   return (
     <Fragment>
@@ -39,7 +39,7 @@ const ProductDescription = ({ image, name, creator }: IProductDescriptionProps) 
               <InstallButton
                 text="Instalar"
                 variant="apple"
-                onClick={handleInstallStart}
+                // onClick={handleInstallStart}
                 className="max-w-[200px]"
               />
             )}

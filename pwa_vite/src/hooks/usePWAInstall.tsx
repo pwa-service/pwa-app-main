@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import { useInstallProgress } from "./useInstallProgress";
+import { useUserAgent } from "./useUserAgent";
 
-import { useUserAgent } from "../hooks/useUserAgent";
-import { useInstallProgress } from "../hooks/useInstallProgress";
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
 
-import type { BeforeInstallPromptEvent } from "../types/install";
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+};
 
 const PWA_ISTALLED_KEY = "pwa_installed";
 
@@ -16,84 +22,66 @@ const getIsInstalled = (): boolean => {
 };
 
 export const usePWAInstall = () => {
-  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false);
-  const [isInstalling, setIsInstalling] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(getIsInstalled());
 
   const { isPWA, isIOS } = useUserAgent();
-  const { progress, startProgress, resetProgress } = useInstallProgress({ speed: 5 });
+  const { isInstalling, progress, startProgress } = useInstallProgress();
 
   useEffect(() => {
-    if (isPWA) {
-      setIsInstalled(true);
-      localStorage.setItem("pwa_installed", "true");
-    }
-
-    const handleBeforeInstallPrompt = (event: Event) => {
+    const handler = (event: Event) => {
       event.preventDefault();
-      setPrompt(event as BeforeInstallPromptEvent);
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
-    const handleAppInstalled = () => {
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  useEffect(() => {
+    const onInstalled = () => {
       setIsInstalled(true);
-      setIsInstalling(false);
-      localStorage.setItem("pwa_installed", "true");
-      setPrompt(null);
-      resetProgress();
+      localStorage.setItem(PWA_ISTALLED_KEY, JSON.stringify(true));
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
+    if (progress >= 100 && !isInstalled) onInstalled();
+  }, [progress, isInstalled]);
 
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-    };
-  }, [isPWA, resetProgress]);
-
-  const handleInstallStart = useCallback(() => {
+  const promptInstall = useCallback(async () => {
     if (isIOS && !isPWA) {
       setShowIOSInstructions(true);
       return;
     }
 
-    if (!prompt) return;
+    if (!deferredPrompt) return false;
 
-    setIsInstalling(true);
-    startProgress();
-  }, [prompt, isIOS, isPWA, startProgress]);
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
 
-  useEffect(() => {
-    if (!prompt || progress < 100) return;
+    setDeferredPrompt(null);
 
-    const install = async () => {
-      try {
-        await prompt.prompt();
-        const { outcome } = await prompt.userChoice;
+    if (outcome === "accepted") {
+      const isDesktop = window.matchMedia("(pointer: fine)").matches;
 
-        if (outcome === "accepted") {
-          setIsInstalled(true);
-          localStorage.setItem("pwa_installed", "true");
-        } else {
-          setIsInstalled(false);
-        }
-      } finally {
-        setIsInstalling(false);
-        resetProgress();
-        setPrompt(null);
+      if (isDesktop) {
+        setIsInstalled(true);
+        localStorage.setItem(PWA_ISTALLED_KEY, JSON.stringify(true));
+        return true;
       }
-    };
 
-    install();
-  }, [progress, prompt, resetProgress]);
+      startProgress();
+      return true;
+    }
+  }, [deferredPrompt, isIOS, isPWA, startProgress]);
 
   return {
-    isInstalling,
-    isInstalled,
-    progress,
-    handleInstallStart,
+    deferredPrompt,
+    promptInstall,
     showIOSInstructions,
     setShowIOSInstructions,
+    isInstalling,
+    progress,
+    isInstalled,
   };
 };

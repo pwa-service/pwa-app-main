@@ -1,51 +1,39 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-interface UseInstallProgressOptions {
-  speed?: number;
-}
+export const useInstallProgress = (duration: number = 3500) => {
+  const [progress, setProgress] = useState<number>(0);
+  const [isInstalling, setIsInstalling] = useState<boolean>(false);
 
-export const useInstallProgress = ({ speed = 1 }: UseInstallProgressOptions = {}) => {
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<number | null>(null);
+  const startProgress = () => {
+    if (isInstalling) return;
 
-  const startProgress = useCallback(() => {
+    setIsInstalling(true);
     setProgress(0);
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    intervalRef.current = window.setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + speed;
-
-        if (next >= 100) {
-          clearInterval(intervalRef.current!);
-          setProgress(100);
-
-          return 100;
-        }
-
-        return next;
-      });
-    }, 100);
-  }, [speed]);
-
-  const resetProgress = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    setProgress(0);
-  }, []);
+  };
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+    if (!isInstalling) return;
 
-  return { progress, startProgress, resetProgress };
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min((elapsed / duration) * 100, 100);
+
+      setProgress(newProgress);
+
+      if (newProgress >= 100) {
+        clearInterval(interval);
+        setIsInstalling(false);
+      }
+    }, 16);
+
+    return () => clearInterval(interval);
+  }, [isInstalling, duration]);
+
+  return {
+    progress,
+    isInstalling,
+    startProgress,
+  };
 };
