@@ -1,30 +1,33 @@
 import { precacheAndRoute } from "workbox-precaching";
 precacheAndRoute(self.__WB_MANIFEST);
 
-const CACHE_NAME = "pwa-launch-cache-v1";
-const FIRST_VISIT_FLAG_URL = "/pwa-first-visit";
-
 self.addEventListener("install", () => {
-  console.log("[SW] Installed");
+  console.log("[SW] Installing...");
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activated");
-  event.waitUntil(self.clients.claim());
+  console.log("[SW] Activating...");
+  clients.claim();
 });
 
 self.addEventListener("message", async (event) => {
-  if (event.data && event.data.type === "CHECK_FIRST_VISIT") {
-    const cache = await caches.open(CACHE_NAME);
-    const exists = await cache.match(FIRST_VISIT_FLAG_URL);
+  if (event.data?.type === "SET_REDIRECT_URL") {
+    redirectUrl = event.data.url;
+    console.log("[SW] Received redirect URL:", redirectUrl);
 
-    if (!exists) {
-      await cache.put(FIRST_VISIT_FLAG_URL, new Response("first-visit", { status: 200 }));
+    const allClients = await clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    });
 
-      event.ports[0].postMessage({ firstVisit: true });
-    } else {
-      event.ports[0].postMessage({ firstVisit: false });
-    }
+    allClients.forEach((client) => {
+      console.log("[SW] Sending REDIRECT_TO to client:", client.id);
+
+      client.postMessage({
+        type: "REDIRECT_TO",
+        url: redirectUrl,
+      });
+    });
   }
 });
