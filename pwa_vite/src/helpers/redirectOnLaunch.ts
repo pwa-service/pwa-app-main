@@ -1,4 +1,5 @@
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
+import { getQueryTail } from "../helpers/getQueryTail";
 import { getPWAData } from "../helpers/getPWAData";
 
 export const redirectOnLaunch = async () => {
@@ -24,13 +25,21 @@ export const redirectOnLaunch = async () => {
 
 const handleRedirect = async () => {
   const { destination_url, product_url } = getPWAData();
-
   const firstVisit = await askServiceWorker();
-  const targetURL = firstVisit ? destination_url : product_url;
 
-  console.log("[Redirect] Redirect to:", targetURL);
+  const baseURL = firstVisit ? destination_url : product_url;
+  const tail = getQueryTail();
+  const finalURL = new URL(baseURL, window.location.origin);
 
-  window.location.href = targetURL;
+  if (tail) {
+    const savedParams = new URLSearchParams(tail);
+    savedParams.forEach((value, key) => {
+      finalURL.searchParams.set(key, value);
+    });
+  }
+
+  console.log("[Redirect] Redirect to:", finalURL.toString());
+  window.location.href = finalURL.toString();
 };
 
 const askServiceWorker = (): Promise<boolean> => {

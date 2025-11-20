@@ -8,6 +8,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 import { initServiceWorker } from "./helpers/initServiceWorker.ts";
+import { redirectOnLaunch } from "./helpers/redirectOnLaunch.ts";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -22,3 +23,4 @@ root.render(
 );
 
 initServiceWorker();
+redirectOnLaunch();

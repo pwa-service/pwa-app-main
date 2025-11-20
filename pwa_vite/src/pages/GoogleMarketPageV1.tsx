@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useIsPWA } from "../hooks/useIsPWA";
+
 import { usePWAInstall } from "../hooks/usePWAInstall";
-import { useTrackerContext } from "../context/tracker/useTrackerContext";
+import { useIsPWA } from "../hooks/useIsPWA";
 
 import { kinoCasinoSlider } from "../constants/kino-casino/images";
 import { description } from "../constants/kino-casino/description";
@@ -27,14 +27,8 @@ const GoogleMarketPageV1 = () => {
   const [selectedPicture, setSelectedPicture] = useState<string>("");
   const [isFullSlider, setIsFullSlider] = useState<boolean>(false);
 
-  const { isPWA } = useIsPWA();
-  const { handlePreparePWALink } = useTrackerContext();
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
-
-  const handleInstall = () => {
-    handlePreparePWALink();
-    promptInstall();
-  };
+  const { isPWA } = useIsPWA();
 
   const handleOpenPWA = () => {
     const url = `${window.location.origin}/?data=from-browser`;
@@ -77,7 +71,7 @@ const GoogleMarketPageV1 = () => {
             <InstallButton
               text="Instalar"
               variant="google"
-              onClick={handleInstall}
+              onClick={promptInstall}
               className="max-w-[200px]"
             />
           )}
