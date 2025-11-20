@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useUserAgent } from "../hooks/useUserAgent";
 import { REDIRECT_URL_KEY, HAS_VISITED_PWA_KEY } from "../constants/storage";
-import { loadPWAData } from "../helpers/loadPWAData";
+import { getPWAData } from "../helpers/getPWAData";
 
 const GlobalRedirect = () => {
   const { isPWA } = useUserAgent();
@@ -34,7 +34,7 @@ const GlobalRedirect = () => {
       return;
     }
 
-    const nextUrl = loadPWAData().product_url;
+    const nextUrl = getPWAData().product_url;
     const currentPath = window.location.pathname;
 
     if (currentPath !== nextUrl) setRedirectUrl(nextUrl);

@@ -1,4 +1,4 @@
-import { usePWAInstallContext } from "../../context/pwa-install/usePWAInstallContext";
+import { usePWAInstall } from "../../hooks/usePWAInstall";
 import { instructions } from "../../constants/instructions";
 
 import Modal from "../../ui/Modal";
@@ -6,7 +6,7 @@ import Card from "../../ui/Card";
 import { X } from "lucide-react";
 
 const InstructionsModal = () => {
-  const { showIOSInstructions, setShowIOSInstructions } = usePWAInstallContext();
+  const { showIOSInstructions, setShowIOSInstructions } = usePWAInstall();
 
   const handleClose = () => setShowIOSInstructions(false);
 
