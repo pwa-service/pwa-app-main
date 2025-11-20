@@ -183,6 +183,7 @@ services:
       - SFTP_USER=eliot
       - SFTP_PASSWORD=Eliot_Password
       - REACT_APP_PATH=./pwa_vite
+      - NGINX_CONF_PATH=./nginx/nginx.conf
       - REMOTE_BASE_DIR=/home/eliot/websites/apps
     depends_on:
       redis:

@@ -16,7 +16,6 @@ import (
 )
 
 const numCopyWorkers = 10
-const nginxConfSrc = "../nginx/nginx.conf"
 const pwaDataSrc = "src/pwa-data.json"
 const productUrl = "https://beton.win"
 
@@ -180,7 +179,7 @@ func updateNginxConfig(filePath string, domain string) error {
 	return nil
 }
 
-func runBuild(reactAppPath string, domain string) (string, error) {
+func runBuild(reactAppPath string, nginxConfSrc string, domain string) (string, error) {
 	localBuildDir := fmt.Sprintf("../builds/pwa_vite_%s", domain)
 	err := copyDir(reactAppPath, localBuildDir)
 	if err != nil {

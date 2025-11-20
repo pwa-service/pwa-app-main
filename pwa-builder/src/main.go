@@ -22,6 +22,7 @@ const BUILD_STATUS_FINISHED = "BUILD_PWA_CHANNEL:BUILD_FINISHED_EVENT"
 
 type Config struct {
 	ReactAppPath      string `env:"REACT_APP_PATH" envDefault:"../../pwa_vite"`
+	NginxConfPath     string `env:"NGINX_CONF_PATH" envDefault:"../nginx/nginx.conf"`
 	WorkerConcurrency int    `env:"WORKER_CONCURRENCY" envDefault:"10"`
 	RedisHost         string `env:"REDIS_HOST" envDefault:"localhost"`
 	RedisPort         string `env:"REDIS_PORT" envDefault:"6379"`
@@ -182,7 +183,7 @@ func processMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON 
 	}
 	defer transporter.Close()
 
-	absLocalBuildDir, buildErr := runBuild(cfg.ReactAppPath, jobData.Domain)
+	absLocalBuildDir, buildErr := runBuild(cfg.ReactAppPath, cfg.NginxConfPath, jobData.Domain)
 	localBuildDirToRemove := absLocalBuildDir
 	localBuildDir := path.Join(absLocalBuildDir, "dist")
 
