@@ -1,27 +1,19 @@
-import { useEffect, useState } from "react";
+export const useIsWebView = () => {
+  if (typeof window === "undefined") {
+    return { isWebView: false };
+  }
 
-export const useIsWebView = (): { isWebView: boolean } => {
-  const [isWebView, setIsWebView] = useState(false);
+  const userAgent = navigator.userAgent || "";
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const isAndroidWebView =
+    userAgent.includes("Android") && typeof window.TelegramWebview !== "undefined";
 
-    const userAgent = navigator.userAgent || "";
+  const isiOSWebView =
+    /iPad|iPhone|iPod/.test(userAgent) &&
+    typeof window.TelegramWebviewProxy !== "undefined" &&
+    typeof window.TelegramWebviewProxyProto !== "undefined";
 
-    if (userAgent.includes("Android") && typeof window.TelegramWebview !== "undefined") {
-      setIsWebView(true);
-      return;
-    }
-
-    if (
-      userAgent.includes("iPhone") &&
-      typeof window.TelegramWebviewProxy !== "undefined" &&
-      typeof window.TelegramWebviewProxyProto !== "undefined"
-    ) {
-      setIsWebView(true);
-      return;
-    }
-  }, []);
-
-  return { isWebView };
+  return {
+    isWebView: isAndroidWebView || isiOSWebView,
+  };
 };
