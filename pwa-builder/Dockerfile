@@ -15,7 +15,7 @@ RUN apk add --no-cache openssh-client libc6-compat
 COPY --from=builder /app/worker .
 
 COPY pwa-builder/nginx  ./nginx
-COPY pwa-builder/builds ./builds
+RUN mkdir -p ./builds
 
 COPY pwa_vite ./pwa_vite
 RUN npm ci --prefix ./pwa_vite
