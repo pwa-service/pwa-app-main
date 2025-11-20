@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export const useInstallProgress = (duration: number = 3500) => {
+export const useInstallProgress = (duration: number = 5000) => {
   const [progress, setProgress] = useState<number>(0);
   const [isInstalling, setIsInstalling] = useState<boolean>(false);
 
