@@ -12,7 +12,7 @@ const tryRedirect = () => {
   }
 };
 
-export const initServiceWorkerForRedirect = () => {
+export const initServiceWorker = () => {
   if (!("serviceWorker" in navigator)) return;
 
   navigator.serviceWorker

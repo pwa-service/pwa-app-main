@@ -1,12 +1,11 @@
 import { useState } from "react";
+import { useIsPWA } from "../hooks/useIsPWA";
+import { usePWAInstall } from "../hooks/usePWAInstall";
+import { useTrackerContext } from "../context/tracker/useTrackerContext";
 
-import { googleProductSummary, aboutTags, googleComments } from "../constants/market";
 import { kinoCasinoSlider } from "../constants/kino-casino/images";
 import { description } from "../constants/kino-casino/description";
-import { useTrackerContext } from "../context/tracker/useTrackerContext";
-import { usePWAInstallContext } from "../context/pwa-install/usePWAInstallContext";
-
-import { useUserAgent } from "../hooks/useUserAgent";
+import { googleProductSummary, aboutTags, googleComments } from "../constants/market";
 
 import gameLogo from "../assets/kino-casino/kino_pwa_2.1.webp";
 
@@ -28,14 +27,13 @@ const GoogleMarketPageV1 = () => {
   const [selectedPicture, setSelectedPicture] = useState<string>("");
   const [isFullSlider, setIsFullSlider] = useState<boolean>(false);
 
-  const isPWAEarly = window.__IS_PWA__;
-  const { isPWA } = useUserAgent();
+  const { isPWA } = useIsPWA();
   const { handlePreparePWALink } = useTrackerContext();
-  const { isInstalling, isInstalled, progress, handleInstallStart } = usePWAInstallContext();
+  const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
 
   const handleInstall = () => {
     handlePreparePWALink();
-    handleInstallStart();
+    promptInstall();
   };
 
   const handleOpenPWA = () => {
@@ -48,7 +46,7 @@ const GoogleMarketPageV1 = () => {
     a.click();
   };
 
-  if (isPWAEarly || isPWA) return <Loader />;
+  if (isPWA) return <Loader />;
 
   return (
     <GoogleMarketLayout>
@@ -64,26 +62,22 @@ const GoogleMarketPageV1 = () => {
         <ProductSummary productSummary={googleProductSummary} />
 
         <div className="mb-8 md:mb-12">
-          {!isInstalling && !isInstalled && (
-            <InstallButton
-              text="Instalar"
-              variant="google"
-              onClick={handleInstall}
-              className="max-w-[200px]"
-            />
-          )}
-
-          {isInstalling && (
+          {isInstalling ? (
             <div className="h-11 flex items-center">
               <ProgressBar variant="google" progress={progress} />
             </div>
-          )}
-
-          {!isInstalling && isInstalled && (
+          ) : isInstalled ? (
             <InstallButton
               text="OPEN"
               variant="google"
               onClick={handleOpenPWA}
+              className="max-w-[200px]"
+            />
+          ) : (
+            <InstallButton
+              text="Instalar"
+              variant="google"
+              onClick={handleInstall}
               className="max-w-[200px]"
             />
           )}

@@ -12,7 +12,7 @@ import type { TrackerData } from "../types/tracker";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useUserAgent } from "../hooks/useUserAgent";
 
-import { loadPWAData } from "../helpers/loadPWAData";
+import { getPWAData } from "../helpers/getPWAData";
 import { parseURLParams } from "../helpers/parseURLParams";
 import { sendRedirectToSW } from "../helpers/sendRedirectToSW";
 
@@ -166,7 +166,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     const currentURL = new URL(window.location.href);
     const { remainingParams } = parseURLParams(currentURL);
 
-    const baseUrl = loadPWAData().destination_url;
+    const baseUrl = getPWAData().destination_url;
     const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
 
     console.log("[Main] Prepared redirect URL:", redirectUrl);
