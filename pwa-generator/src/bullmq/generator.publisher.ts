@@ -15,7 +15,7 @@ export class GeneratorPublisher implements OnModuleInit {
     private readonly NEW_JOB_CHANNEL = `${BUILD_PWA_CHANNEL}:${CREATE_APP_EVENT}`;
     private readonly PENDING_BUILDS_KEY = 'pending:builds';
     private readonly LOCK_KEY_PREFIX = 'lock:build:';
-    private readonly LOCK_TTL = 3600;
+    private readonly LOCK_TTL = 360;
 
     constructor(
         @Inject(REDIS_PUBLISHER) private readonly commandClient: Redis,
