@@ -2,21 +2,26 @@ import {
   FBCLID_KEY,
   PIXEL_ID_KEY,
   SESSION_ID_KEY,
+  REDIRECT_URL_KEY,
   VIEW_CONTENT_SENT_KEY,
   FIRST_OPEN_SENT_KEY,
+  QUERY_TAIL_KEY,
 } from "../constants/storage";
 
 import type { TrackerData } from "../types/tracker";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useIsPWA } from "../hooks/useIsPWA";
+import { useUserAgent } from "../hooks/useUserAgent";
 
+import { getPWAData } from "../helpers/getPWAData";
 import { parseURLParams } from "../helpers/parseURLParams";
+import { sendRedirectToSW } from "../helpers/sendRedirectToSW";
 
 import { postViewContent, postFirstOpen } from "../api/events";
 
 export interface TrackerState {
   trackerData: TrackerData | null;
+  redirectUrl?: string | null;
 
   fbclId?: string | null;
   pixelId?: string | null;
@@ -30,20 +35,26 @@ export interface TrackerState {
   error: string | null;
 }
 
+export interface UseTrackerStoreReturn extends TrackerState {
+  handlePreparePWALink: () => void;
+}
+
 const persistState = (state: TrackerState) => {
   if (state.pixelId) localStorage.setItem(PIXEL_ID_KEY, state.pixelId);
   if (state.fbclId) localStorage.setItem(FBCLID_KEY, state.fbclId);
   if (state.sessionId) localStorage.setItem(SESSION_ID_KEY, state.sessionId);
+  if (state.redirectUrl) localStorage.setItem(REDIRECT_URL_KEY, state.redirectUrl);
 };
 
 const restoreState = (): Partial<TrackerState> => ({
   fbclId: localStorage.getItem(FBCLID_KEY),
   pixelId: localStorage.getItem(PIXEL_ID_KEY),
   sessionId: localStorage.getItem(SESSION_ID_KEY),
+  redirectUrl: localStorage.getItem(REDIRECT_URL_KEY),
 });
 
-export const useTrackerStore = () => {
-  const { isPWA } = useIsPWA();
+export const useTrackerStore = (): UseTrackerStoreReturn => {
+  const { isPWA } = useUserAgent();
 
   const [state, setState] = useState<TrackerState>({
     trackerData: null,
@@ -136,7 +147,13 @@ export const useTrackerStore = () => {
     try {
       const { sessionId } = await postViewContent(data);
 
+      const currentURL = new URL(window.location.href);
+      const { pixelId, fbclId, remainingParams } = parseURLParams(currentURL);
+      const queryTail = `?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
+
       localStorage.setItem(VIEW_CONTENT_SENT_KEY, "true");
+      localStorage.setItem(QUERY_TAIL_KEY, queryTail);
+
       updateState((prev) => ({ ...prev, sessionId }));
     } catch (error) {
       localStorage.removeItem(VIEW_CONTENT_SENT_KEY);
@@ -146,6 +163,23 @@ export const useTrackerStore = () => {
     } finally {
       setLoading("viewContent", false);
     }
+  };
+
+  const handlePreparePWALink = () => {
+    // if (!state.sessionId) return;
+
+    const { fbclId, pixelId, sessionId } = state;
+
+    const currentURL = new URL(window.location.href);
+    const { remainingParams } = parseURLParams(currentURL);
+
+    const baseUrl = getPWAData().destination_url;
+    const redirectUrl = `${baseUrl}?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
+
+    console.log("[Main] Prepared redirect URL:", redirectUrl);
+
+    sendRedirectToSW(redirectUrl);
+    updateState((prev) => ({ ...prev, redirectUrl }));
   };
 
   const handlePWAFirstOpen = async () => {
@@ -173,5 +207,6 @@ export const useTrackerStore = () => {
 
   return {
     ...state,
+    handlePreparePWALink,
   };
 };
