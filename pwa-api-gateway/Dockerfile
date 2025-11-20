@@ -10,10 +10,10 @@ COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
 
 WORKDIR /workspace/pwa-api-gateway
-RUN npm install && npm install -g @nestjs/cli
+RUN npm ci && npm install -g @nestjs/cli
 
 WORKDIR /workspace/pwa-shared
-RUN npm install
+RUN npm ci
 
 FROM deps AS build
 WORKDIR /workspace
@@ -31,7 +31,7 @@ ENV NODE_ENV=production
 
 COPY --from=build /workspace/pwa-api-gateway/dist ./dist
 COPY --from=build /workspace/pwa-api-gateway/package*.json ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 COPY --from=build /workspace/pwa-protos/protos ./protos
 
 CMD ["node", "dist/pwa-api-gateway/src/main.js"]

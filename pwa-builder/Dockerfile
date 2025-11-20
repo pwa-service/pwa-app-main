@@ -21,5 +21,5 @@ RUN apk add --no-cache openssh-client libc6-compat
 COPY --from=builder /app/worker .
 
 COPY pwa_vite ./pwa_vite
-RUN npm install --prefix ./pwa_vite
+RUN npm ci --prefix ./pwa_vite
 CMD ["./worker"]

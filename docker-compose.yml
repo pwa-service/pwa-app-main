@@ -149,7 +149,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - GENERATOR_GRPC_URL=pwa-generator:50054
+      - GENERATOR_GRPC_URL=pwa-generator:50055
       - QUEUE_NAME=BUILD_QUEUE
       - QUEUE_PREFIX=pwa
     depends_on:
