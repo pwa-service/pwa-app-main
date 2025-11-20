@@ -1,6 +1,7 @@
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
 import { getQueryTail } from "../helpers/getQueryTail";
 import { getPWAData } from "../helpers/getPWAData";
+import { SESSION_ID_KEY } from "../constants/storage";
 
 export const redirectOnLaunch = async () => {
   const standalone = window.matchMedia("(display-mode: standalone)");
@@ -29,17 +30,22 @@ const handleRedirect = async () => {
 
   const baseURL = firstVisit ? destination_url : product_url;
   const tail = getQueryTail();
-  const finalURL = new URL(baseURL, window.location.origin);
+  // const finalURL = new URL(baseURL, window.location.origin);
 
-  if (tail) {
-    const savedParams = new URLSearchParams(tail);
-    savedParams.forEach((value, key) => {
-      finalURL.searchParams.set(key, value);
-    });
-  }
+  // if (tail) {
+  //   const savedParams = new URLSearchParams(tail);
+  //   savedParams.forEach((value, key) => {
+  //     finalURL.searchParams.set(key, value);
+  //   });
+  // }
 
-  console.log("[Redirect] Redirect to:", finalURL.toString());
-  window.location.href = finalURL.toString();
+  const sessionId = localStorage.getItem(SESSION_ID_KEY);
+  const finalURL = `${baseURL}?${sessionId}&${tail.slice(1)}`;
+
+  console.log("[Redirect] Redirect to:", finalURL);
+  console.log("finalURL :", finalURL);
+
+  window.location.href = finalURL;
 };
 
 const askServiceWorker = (): Promise<boolean> => {
