@@ -1,13 +1,8 @@
 import { useEffect, Fragment } from "react";
 import { useIsWebView } from "./hooks/useIsWebView";
-
-import { getPWAData } from "./helpers/getPWAData";
 import { redirectFromWebView } from "./helpers/redirectFromWebView";
 
 import AppRouter from "./components/AppRouter";
-import GlobalRedirect from "./components/GlobalRedirect";
-
-getPWAData();
 
 const App = () => {
   const { isWebView } = useIsWebView();
@@ -18,7 +13,6 @@ const App = () => {
 
   return (
     <Fragment>
-      <GlobalRedirect />
       <AppRouter />
     </Fragment>
   );
