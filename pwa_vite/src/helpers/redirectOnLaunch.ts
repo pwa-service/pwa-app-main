@@ -22,6 +22,8 @@ export const redirectOnLaunch = async () => {
 };
 
 const handleRedirect = async () => {
+  await idbGet("dummy").catch(() => {});
+
   const { destination_url, product_url } = getPWAData();
   const firstVisit = await askServiceWorker();
 
