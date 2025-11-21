@@ -10,7 +10,7 @@ import {
 import type { TrackerData } from "../types/tracker";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useUserAgent } from "../hooks/useUserAgent";
+import { useIsPWA } from "../hooks/useIsPWA";
 
 import { idbSet } from "../helpers/idbStorage";
 import { parseURLParams } from "../helpers/parseURLParams";
@@ -45,7 +45,7 @@ const restoreState = (): Partial<TrackerState> => ({
 });
 
 export const useTrackerStore = () => {
-  const { isPWA } = useUserAgent();
+  const { isPWA } = useIsPWA();
 
   const [state, setState] = useState<TrackerState>({
     trackerData: null,
@@ -143,6 +143,7 @@ export const useTrackerStore = () => {
       const queryTail = `?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
 
       localStorage.setItem(VIEW_CONTENT_SENT_KEY, "true");
+      alert(queryTail); // LOG
       await idbSet(QUERY_TAIL_KEY, queryTail);
       updateState((prev) => ({ ...prev, sessionId }));
     } catch (error) {

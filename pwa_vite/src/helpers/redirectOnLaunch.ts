@@ -1,6 +1,6 @@
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
 import { getPWAData } from "../helpers/getPWAData";
-import { idbGet } from "../helpers/idbStorage";
+import { waitUntilActive, idbGet } from "../helpers/idbStorage";
 
 import { QUERY_TAIL_KEY } from "../constants/storage";
 
@@ -22,7 +22,7 @@ export const redirectOnLaunch = async () => {
 };
 
 const handleRedirect = async () => {
-  await idbGet("dummy").catch(() => {});
+  await waitUntilActive();
 
   const { destination_url, product_url } = getPWAData();
   const firstVisit = await askServiceWorker();
@@ -32,10 +32,12 @@ const handleRedirect = async () => {
 
   if (!tail) {
     console.warn("[Redirect] Missing query tail in IndexedDB");
+    alert("[Redirect] Missing query tail in IndexedDB"); // LOG
     return;
   }
 
   const finalURL = `${baseURL}/${tail}`;
+  alert(finalURL);
   console.log("[Redirect] Redirect to:", finalURL);
   window.location.href = finalURL;
 };
