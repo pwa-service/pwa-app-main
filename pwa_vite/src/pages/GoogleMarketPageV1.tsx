@@ -4,11 +4,11 @@ import { usePWAInstall } from "../hooks/usePWAInstall";
 import { useIsPWA } from "../hooks/useIsPWA";
 import { useTrackerContext } from "../context/tracker/useTrackerContext";
 
-import { kinoCasinoSlider } from "../constants/kino-casino/images";
-import { description } from "../constants/kino-casino/description";
+import { kinoCasinoSlider } from "../constants/quini-casino/images";
+import { description } from "../constants/quini-casino/description";
 import { googleProductSummary, aboutTags, googleComments } from "../constants/market";
 
-import gameLogo from "../assets/kino-casino/kino_pwa_2.1.webp";
+import gameLogo from "../assets/quini-casino/quini_pwa_2.1.webp";
 
 import Loader from "../ui/Loader";
 import InstructionsModal from "../components/modal/InstructionsModal";
@@ -58,7 +58,7 @@ const GoogleMarketPageV1 = () => {
           <ProductImage image={gameLogo} />
         </div>
 
-        <ProductDescription image={gameLogo} name="Kino Casino" creator="BetonWin" />
+        <ProductDescription image={gameLogo} name="Quini6 Casino" creator="BetonWin Casino" />
 
         <ProductSummary productSummary={googleProductSummary} />
 
