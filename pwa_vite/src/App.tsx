@@ -1,10 +1,11 @@
 import { useEffect, Fragment } from "react";
 import { useIsWebView } from "./hooks/useIsWebView";
-import { redirectFromWebView } from "./helpers/redirectFromWebView";
-import { getPWAData } from "./helpers/getPWAData";
 
-import AppRouter from "./components/AppRouter";
+import { getPWAData } from "./helpers/getPWAData";
+import { redirectFromWebView } from "./helpers/redirectFromWebView";
+
 import GlobalRedirect from "./components/GlobalRedirect";
+import AppRouter from "./components/AppRouter";
 
 getPWAData();
 

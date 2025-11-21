@@ -5,16 +5,15 @@ import {
   REDIRECT_URL_KEY,
   VIEW_CONTENT_SENT_KEY,
   FIRST_OPEN_SENT_KEY,
-  QUERY_TAIL_KEY,
 } from "../constants/storage";
 
 import type { TrackerData } from "../types/tracker";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useUserAgent } from "../hooks/useUserAgent";
+import { useIsPWA } from "../hooks/useIsPWA";
 
-import { getPWAData } from "../helpers/getPWAData";
 import { parseURLParams } from "../helpers/parseURLParams";
+import { getPWAData } from "../helpers/getPWAData";
 import { sendRedirectToSW } from "../helpers/sendRedirectToSW";
 
 import { postViewContent, postFirstOpen } from "../api/events";
@@ -54,7 +53,7 @@ const restoreState = (): Partial<TrackerState> => ({
 });
 
 export const useTrackerStore = (): UseTrackerStoreReturn => {
-  const { isPWA } = useUserAgent();
+  const { isPWA } = useIsPWA();
 
   const [state, setState] = useState<TrackerState>({
     trackerData: null,
@@ -147,13 +146,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
     try {
       const { sessionId } = await postViewContent(data);
 
-      const currentURL = new URL(window.location.href);
-      const { pixelId, fbclId, remainingParams } = parseURLParams(currentURL);
-      const queryTail = `?user_id=${sessionId}&pixel_id=${pixelId}&fbclid=${fbclId}&${remainingParams}`;
-
       localStorage.setItem(VIEW_CONTENT_SENT_KEY, "true");
-      localStorage.setItem(QUERY_TAIL_KEY, queryTail);
-
       updateState((prev) => ({ ...prev, sessionId }));
     } catch (error) {
       localStorage.removeItem(VIEW_CONTENT_SENT_KEY);
@@ -166,7 +159,7 @@ export const useTrackerStore = (): UseTrackerStoreReturn => {
   };
 
   const handlePreparePWALink = () => {
-    // if (!state.sessionId) return;
+    if (!state.sessionId) return;
 
     const { fbclId, pixelId, sessionId } = state;
 

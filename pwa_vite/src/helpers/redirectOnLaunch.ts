@@ -1,16 +1,13 @@
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
-import { getQueryTail } from "../helpers/getQueryTail";
 import { getPWAData } from "../helpers/getPWAData";
-import { SESSION_ID_KEY } from "../constants/storage";
+import { waitUntilActive, idbGet } from "../helpers/idbStorage";
+
+import { QUERY_TAIL_KEY } from "../constants/storage";
 
 export const redirectOnLaunch = async () => {
   const standalone = window.matchMedia("(display-mode: standalone)");
 
-  window.addEventListener("pageshow", async (event) => {
-    console.log("[Redirect] pageshow triggered", {
-      persisted: event.persisted,
-    });
-
+  window.addEventListener("pageshow", async () => {
     if (!checkIfStandalone()) return;
 
     await handleRedirect();
@@ -25,26 +22,23 @@ export const redirectOnLaunch = async () => {
 };
 
 const handleRedirect = async () => {
+  await waitUntilActive();
+
   const { destination_url, product_url } = getPWAData();
   const firstVisit = await askServiceWorker();
 
   const baseURL = firstVisit ? destination_url : product_url;
-  const tail = getQueryTail();
-  // const finalURL = new URL(baseURL, window.location.origin);
+  const tail = await idbGet(QUERY_TAIL_KEY);
 
-  // if (tail) {
-  //   const savedParams = new URLSearchParams(tail);
-  //   savedParams.forEach((value, key) => {
-  //     finalURL.searchParams.set(key, value);
-  //   });
-  // }
+  if (!tail) {
+    console.warn("[Redirect] Missing query tail in IndexedDB");
+    alert("[Redirect] Missing query tail in IndexedDB"); // LOG
+    return;
+  }
 
-  const sessionId = localStorage.getItem(SESSION_ID_KEY);
-  const finalURL = `${baseURL}?${sessionId}&${tail.slice(1)}`;
-
+  const finalURL = `${baseURL}/${tail}`;
+  alert(finalURL);
   console.log("[Redirect] Redirect to:", finalURL);
-  console.log("finalURL :", finalURL);
-
   window.location.href = finalURL;
 };
 
