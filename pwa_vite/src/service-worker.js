@@ -1,6 +1,6 @@
-// import { precacheAndRoute } from "workbox-precaching";
+import { precacheAndRoute } from "workbox-precaching";
 
-// precacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute(self.__WB_MANIFEST);
 
 const CACHE_NAME = "pwa-launch-cache-v2";
 const FIRST_VISIT_FLAG_URL = "/pwa-first-visit";
