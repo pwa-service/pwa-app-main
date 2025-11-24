@@ -15,12 +15,10 @@ export const initServiceWorker = () => {
         const worker = registration.installing;
         if (!worker) return;
 
-        worker?.addEventListener("statechange", () => {
-          if (worker.state === "installed") {
-            if (navigator.serviceWorker.controller) {
-              console.log("[SW] New version available");
-              worker.postMessage({ type: "SKIP_WAITING" });
-            }
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            console.log("[SW] New version available");
+            worker.postMessage({ type: "SKIP_WAITING" });
           }
         });
       });
