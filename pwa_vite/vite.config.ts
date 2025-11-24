@@ -19,8 +19,8 @@ export default defineConfig(async () => {
         scope: "/",
 
         manifest: {
-          short_name: "Quini6 Casino",
-          name: "Quini6 Casino",
+          short_name: "Template",
+          name: "Template",
           start_url: "/",
           scope: "/",
           display: "standalone",
@@ -38,15 +38,25 @@ export default defineConfig(async () => {
             {
               src: "./favicon.ico",
               type: "image/x-icon",
-              sizes: "64x64 32x32 24x24 16x16",
+              sizes: "256x256",
             },
 
             {
-              src: "./app_icon_512.webp",
+              src: "./app_icon.webp",
               type: "image/webp",
               sizes: "512x512",
             },
           ],
+
+          // screenshots: [
+          //   {
+          //     src: "./screenshots",
+          //     form_factor: "narrow",
+          //     sizes: "",
+          //     type: "image/png",
+          //     label: "",
+          //   },
+          // ],
         },
       }),
     ],

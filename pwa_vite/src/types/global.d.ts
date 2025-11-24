@@ -1,5 +1,5 @@
 export declare global {
-  interface Window {
-    __IS_PWA__?: boolean;
+  interface Navigator {
+    standalone?: boolean;
   }
 }

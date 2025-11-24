@@ -1,9 +1,9 @@
-export interface IImageData {
+export interface ImageData {
   src: string;
   alt: string;
 }
 
-export interface IProductSummaryData {
+export interface ProductSummaryData {
   id: number;
   value: string | null;
   label: string;
@@ -11,20 +11,20 @@ export interface IProductSummaryData {
   description?: string;
 }
 
-export interface IGoogleCommentsData {
+export interface GoogleCommentData {
   id: number;
   type: "user" | "support";
-  avatar?: IImageData;
+  avatar?: ImageData;
   fullName: string;
   date: string;
-  starImage?: IImageData;
+  starImage?: ImageData;
   text: string;
 }
 
-export interface IAppleCommentsData {
+export interface AppleCommentData {
   id: number;
   fullName: string;
-  starsImage: IImageData;
+  starsImage: ImageData;
   date: string;
   text: string;
 }

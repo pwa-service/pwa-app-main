@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-
-import MarketHeader from "../market/google/MarketHeader";
+import GoogleMarketHeader from "../markets/google/Header";
 
 interface GoogleMarketLayoutProps {
   children: ReactNode;
@@ -8,8 +7,8 @@ interface GoogleMarketLayoutProps {
 
 const GoogleMarketLayout = ({ children }: GoogleMarketLayoutProps) => {
   return (
-    <main className="max-w-screen-xl w-full mx-auto px-4 sm:px-8 lg:px-16">
-      <MarketHeader />
+    <main className="max-w-7xl w-full mx-auto px-4 sm:px-8 lg:px-16">
+      <GoogleMarketHeader />
       {children}
     </main>
   );

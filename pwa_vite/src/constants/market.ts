@@ -1,29 +1,20 @@
-import type { IImageData, IGoogleCommentsData, IAppleCommentsData } from "../types/market";
+import type { AppleCommentData, GoogleCommentData } from "../types/market";
 
-import starIcon from "../assets/market/google-star.svg";
-import downloadsIcon from "../assets/market/google-downloads.svg";
-import guardIcon from "../assets/market/google-guard.svg";
-import starsIcon from "../assets/market/apple-stars.svg";
-import avatarIcon from "../assets/market/default-avatar.svg";
+import starIcon from "../assets/markets/google/google_star.svg";
+import downloadsIcon from "../assets/markets/google/google_downloads.svg";
+import guardIcon from "../assets/markets/google/google_guard.svg";
 
-import screen1 from "../assets/market/screen-1.png";
-import screen2 from "../assets/market/screen-2.png";
-import screen3 from "../assets/market/screen-3.png";
-import screen4 from "../assets/market/screen-4.png";
+import fiveStars from "../assets/markets/google/google_five_stars.svg";
 
-import screen5 from "../assets/market/screen-5.png";
-import screen6 from "../assets/market/screen-6.png";
-import screen7 from "../assets/market/screen-7.png";
-import screen8 from "../assets/market/screen-8.png";
+import avatarIcon from "../assets/markets/default_avatar.svg";
+import avatar1 from "../assets/markets/avatar_1.svg";
+import avatar2 from "../assets/markets/avatar_2.svg";
+import avatar3 from "../assets/markets/avatar_3.svg";
 
-import fiveStars from "../assets/market/google-five-stars.svg";
-import fiveStarsApple from "../assets/market/apple-five-stars.svg";
+import starsIcon from "../assets/markets/apple/apple_stars.svg";
+import fiveStarsApple from "../assets/markets/apple/apple_five_stars.svg";
 
-import avatar1 from "../assets/market/avatar-1.svg";
-import avatar2 from "../assets/market/avatar-2.svg";
-import avatar3 from "../assets/market/avatar-3.svg";
-
-export const appleProductSummary = [
+export const appleSummary = [
   { id: 1, label: "Resenas", value: "4.8", icon: starsIcon, description: "" },
   { id: 2, label: "Age", value: "21+", icon: null, description: "Years old" },
   { id: 3, label: "Chart", value: "#1", icon: null, description: "Board" },
@@ -36,37 +27,26 @@ export const appleProductSummary = [
   },
 ];
 
-export const googleProductSummary = [
+export const googleSummary = [
   { id: 1, label: "Resenas", value: "4.8", icon: starIcon },
   { id: 2, label: "Descargas", value: "50k+", icon: null },
   { id: 3, label: "16.5 MB", value: null, icon: downloadsIcon },
   { id: 4, label: "Eleccion del editon", value: null, icon: guardIcon },
 ];
 
-export const sliderImagesV1: IImageData[] = [
-  { src: screen1, alt: "screen1" },
-  { src: screen2, alt: "screen2" },
-  { src: screen3, alt: "screen3" },
-  { src: screen4, alt: "screen4" },
-];
+export const tags: string[] = ["Casino", "Slot machine", "Casual games"];
 
-export const sliderImagesV2: IImageData[] = [
-  { src: screen5, alt: "screen1" },
-  { src: screen6, alt: "screen2" },
-  { src: screen7, alt: "screen3" },
-  { src: screen8, alt: "screen4" },
-];
+export const reviews = {
+  rating: 4.8,
+  reviews: "126 thousand reviews",
+  percentA: 95,
+  percentB: 13,
+  percentC: 8,
+  percentD: 5,
+  percentE: 3,
+};
 
-export const aboutTexts: string[] = [
-  "🇨🇱 Bonificación de bienvenida: DEL 700% HASTA $3,000.000 + 600 GIROS GRATIS",
-  "🇨🇱 Bonificación de bienvenida: DEL 700% HASTA $3,000.000 + 600 GIROS GRATIS",
-  "🇨🇱 Bonificación de bienvenida: DEL 700% HASTA $3,000.000 + 600 GIROS GRATIS",
-  "🇨🇱 Bonificación de bienvenida: DEL 700% HASTA $3,000.000 + 600 GIROS GRATIS",
-];
-
-export const aboutTags: string[] = ["Casino", "Slot machine", "Casual games"];
-
-export const googleComments: IGoogleCommentsData[] = [
+export const googleComments: GoogleCommentData[] = [
   {
     id: 1,
     type: "user",
@@ -103,7 +83,7 @@ export const googleComments: IGoogleCommentsData[] = [
   },
 ];
 
-export const appleComments: IAppleCommentsData[] = [
+export const appleComments: AppleCommentData[] = [
   {
     id: 1,
     fullName: "Alex Morgan",
