@@ -2,7 +2,7 @@ import { instructions } from "../../constants/instructions";
 
 import Modal from "../../ui/Modal";
 import Card from "../../ui/Card";
-import { X } from "lucide-react";
+import { MdClose } from "react-icons/md";
 
 const InstructionsModal = () => {
   const handleClose = () => {};
@@ -14,7 +14,7 @@ const InstructionsModal = () => {
           <h2 className="text-2xl font-medium">Instructions</h2>
 
           <button onClick={handleClose}>
-            <X size={24} />
+            <MdClose size={24} />
           </button>
         </div>
 
