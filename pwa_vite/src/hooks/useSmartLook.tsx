@@ -10,6 +10,7 @@ export function useSmartLook() {
     if (typeof window !== "undefined" && appID) {
       if (window.location.pathname === "/") {
         console.log("Smartlook enabled for /");
+        console.log(appID);
         Smartlook.init(appID);
       }
     }
