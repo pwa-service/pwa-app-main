@@ -19,8 +19,8 @@ export default defineConfig(async () => {
         scope: "/",
 
         manifest: {
-          short_name: "Template",
-          name: "Template",
+          short_name: "Quini6 Casino",
+          name: "Quini6 Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
