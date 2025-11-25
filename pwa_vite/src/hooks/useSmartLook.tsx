@@ -24,22 +24,8 @@ export const useSmartLook = () => {
         return;
       }
 
-      smartlookClient.init(key, { region: "eu", standalone: true });
+      smartlookClient.init(key);
       initializedRef.current = true;
-
-      console.log("Smartlook initialized successfully", {
-        isWebView: /webview|wv|telegram/i.test(navigator.userAgent),
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-      });
-
-      const referrer = document.referrer;
-      if (referrer) {
-        smartlookClient.track("page_load_with_referrer", {
-          referrer,
-          userAgent: navigator.userAgent,
-        });
-      }
     } catch (error) {
       console.error("Failed to initialize Smartlook:", error);
       initializedRef.current = false;
