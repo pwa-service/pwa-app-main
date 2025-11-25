@@ -8,6 +8,7 @@ export class ViewContentEnrichmentPipe
     transform(value: AnyEventDto): AnyEventDto {
         const params = this.getSearchParams(value);
         const pixelId = value.pixelId || params.get('pixel_id');
+        const currency = value.currency === "" || value.currency === undefined || value.currency === null ? "USD" : value.currency
 
         const _meta: EventMeta = {
             clientIp: value._meta.clientIp,
@@ -15,7 +16,6 @@ export class ViewContentEnrichmentPipe
             sessionId: value.sessionId,
             pwaDomain: value.pwaDomain,
             value: value.value ? parseFloat(value.value) : undefined,
-            currency: value.currency,
             pixelId: pixelId ? pixelId : "",
             fbclid: params.get('fbclid') || undefined,
             offerId: params.get('offer_id') || undefined,
@@ -23,7 +23,7 @@ export class ViewContentEnrichmentPipe
             sub1: params.get('sub1') || undefined,
         };
 
-        return Object.assign(value, { _meta });
+        return Object.assign({...value, currency }, { _meta });
     }
 
     private getSearchParams(v: AnyEventDto): URLSearchParams {
