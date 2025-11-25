@@ -1,85 +1,46 @@
-let dbPromise: Promise<IDBDatabase> | null = null;
+const DB_NAME = "pwa_store";
+const STORE = "pwa_data";
 
-export const waitUntilActive = () =>
-  new Promise<void>((resolve) => {
-    if (document.visibilityState === "visible") {
-      resolve();
-    } else {
-      document.addEventListener(
-        "visibilitychange",
-        () => {
-          if (document.visibilityState === "visible") resolve();
-        },
-        { once: true }
-      );
-    }
-  });
-
-const initDB = () => {
-  if (dbPromise) return dbPromise;
-
-  dbPromise = new Promise((resolve, reject) => {
-    let opened = false;
-
-    const request = indexedDB.open("trackerDB", 1);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains("tracker")) {
-        db.createObjectStore("tracker");
-      }
-    };
-
-    request.onerror = () => reject(request.error);
-
-    request.onsuccess = () => {
-      opened = true;
-      resolve(request.result);
-    };
-
-    // Safari/Chrome mobile freeze protection hack
-    const check = setInterval(() => {
-      if (opened) {
-        clearInterval(check);
-        return;
-      }
-
-      if (request.readyState === "done") {
-        clearInterval(check);
-        resolve(request.result);
-      }
-    }, 50);
-  });
-
-  return dbPromise;
-};
-
-// idbSet
-export const idbSet = async (key: string, value: string): Promise<void> => {
-  const db = await initDB();
-
+function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const tx = db.transaction("tracker", "readwrite");
-    const store = tx.objectStore("tracker");
+    const req = indexedDB.open(DB_NAME, 1);
 
-    store.put(value, key);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(STORE);
+    };
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export const saveData = async (key: string, value: string) => {
+  const db = await openDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+
+    const req = store.put(value, key);
+
+    req.onsuccess = () => {};
+    req.onerror = () => reject(req.error);
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 };
 
-// idbGet
-export const idbGet = async (key: string): Promise<string | null> => {
-  const db = await initDB();
+export const loadData = async (key: string) => {
+  const db = await openDB();
 
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction("tracker", "readonly");
-    const store = tx.objectStore("tracker");
+  return new Promise<string>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readonly");
+    const store = tx.objectStore(STORE);
 
-    const getReq = store.get(key);
+    const req = store.get(key);
 
-    getReq.onsuccess = () => resolve(getReq.result ?? null);
-    getReq.onerror = () => reject(getReq.error);
+    req.onsuccess = () => resolve(req.result || "");
+    req.onerror = () => reject(req.error);
   });
 };

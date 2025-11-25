@@ -1,6 +1,7 @@
 import { classNames } from "../../utils/classNames";
 
-import { BellOffIcon, BellRingIcon } from "lucide-react";
+import { LuBellOff, LuBellRing } from "react-icons/lu";
+
 import LoadingSpinner from "../../ui/LoadingSpinner";
 
 interface SubscribeButtonProps {
@@ -27,9 +28,9 @@ const SubscribeButton = ({ loading, token, toggleSubscription }: SubscribeButton
       {loading ? (
         <LoadingSpinner />
       ) : subscription ? (
-        <BellRingIcon size={20} />
+        <LuBellRing size={20} />
       ) : (
-        <BellOffIcon size={20} />
+        <LuBellOff size={20} />
       )}
     </button>
   );

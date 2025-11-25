@@ -1,27 +1,20 @@
-import { useEffect, Fragment } from "react";
+import { useEffect } from "react";
 import { useIsWebView } from "./hooks/useIsWebView";
+import { useSmartLook } from "./hooks/useSmartLook";
 
-import { getPWAData } from "./helpers/getPWAData";
 import { redirectFromWebView } from "./helpers/redirectFromWebView";
 
-import GlobalRedirect from "./components/GlobalRedirect";
 import AppRouter from "./components/AppRouter";
-
-getPWAData();
 
 const App = () => {
   const { isWebView } = useIsWebView();
+  useSmartLook();
 
   useEffect(() => {
     if (isWebView) redirectFromWebView();
   }, [isWebView]);
 
-  return (
-    <Fragment>
-      <GlobalRedirect />
-      <AppRouter />
-    </Fragment>
-  );
+  return <AppRouter />;
 };
 
 export default App;

@@ -1,13 +1,15 @@
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
 import { getPWAData } from "../helpers/getPWAData";
-import { waitUntilActive, idbGet } from "../helpers/idbStorage";
-
-import { QUERY_TAIL_KEY } from "../constants/storage";
+import { getQueryTail } from "./getQueryTail";
 
 export const redirectOnLaunch = async () => {
   const standalone = window.matchMedia("(display-mode: standalone)");
 
-  window.addEventListener("pageshow", async () => {
+  window.addEventListener("pageshow", async (event) => {
+    console.log("[Redirect] pageshow triggered", {
+      persisted: event.persisted,
+    });
+
     if (!checkIfStandalone()) return;
 
     await handleRedirect();
@@ -22,24 +24,20 @@ export const redirectOnLaunch = async () => {
 };
 
 const handleRedirect = async () => {
-  await waitUntilActive();
-
   const { destination_url, product_url } = getPWAData();
   const firstVisit = await askServiceWorker();
+  const tail = await getQueryTail();
+  console.log("tail :", tail);
 
   const baseURL = firstVisit ? destination_url : product_url;
-  const tail = await idbGet(QUERY_TAIL_KEY);
+  const finalURL = new URL(baseURL, window.location.origin);
 
-  if (!tail) {
-    console.warn("[Redirect] Missing query tail in IndexedDB");
-    alert("[Redirect] Missing query tail in IndexedDB"); // LOG
-    return;
+  if (firstVisit && tail) {
+    finalURL.search = tail;
   }
 
-  const finalURL = `${baseURL}/${tail}`;
-  alert(finalURL);
-  console.log("[Redirect] Redirect to:", finalURL);
-  window.location.href = finalURL;
+  console.log("[Redirect] Redirect to:", finalURL.toString());
+  window.location.href = finalURL.toString();
 };
 
 const askServiceWorker = (): Promise<boolean> => {
