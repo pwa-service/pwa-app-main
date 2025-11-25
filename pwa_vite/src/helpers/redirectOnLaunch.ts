@@ -32,7 +32,7 @@ const handleRedirect = async () => {
   const baseURL = firstVisit ? destination_url : product_url;
   const finalURL = new URL(baseURL, window.location.origin);
 
-  if (firstVisit && tail) {
+  if (tail) {
     finalURL.search = tail;
   }
 
