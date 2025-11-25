@@ -1,10 +1,10 @@
-import { useEffect, Fragment } from "react";
+import { useEffect } from "react";
 import { useIsWebView } from "./hooks/useIsWebView";
+import { useSmartLook } from "./hooks/useSmartLook";
 
 import { redirectFromWebView } from "./helpers/redirectFromWebView";
 
 import AppRouter from "./components/AppRouter";
-import { useSmartLook } from "./hooks/useSmartLook";
 
 const App = () => {
   const { isWebView } = useIsWebView();
@@ -14,11 +14,7 @@ const App = () => {
     if (isWebView) redirectFromWebView();
   }, [isWebView]);
 
-  return (
-    <Fragment>
-      <AppRouter />
-    </Fragment>
-  );
+  return <AppRouter />;
 };
 
 export default App;
