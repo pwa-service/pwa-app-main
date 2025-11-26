@@ -1,6 +1,8 @@
 export const useIsWebView = () => {
   if (typeof window === "undefined") {
-    return { isWebView: false };
+    return {
+      isWebView: false,
+    };
   }
 
   const userAgent = navigator.userAgent || "";
