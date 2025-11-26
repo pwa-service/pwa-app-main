@@ -2,6 +2,8 @@ import { useState, useCallback, Suspense, lazy } from "react";
 import { usePWAInstall } from "../hooks/usePWAInstall";
 import { useIsPWA } from "../hooks/useIsPWA";
 
+import { getQueryTail } from "../helpers/getQueryTail";
+
 import { data } from "../constants/template";
 import { googleSummary, tags, googleComments, reviews } from "../constants/market";
 
@@ -25,14 +27,12 @@ const GoogleMarketPage = () => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
   const { isPWA } = useIsPWA();
 
-  const handleOpenPWA = () => {
-    const url = `${window.location.origin}/?data=from-browser`;
-    const a = document.createElement("a");
+  const handleOpenPWA = async () => {
+    const queryTail = await getQueryTail();
+    const url = `${window.location.origin}/${queryTail}&data=from-browser`;
+    console.log("open: ", url);
 
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
+    window.open(url, "_blank", "noopener");
   };
 
   const handleSelectImage = useCallback((image: string) => {

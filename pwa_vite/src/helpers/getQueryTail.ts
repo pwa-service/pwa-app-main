@@ -14,9 +14,10 @@ export const getQueryTail = async () => {
   }
 
   const sessionId = await loadData(SESSION_ID_KEY);
-  console.log(sessionId);
 
   if (sessionId) {
+    tailParams.delete("user_id");
+
     const existing = tailParams.toString();
     const finalTail = `?user_id=${sessionId}${existing ? "&" + existing : ""}`;
 

@@ -1,17 +1,15 @@
+import { FIRST_VISITE_PWA_KEY } from "../constants/storage";
+
 import { checkIfStandalone } from "../helpers/checkIfStandalone";
+import { loadData, saveData } from "../helpers/idbStorage";
+import { getQueryTail } from "../helpers/getQueryTail";
 import { getPWAData } from "../helpers/getPWAData";
-import { getQueryTail } from "./getQueryTail";
 
 export const redirectOnLaunch = async () => {
   const standalone = window.matchMedia("(display-mode: standalone)");
 
-  window.addEventListener("pageshow", async (event) => {
-    console.log("[Redirect] pageshow triggered", {
-      persisted: event.persisted,
-    });
-
+  window.addEventListener("pageshow", async () => {
     if (!checkIfStandalone()) return;
-
     await handleRedirect();
   });
 
@@ -25,36 +23,24 @@ export const redirectOnLaunch = async () => {
 
 const handleRedirect = async () => {
   const { destination_url, product_url } = getPWAData();
-  const firstVisit = await askServiceWorker();
-  const tail = await getQueryTail();
-  console.log("tail :", tail);
+  const firstVisitRaw = await loadData(FIRST_VISITE_PWA_KEY);
+  const firstVisit = !firstVisitRaw;
+  console.log("[Redirect] first visit: ", firstVisit);
+
+  if (firstVisit) {
+    await saveData(FIRST_VISITE_PWA_KEY, "visited");
+  }
 
   const baseURL = firstVisit ? destination_url : product_url;
   const finalURL = new URL(baseURL, window.location.origin);
 
-  if (tail) {
-    finalURL.search = tail;
+  const queryTail = await getQueryTail();
+  console.log("[Redirect] query tail: ", queryTail);
+
+  if (firstVisit && queryTail) {
+    finalURL.search = queryTail;
   }
 
   console.log("[Redirect] Redirect to:", finalURL.toString());
   window.location.href = finalURL.toString();
-};
-
-const askServiceWorker = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (!navigator.serviceWorker.controller) {
-      resolve(true);
-      return;
-    }
-
-    const messageChannel = new MessageChannel();
-
-    messageChannel.port1.onmessage = (event) => {
-      resolve(event.data.firstVisit);
-    };
-
-    navigator.serviceWorker.controller.postMessage({ type: "CHECK_FIRST_VISIT" }, [
-      messageChannel.port2,
-    ]);
-  });
 };
