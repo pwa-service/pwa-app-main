@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const DEFAULT_INSTALL_PROGRESS_DURATION = 5 * 1000; // 5 sec
+const DEFAULT_INSTALL_PROGRESS_DURATION = 7.5 * 1000; // 7.5 sec
 
 export const useInstallProgress = (duration: number = DEFAULT_INSTALL_PROGRESS_DURATION) => {
   const [progress, setProgress] = useState<number>(0);
