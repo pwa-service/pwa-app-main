@@ -13,6 +13,7 @@ import {
 import {AllowAnonymous} from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
 import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -65,5 +66,11 @@ export class AuthGrpcController {
   @GrpcMethod('AuthService', 'Me')
   async me(_empty: {}, md: Metadata, @GrpcUser() user: UserRecord | null) {
     return user;
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'TelegramAuth')
+  async telegramAuth(dto: TelegramAuthDto) {
+    return this.auth.telegramAuth(dto);
   }
 }

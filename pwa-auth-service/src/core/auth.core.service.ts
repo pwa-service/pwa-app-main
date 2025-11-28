@@ -15,6 +15,7 @@ import { AuthRepository } from './auth.repository';
 import * as crypto from 'crypto';
 import {MailerService} from "@nestjs-modules/mailer";
 import {RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
+import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 type UserPayload = { id: string; email: string; username: string };
 
@@ -23,6 +24,7 @@ export class AuthCoreService {
     private privateKey!: CryptoKey;
     private publicJwk!: any;
     private kid!: string;
+    private readonly botToken = process.env.TELEGRAM_BOT_TOKEN!;
 
     constructor(
         private readonly store: RefreshStore,
@@ -66,8 +68,8 @@ export class AuthCoreService {
 
 
     async validateUser(input: SignInDto): Promise<UserPayload> {
-        const { email: emailOrUsername, password } = input;
-        const user = await this.repo.findByEmailOrUsername(emailOrUsername);
+        const { email, password } = input;
+        const user = await this.repo.findByEmail(email);
         if (!user) {
             throw new RpcException({
                 code: status.UNAUTHENTICATED,
@@ -189,7 +191,7 @@ export class AuthCoreService {
 
     async signUp(input: SignUpDto) {
         const { email, name, password } = input;
-        const existing = await this.repo.findByEmailOrUsername(email);
+        const existing = await this.repo.findByEmail(email);
         if (existing) {
             throw new RpcException({
                 code: status.ALREADY_EXISTS,
@@ -202,6 +204,19 @@ export class AuthCoreService {
             email,
             password: hash,
             username: name ?? email.split('@')[0],
+        });
+
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const exp = Math.floor(Date.now() / 1000) + 3600;
+        await this.store.saveOneTime(token, created.id, exp);
+        const resetLink = `${process.env.FRONTEND_URL}/auth/confirm-email?token=${token}`;
+
+        await this.mailerService.sendMail({
+            to: email ?? '',
+            subject: 'Email confirmation',
+            text: `Use this link to confirm your password: ${resetLink}`,
+            html: `<p>Click <a href="${resetLink}">here</a> to confirm your email.</p>`,
         });
 
         return this.issueTokens({
@@ -218,7 +233,7 @@ export class AuthCoreService {
 
     async restorePassword(input: RestorePasswordDto) {
         const { email, newPassword, token } = input;
-        const user = await this.repo.findByEmailOrUsername(email);
+        const user = await this.repo.findByEmail(email);
         if (!user) {
             throw new RpcException({
                 code: status.NOT_FOUND,
@@ -248,7 +263,7 @@ export class AuthCoreService {
     }
 
     async requestPasswordReset(email: string) {
-        const user = await this.repo.findByEmailOrUsername(email);
+        const user = await this.repo.findByEmail(email);
         if (!user || !user.email) {
             return { message: 'If user exists, reset email was sent.' };
         }
@@ -295,5 +310,55 @@ export class AuthCoreService {
         };
 
         return this.issueTokens(userPayload);
+    }
+
+    async telegramAuth(input: TelegramAuthDto) {
+        if (!this.botToken) {
+            throw new RpcException({
+                code: status.INTERNAL,
+                message: 'Telegram bot token not configured',
+            });
+        }
+        const dataCheckArr = [];
+        if (input.auth_date) dataCheckArr.push(`auth_date=${input.auth_date}`);
+        if (input.first_name) dataCheckArr.push(`first_name=${input.first_name}`);
+        if (input.id) dataCheckArr.push(`id=${input.id}`);
+        if (input.last_name) dataCheckArr.push(`last_name=${input.last_name}`);
+        if (input.photo_url) dataCheckArr.push(`photo_url=${input.photo_url}`);
+        if (input.username) dataCheckArr.push(`username=${input.username}`);
+
+        const dataCheckString = dataCheckArr.sort().join('\n');
+        const secretKey = crypto.createHash('sha256').update(this.botToken).digest();
+        const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+        if (hmac !== input.hash) {
+            throw new RpcException({
+                code: status.UNAUTHENTICATED,
+                message: 'Invalid Telegram hash',
+            });
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        if (now - input.auth_date > 86400) {
+            throw new RpcException({
+                code: status.UNAUTHENTICATED,
+                message: 'Telegram auth data is outdated',
+            });
+        }
+
+        const telegramEmail = `tg_${input.id}@telegram.fake`;
+        let user = await this.repo.findByEmail(telegramEmail);
+
+        if (!user) {
+            user = await this.repo.createUser({
+                password: crypto.randomBytes(16).toString('hex'),
+                username: input.username ?? `tg_user_${input.id}`,
+            });
+        }
+
+        return this.issueTokens({
+            id: String(user.id),
+            email: user.email ?? '',
+            username: user.username ?? '',
+        });
     }
 }

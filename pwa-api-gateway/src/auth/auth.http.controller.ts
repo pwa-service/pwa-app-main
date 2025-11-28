@@ -1,4 +1,4 @@
-import {Body, Controller, Get, HttpCode, Post, Req, UseGuards} from '@nestjs/common';
+import {Body, Controller, Get, HttpCode, Post, Query, Req, UseGuards} from '@nestjs/common';
 import { Request } from 'express';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import { AuthGrpcClient } from './auth.grpc.client';
@@ -11,6 +11,7 @@ import {
 } from '../../../pwa-shared/src';
 import {JwtAuthGuard} from "../common/jwt-auth.guard";
 import {ApiTags} from "@nestjs/swagger";
+import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -60,9 +61,15 @@ export class AuthHttpController {
         return this.auth.restorePassword(dto, buildGrpcMetadata(req));
     }
 
-    @Post('confirm-email')
+    @Get('confirm-email')
     @HttpCode(200)
-    async confirmEmail(@Body() dto: ConfirmEmailDto, @Req() req: Request) {
+    async confirmEmail(@Query() dto: ConfirmEmailDto, @Req() req: Request) {
         return this.auth.confirmEmail(dto, buildGrpcMetadata(req));
+    }
+
+    @Post('telegram')
+    @HttpCode(200)
+    async telegramAuth(@Body() dto: TelegramAuthDto, @Req() req: Request) {
+        return this.auth.telegramAuth(dto, buildGrpcMetadata(req));
     }
 }
