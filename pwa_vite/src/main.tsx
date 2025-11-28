@@ -4,7 +4,6 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import TrackerContextProvider from "./components/TrackerContextProvider.tsx";
 
-import { initServiceWorker } from "./helpers/initServiceWorker.ts";
 import { redirectOnLaunch } from "./helpers/redirectOnLaunch.ts";
 
 import App from "./App.tsx";
@@ -22,5 +21,4 @@ root.render(
   </StrictMode>
 );
 
-initServiceWorker();
 redirectOnLaunch();

@@ -1,4 +1,4 @@
-import type { EventBaseBodyData, PostFirstOpenBodyData } from "../types/events";
+import type { EventBaseBodyData } from "../types/events";
 
 import { axiosInstance } from "../axios/instance";
 
@@ -15,9 +15,9 @@ export const postViewContent = async (
   }
 };
 
-export const postFirstOpen = async (bodyData: PostFirstOpenBodyData): Promise<unknown> => {
+export const postFirstOpen = async (sessionId: string): Promise<unknown> => {
   try {
-    const { data } = await axiosInstance.post("/api/event/first-open", bodyData);
+    const { data } = await axiosInstance.post("/api/event/first-open", { sessionId });
 
     return data;
   } catch (error) {

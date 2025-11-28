@@ -89,7 +89,7 @@ export const useTracker = () => {
     const currentURL = new URL(window.location.href);
     const { fbclId, pixelId } = parseURLParams(currentURL);
 
-    const IS_DEVELOPMENT = currentURL.host === "localhost:4173";
+    const IS_DEVELOPMENT = import.meta.env.MODE === "development";
 
     const trackerData = {
       pwaDomain: IS_DEVELOPMENT ? "pwaservice.site" : currentURL.host,
@@ -170,10 +170,7 @@ export const useTracker = () => {
     setLoading("visitingPWA", true);
 
     try {
-      await postFirstOpen({
-        ...state.trackerData,
-        sessionId: state.sessionId,
-      });
+      await postFirstOpen(state.sessionId);
 
       localStorage.setItem(FIRST_OPEN_SENT_KEY, "true");
     } catch (error) {

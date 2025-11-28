@@ -3,7 +3,3 @@ export interface EventBaseBodyData {
   landingUrl: string;
   queryStringRaw: string;
 }
-
-export interface PostFirstOpenBodyData extends EventBaseBodyData {
-  sessionId: string;
-}

@@ -12,11 +12,17 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
       VitePWA({
-        strategies: "injectManifest",
-        srcDir: "src",
-        filename: "service-worker.js",
-        injectRegister: false,
+        registerType: "autoUpdate",
+        injectRegister: "auto",
         scope: "/",
+
+        devOptions: {
+          enabled: true,
+        },
+
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
+        },
 
         manifest: {
           short_name: "Quini6 Casino",
