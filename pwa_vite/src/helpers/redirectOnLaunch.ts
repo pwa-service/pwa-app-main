@@ -26,18 +26,15 @@ export const redirectOnLaunch = async () => {
 const handleRedirect = async () => {
   const { destination_url, product_url } = getPWAData();
   const firstVisit = await askServiceWorker();
-
-  const baseURL = firstVisit ? destination_url : product_url;
   const tail = await getQueryTail();
   console.log("tail :", tail);
 
+  const baseURL = firstVisit ? destination_url : product_url;
   const finalURL = new URL(baseURL, window.location.origin);
 
-  if (tail) {
+  if (firstVisit && tail) {
     finalURL.search = tail;
   }
-
-  window.location.href = finalURL.toString();
 
   console.log("[Redirect] Redirect to:", finalURL.toString());
   window.location.href = finalURL.toString();

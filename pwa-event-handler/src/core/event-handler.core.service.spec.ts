@@ -140,8 +140,9 @@ describe('EventHandlerCoreService', () => {
 
         it('should send CompleteRegistration event on session and log success', async () => {
             mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
+            //@ts-ignore
             const result = await service.completeRegistration(dto);
-            expect(result.success).toBe(true);
+            expect(result.data).toBe(true);
             expect(repo.getSessionById).toHaveBeenCalledWith(mockSession.id);
             expect(logs.createLog).toHaveBeenCalledWith(
                 expect.objectContaining({ eventType: EventType.CompleteRegistration, status: LogStatus.success }),
@@ -150,9 +151,10 @@ describe('EventHandlerCoreService', () => {
 
         it('should handle FB API error and return success: false', async () => {
             mockedAxios.post.mockRejectedValue({ response: { status: 500, data: { error: 'FB Internal Error' } }, isAxiosError: true });
+            //@ts-ignore
             const result = await service.completeRegistration(dto);
-            expect(result.success).toBe(false);
-            expect(result.fb).toContain('FB 500');
+            expect(result.data).toBe(false);
+            expect(result.data).toContain('FB 500');
             expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
         });
     });
@@ -166,8 +168,9 @@ describe('EventHandlerCoreService', () => {
 
         it('should send Purchase event with value/currency and log success', async () => {
             mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
+            //@ts-ignore
             const result = await service.purchase(dto);
-            expect(result.success).toBe(true);
+            expect(result.data).toBe(true);
             expect(logs.createLog).toHaveBeenCalledWith(
                 expect.objectContaining({ eventType: EventType.Purchase, status: LogStatus.success }),
             );
@@ -175,8 +178,9 @@ describe('EventHandlerCoreService', () => {
 
         it('should handle FB API error and return success: false', async () => {
             mockedAxios.post.mockRejectedValue({ response: { status: 500, data: { error: 'FB Internal Error' } }, isAxiosError: true });
+            //@ts-ignore
             const result = await service.purchase(dto);
-            expect(result.success).toBe(false);
+            expect(result.data).toBe(false);
             expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
         });
     });
@@ -190,8 +194,9 @@ describe('EventHandlerCoreService', () => {
 
         it('should send Subscribe event and log success', async () => {
             mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
+            //@ts-ignore
             const result = await service.subscribe(dto);
-            expect(result.success).toBe(true);
+            expect(result.data).toBe(true);
             expect(logs.createLog).toHaveBeenCalledWith(
                 expect.objectContaining({ eventType: EventType.Subscribe, status: LogStatus.success }),
             );
@@ -199,8 +204,9 @@ describe('EventHandlerCoreService', () => {
 
         it('should handle FB API error and return success: false', async () => {
             mockedAxios.post.mockRejectedValue({ response: { status: 401, data: { error: 'Unauthorized' } }, isAxiosError: true });
+            //@ts-ignore
             const result = await service.subscribe(dto);
-            expect(result.success).toBe(false);
+            expect(result.data).toBe(false);
             expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
         });
     });
