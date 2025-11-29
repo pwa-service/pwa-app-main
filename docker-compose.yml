@@ -249,23 +249,20 @@ services:
           cpus: "0.2"
           memory: "0.4g"
 
-  prisma-studio:
-    build:
-      context: .
-      dockerfile: pwa-prisma/Dockerfile.studio
-    container_name: prisma-studio
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=supersecret
+    ports:
+      - "9000:80"
+    networks:
+      - pwa-network
     depends_on:
       postgres:
         condition: service_healthy
-      prisma-migrator:
-        condition: service_completed_successfully
     restart: unless-stopped
-    networks:
-      - pwa-network
-    ports:
-      - "127.0.0.1:5555:5555"
     deploy:
       resources:
         limits:
