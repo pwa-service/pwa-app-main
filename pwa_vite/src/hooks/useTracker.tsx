@@ -170,10 +170,7 @@ export const useTracker = () => {
     setLoading("visitingPWA", true);
 
     try {
-      await postFirstOpen({
-        ...state.trackerData,
-        sessionId: state.sessionId,
-      });
+      await postFirstOpen(state.sessionId);
 
       localStorage.setItem(FIRST_OPEN_SENT_KEY, "true");
     } catch (error) {
