@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+  
 env:
   DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
   DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
