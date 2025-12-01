@@ -266,6 +266,26 @@ services:
           cpus: "0.25"
           memory: "0.5g"
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=supersecret
+    ports:
+      - "9000:80"
+    networks:
+      - pwa-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "0.5g"
+
 volumes:
   postgres_data:
     driver: local
