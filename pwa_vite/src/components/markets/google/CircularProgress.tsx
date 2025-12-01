@@ -8,7 +8,7 @@ interface CircularProgressProps {
 const CircularProgress = ({
   progress = 0,
   strokeWidth = 4,
-  strokeColor = "#007A55",
+  strokeColor = "#007a55",
   trackColor = "#E5E7EB",
 }: CircularProgressProps) => {
   const radius = 50 - strokeWidth / 2;
