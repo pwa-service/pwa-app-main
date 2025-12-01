@@ -1,20 +1,15 @@
 import { useState, useCallback, Suspense, lazy } from "react";
-import { usePWAInstall } from "../hooks/usePWAInstall";
 import { useIsPWA } from "../hooks/useIsPWA";
 
-import { getQueryTail } from "../helpers/getQueryTail";
-
 import { data } from "../constants/template";
-import { googleSummary, tags, googleComments, reviews } from "../constants/market";
+import { reviews, googleComments } from "../constants/market";
 
 import Loader from "../ui/Loader";
-import GoogleMarketLayout from "../components/layouts/GoogleMarketLayout";
 import Description from "../components/markets/google/Description";
-import Summary from "../components/markets/google/Summary";
-import InstallButton from "../components/markets/InstallButton";
-import ProgressBar from "../components/markets/ProgressBar";
-import Slider from "../components/markets/Slider";
-import AboutSection from "../components/markets/AboutSection";
+import ImageSlider from "../components/markets/google/ImageSlider";
+import SectionContainer from "../components/markets/google/SectionContainer";
+import TagsList from "../components/markets/google/TagsList";
+import DataSafetyList from "../components/markets/google/DataSafetyList";
 import Reviews from "../components/markets/google/Reviews";
 import Comments from "../components/markets/google/Comments";
 
@@ -24,16 +19,7 @@ const GoogleMarketPage = () => {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [showGallery, setShowGallery] = useState<boolean>(false);
 
-  const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
   const { isPWA } = useIsPWA();
-
-  const handleOpenPWA = async () => {
-    const queryTail = await getQueryTail();
-    const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-    console.log("open: ", url);
-
-    window.open(url, "_blank", "noopener");
-  };
 
   const handleSelectImage = useCallback((image: string) => {
     setSelectedImage(image);
@@ -45,49 +31,14 @@ const GoogleMarketPage = () => {
   if (isPWA) return <Loader />;
 
   return (
-    <GoogleMarketLayout>
-      <div className="relative">
-        <div className="absolute right-0 hidden md:block w-[200px] rounded-2xl overflow-hidden">
-          <div className="relative">
-            <img src={data.productImage} alt="" className="w-full h-full" />
-          </div>
-        </div>
+    <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
+      <Description imageSRC={data.productImage} productName={data.productName} />
 
-        <Description
-          productImage={data.productImage}
-          productName={data.productName}
-          productCreator={data.productCreator}
-        />
-
-        <Summary productSummary={googleSummary} />
-
-        <div className="mb-8 md:mb-12">
-          {isInstalling ? (
-            <div className="h-11 flex items-center">
-              <ProgressBar variant="google" progress={progress} />
-            </div>
-          ) : isInstalled ? (
-            <InstallButton
-              text="OPEN"
-              variant="google"
-              onClick={handleOpenPWA}
-              className="max-w-[200px]"
-            />
-          ) : (
-            <InstallButton
-              text="Instalar"
-              variant="google"
-              onClick={promptInstall}
-              className="max-w-[200px]"
-            />
-          )}
-        </div>
-      </div>
-
-      <Slider variant="google" images={data.images} handleSelectImage={handleSelectImage} />
-      <AboutSection variant="google" description={data.description} tags={tags} />
-      <Reviews {...reviews} />
-      <Comments comments={googleComments} />
+      <ImageSlider
+        images={data.images}
+        handleSelectImage={handleSelectImage}
+        showGallery={showGallery}
+      />
 
       {showGallery && (
         <Suspense fallback={<div>Loading...</div>}>
@@ -98,7 +49,35 @@ const GoogleMarketPage = () => {
           />
         </Suspense>
       )}
-    </GoogleMarketLayout>
+
+      <SectionContainer title="About this up">
+        <ul className="flex flex-col gap-5">
+          {data.description.map((row, index) => (
+            <li key={index}>
+              <p className="text-zinc-600">{row}</p>
+            </li>
+          ))}
+        </ul>
+
+        <TagsList tags={["Gambling"]} />
+      </SectionContainer>
+
+      <SectionContainer title="Data safety">
+        <p className="text-zinc-600">
+          Safety starts with understanding how developers collect and share your data. Data privacy
+          and security practices may vary based on your use, region, and age. The developer provided
+          this information and may update it over time.
+        </p>
+
+        <DataSafetyList />
+      </SectionContainer>
+
+      <SectionContainer title="Rating and reviews">
+        <Reviews {...reviews} />
+      </SectionContainer>
+
+      <Comments comments={googleComments} />
+    </main>
   );
 };
 

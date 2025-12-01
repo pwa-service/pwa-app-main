@@ -8,32 +8,30 @@ interface CommentsProps {
 
 const Comments = memo(({ comments }: CommentsProps) => {
   return (
-    <div className="w-full flex flex-col mb-10">
+    <div className="w-full flex flex-col gap-10 mt-16">
       {comments.map(({ type, id, avatar, fullName, starImage, date, text }) =>
         type === "user" ? (
-          <div key={id} className="flex flex-col gap-2 mt-12">
-            <div className="flex items-center gap-4">
-              <img src={avatar?.src} alt={avatar?.alt} className="w-10 h-10" />
-
-              <h2 className="font-semibold text-[#202124] text-xl">{fullName}</h2>
+          <div key={id} className="flex flex-col">
+            <div className="flex items-center gap-4 mb-6">
+              <img src={avatar?.src} alt={avatar?.alt} className="w-8 h-8" />
+              <span className="font-medium text-zinc-800">{fullName}</span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 mb-2">
               <img src={starImage?.src} alt={starImage?.alt} />
-              <p className="font-normal text-[#4C4D55]">{date}</p>
+              <p className="text-xs text-zinc-600">{date}</p>
             </div>
 
-            <p className="text-[#4C4D55] leading-[105%]">{text}</p>
+            <p className="text-zinc-600 text-sm">{text}</p>
           </div>
         ) : (
-          <div key={id} className="w-full flex flex-col gap-2 p-6 bg-[#F8F9FA] mt-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-[#202124] text-xl">{fullName}</h2>
-
-              <p className="font-normal text-[#4C4D55]">{date}</p>
+          <div key={id} className="w-full flex flex-col gap-2 p-4 -mt-4 rounded-lg bg-blue-100/30">
+            <div className="flex items-center gap-4 mb-2">
+              <span className="font-medium text-zinc-800">{fullName}</span>
+              <p className="text-xs text-zinc-600">{date}</p>
             </div>
 
-            <p className="font-light text-[#4C4D55] leading-[105%]">{text}</p>
+            <p className="text-zinc-600 text-sm">{text}</p>
           </div>
         )
       )}
