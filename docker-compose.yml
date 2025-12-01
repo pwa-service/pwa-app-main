@@ -272,7 +272,7 @@ services:
     env_file:
     - ./.env
     ports:
-      - "9000:80"
+      - "127.0.0.1:9000:80"
     networks:
       - pwa-network
     depends_on:
