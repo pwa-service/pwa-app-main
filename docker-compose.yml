@@ -269,9 +269,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@example.com
-      - PGADMIN_DEFAULT_PASSWORD=supersecret
+    env_file:
+    - ./.env
     ports:
       - "9000:80"
     networks:
