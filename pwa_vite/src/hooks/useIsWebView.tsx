@@ -1,6 +1,8 @@
 export const useIsWebView = () => {
   if (typeof window === "undefined") {
-    return { isWebView: false };
+    return {
+      isWebView: false,
+    };
   }
 
   const userAgent = navigator.userAgent || "";
@@ -13,7 +15,9 @@ export const useIsWebView = () => {
     typeof window.TelegramWebviewProxy !== "undefined" &&
     typeof window.TelegramWebviewProxyProto !== "undefined";
 
+  const isFacebookWebView = /FBAN|FBAV|FB_IAB/i.test(userAgent);
+
   return {
-    isWebView: isAndroidWebView || isiOSWebView,
+    isWebView: isAndroidWebView || isiOSWebView || isFacebookWebView,
   };
 };

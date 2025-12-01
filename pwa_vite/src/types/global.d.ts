@@ -1,5 +1,9 @@
 export declare global {
+  interface Navigator {
+    standalone?: boolean;
+  }
+
   interface Window {
-    __IS_PWA__?: boolean;
+    smartlook?: unknown;
   }
 }

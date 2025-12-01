@@ -12,11 +12,17 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
       VitePWA({
-        strategies: "injectManifest",
-        srcDir: "src",
-        filename: "service-worker.js",
-        injectRegister: false,
+        registerType: "autoUpdate",
+        injectRegister: "auto",
         scope: "/",
+
+        devOptions: {
+          enabled: true,
+        },
+
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
+        },
 
         manifest: {
           short_name: "Quini6 Casino",
@@ -38,15 +44,25 @@ export default defineConfig(async () => {
             {
               src: "./favicon.ico",
               type: "image/x-icon",
-              sizes: "64x64 32x32 24x24 16x16",
+              sizes: "256x256",
             },
 
             {
-              src: "./app_icon_512.webp",
+              src: "./app_icon.webp",
               type: "image/webp",
               sizes: "512x512",
             },
           ],
+
+          // screenshots: [
+          //   {
+          //     src: "./screenshots",
+          //     form_factor: "narrow",
+          //     sizes: "",
+          //     type: "image/png",
+          //     label: "",
+          //   },
+          // ],
         },
       }),
     ],

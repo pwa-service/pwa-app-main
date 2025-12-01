@@ -1,0 +1,84 @@
+import { useState, useCallback, Suspense, lazy } from "react";
+import { useIsPWA } from "../hooks/useIsPWA";
+
+import { data } from "../constants/template";
+import { reviews, googleComments } from "../constants/market";
+
+import Loader from "../ui/Loader";
+import Description from "../components/markets/google/Description";
+import ImageSlider from "../components/markets/google/ImageSlider";
+import SectionContainer from "../components/markets/google/SectionContainer";
+import TagsList from "../components/markets/google/TagsList";
+import DataSafetyList from "../components/markets/google/DataSafetyList";
+import Reviews from "../components/markets/google/Reviews";
+import Comments from "../components/markets/google/Comments";
+
+const ExpandedGallery = lazy(() => import("../components/markets/ExpandedGallery"));
+
+const GoogleMarketPage = () => {
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [showGallery, setShowGallery] = useState<boolean>(false);
+
+  const { isPWA } = useIsPWA();
+
+  const handleSelectImage = useCallback((image: string) => {
+    setSelectedImage(image);
+    setShowGallery(true);
+  }, []);
+
+  const handleCloseGallery = useCallback(() => setShowGallery(false), []);
+
+  if (isPWA) return <Loader />;
+
+  return (
+    <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
+      <Description imageSRC={data.productImage} productName={data.productName} />
+
+      <ImageSlider
+        images={data.images}
+        handleSelectImage={handleSelectImage}
+        showGallery={showGallery}
+      />
+
+      {showGallery && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <ExpandedGallery
+            images={data.images}
+            selectedImage={selectedImage}
+            onClose={handleCloseGallery}
+          />
+        </Suspense>
+      )}
+
+      <SectionContainer title="About this up">
+        <ul className="flex flex-col gap-5">
+          {data.description.map((row, index) => (
+            <li key={index}>
+              <p className="text-zinc-600">{row}</p>
+            </li>
+          ))}
+        </ul>
+
+        <TagsList tags={["Gambling"]} />
+      </SectionContainer>
+
+      <SectionContainer title="Data safety">
+        <p className="text-zinc-600">
+          Safety starts with understanding how developers collect and share your data. Data privacy
+          and security practices may vary based on your use, region, and age. The developer provided
+          this information and may update it over time.
+        </p>
+
+        <DataSafetyList />
+      </SectionContainer>
+
+      <SectionContainer title="Rating and reviews">
+        <Reviews {...reviews} />
+      </SectionContainer>
+
+      <Comments comments={googleComments} />
+    </main>
+  );
+};
+
+export default GoogleMarketPage;

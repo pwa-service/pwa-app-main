@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useInstallProgress } from "./useInstallProgress";
-import { useUserAgent } from "./useUserAgent";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -23,10 +22,8 @@ const getIsInstalled = (): boolean => {
 
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIOSInstructions, setShowIOSInstructions] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(getIsInstalled());
 
-  const { isPWA, isIOS } = useUserAgent();
   const { isInstalling, progress, startProgress } = useInstallProgress();
 
   useEffect(() => {
@@ -49,11 +46,6 @@ export const usePWAInstall = () => {
   }, [progress, isInstalled]);
 
   const promptInstall = useCallback(async () => {
-    if (isIOS && !isPWA) {
-      setShowIOSInstructions(true);
-      return;
-    }
-
     if (!deferredPrompt) return false;
 
     deferredPrompt.prompt();
@@ -73,13 +65,11 @@ export const usePWAInstall = () => {
       startProgress();
       return true;
     }
-  }, [deferredPrompt, isIOS, isPWA, startProgress]);
+  }, [deferredPrompt, startProgress]);
 
   return {
     deferredPrompt,
     promptInstall,
-    showIOSInstructions,
-    setShowIOSInstructions,
     isInstalling,
     progress,
     isInstalled,
