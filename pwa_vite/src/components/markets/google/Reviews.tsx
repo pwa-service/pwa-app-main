@@ -18,12 +18,10 @@ const Reviews = memo(
     const percents = [percentA, percentB, percentC, percentD, percentE];
 
     return (
-      <div className="flex flex-col mb-6 md:mb-10">
-        <h1 className="text-2xl font-medium mb-8">Ratings and reviews</h1>
-
-        <div className="w-full flex items-center gap-10 mb-2">
+      <div className="flex flex-col gap-2 mt-8">
+        <div className="w-full flex items-center gap-10">
           <div className="h-full flex flex-col gap-2">
-            <h1 className="text-6xl font-medium text-[#202124]">{rating}</h1>
+            <span className="text-6xl font-medium text-[#202124]">{rating}</span>
             <img src={starsIcon} alt="five_stars" />
           </div>
 

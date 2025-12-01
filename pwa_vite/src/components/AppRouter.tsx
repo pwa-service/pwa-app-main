@@ -1,11 +1,11 @@
 import { Routes, Route } from "react-router";
 
-import Google from "../pages/Google";
+import GoogleMarketPage from "../pages/GoogleMarketPage";
 
 const AppRouter = () => {
   return (
     <Routes>
-      <Route path="/" element={<Google />} />
+      <Route path="/" element={<GoogleMarketPage />} />
     </Routes>
   );
 };

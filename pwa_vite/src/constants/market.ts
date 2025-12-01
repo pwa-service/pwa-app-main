@@ -38,12 +38,12 @@ export const tags: string[] = ["Casino", "Slot machine", "Casual games"];
 
 export const reviews = {
   rating: 4.8,
-  reviews: "126 thousand reviews",
-  percentA: 95,
-  percentB: 13,
-  percentC: 8,
-  percentD: 5,
-  percentE: 3,
+  reviews: "499 reviews",
+  percentA: 81,
+  percentB: 14,
+  percentC: 4,
+  percentD: 1,
+  percentE: 0,
 };
 
 export const googleComments: GoogleCommentData[] = [
