@@ -11,7 +11,7 @@ const App = () => {
   useSmartLook();
 
   useEffect(() => {
-    if (isWebView) redirectFromWebView();
+    redirectFromWebView(isWebView);
   }, [isWebView]);
 
   return <AppRouter />;

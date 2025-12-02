@@ -1,12 +1,15 @@
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
+import { useIsWebView } from "../../../hooks/useIsWebView";
 
 import { classNames } from "../../../utils/classNames";
 import { getQueryTail } from "../../../helpers/getQueryTail";
+import { redirectFromWebView } from "../../../helpers/redirectFromWebView";
 
 import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
 import { TbRating21Plus } from "react-icons/tb";
-import CircularProgress from "../../../components/markets/google/CircularProgress";
+import CircularProgress from "../CircularProgress";
+import InstallButton from "../InstallButton";
 
 interface DescriptionProps {
   imageSRC: string;
@@ -15,6 +18,14 @@ interface DescriptionProps {
 
 const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
+  const { isWebView } = useIsWebView();
+
+  const handleInstall = async () => {
+    const redirected = redirectFromWebView(isWebView);
+    if (redirected) return;
+
+    promptInstall();
+  };
 
   const handleOpenPWA = async () => {
     const queryTail = await getQueryTail();
@@ -99,31 +110,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
         </div>
       </div>
 
-      {isInstalled && !isInstalling && (
-        <button
-          onClick={handleOpenPWA}
-          className={classNames(
-            "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
-            "mt-6 md:mt-10 rounded-lg bg-emerald-700/90",
-            "text-base xl:text-lg text-white font-medium"
-          )}
-        >
-          Open
-        </button>
-      )}
-
-      {!isInstalling && !isInstalled && (
-        <button
-          onClick={promptInstall}
-          className={classNames(
-            "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
-            "mt-6 md:mt-10 rounded-lg bg-emerald-700/90",
-            "text-base xl:text-lg text-white font-medium"
-          )}
-        >
-          Install
-        </button>
-      )}
+      {isInstalled && !isInstalling && <InstallButton label="Open" onClick={handleOpenPWA} />}
+      {!isInstalling && !isInstalled && <InstallButton label="Install" onClick={handleInstall} />}
     </div>
   );
 };

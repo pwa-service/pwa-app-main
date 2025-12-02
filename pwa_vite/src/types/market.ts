@@ -3,7 +3,7 @@ export interface ImageData {
   alt: string;
 }
 
-export interface ProductSummaryData {
+export interface SummaryData {
   id: number;
   value: string | null;
   label: string;

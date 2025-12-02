@@ -1,50 +1,25 @@
 import { classNames } from "../../utils/classNames";
 
-export type ButtonVariant = "google" | "apple";
-
 interface InstallButtonProps {
-  className?: string;
-  text: string;
-  loading?: boolean;
+  label: string;
   onClick?: VoidFunction;
   disabled?: boolean;
-  variant: ButtonVariant;
+  className?: string;
 }
 
-const InstallButton = ({
-  text,
-  loading = false,
-  onClick,
-  disabled,
-  variant,
-  className,
-}: InstallButtonProps) => {
-  let variantButtonStyles: string;
-
-  switch (variant) {
-    case "google":
-      variantButtonStyles = `text-[16px] py-2.5 rounded-lg bg-[#00A173]`;
-      break;
-
-    case "apple":
-      variantButtonStyles = `uppercase text-[14px] max-w-30 md:max-w-[200px] py-1.5 md:py-2 px-4 md:px-8 rounded-full bg-[#027BFF]`;
-      break;
-  }
-
+const InstallButton = ({ label, onClick, disabled, className }: InstallButtonProps) => {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={classNames(
-        "w-full",
-        "text-white font-medium",
-        "transition-all duration-300",
-        disabled ? "cursor-not-allowed" : "cursor-pointer",
-        variantButtonStyles,
+        "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
+        "mt-6 md:mt-10 rounded-lg bg-emerald-700/90",
+        "text-base xl:text-lg text-white font-medium",
         className
       )}
     >
-      {loading ? "loading..." : text}
+      {label}
     </button>
   );
 };
