@@ -20,9 +20,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
   const { isWebView } = useIsWebView();
 
-  const handleInstall = async () => {
-    const success = redirectFromWebView(isWebView);
-    if (success) return;
+  const handleInstall = () => {
+    if (isWebView) redirectFromWebView();
 
     promptInstall();
   };
