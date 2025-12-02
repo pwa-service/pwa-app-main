@@ -1,7 +1,9 @@
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
+import { useIsWebView } from "../../../hooks/useIsWebView";
 
 import { classNames } from "../../../utils/classNames";
 import { getQueryTail } from "../../../helpers/getQueryTail";
+import { redirectFromWebView } from "../../../helpers/redirectFromWebView";
 
 import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
@@ -16,6 +18,14 @@ interface DescriptionProps {
 
 const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
+  const { isWebView } = useIsWebView();
+
+  const handleInstall = async () => {
+    const redirected = redirectFromWebView(isWebView);
+    if (redirected) return;
+
+    promptInstall();
+  };
 
   const handleOpenPWA = async () => {
     const queryTail = await getQueryTail();
@@ -101,7 +111,7 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
       </div>
 
       {isInstalled && !isInstalling && <InstallButton label="Open" onClick={handleOpenPWA} />}
-      {!isInstalling && !isInstalled && <InstallButton label="Install" onClick={promptInstall} />}
+      {!isInstalling && !isInstalled && <InstallButton label="Install" onClick={handleInstall} />}
     </div>
   );
 };

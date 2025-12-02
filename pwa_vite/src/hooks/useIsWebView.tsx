@@ -8,16 +8,17 @@ export const useIsWebView = () => {
   const userAgent = navigator.userAgent || "";
 
   const isAndroidWebView =
-    userAgent.includes("Android") && typeof window.TelegramWebview !== "undefined";
+    /Android/i.test(userAgent) &&
+    (userAgent.includes("; wv") || userAgent.includes("Version/") || userAgent.includes("WebView"));
 
-  const isiOSWebView =
-    /iPad|iPhone|iPod/.test(userAgent) &&
-    typeof window.TelegramWebviewProxy !== "undefined" &&
-    typeof window.TelegramWebviewProxyProto !== "undefined";
+  const isTelegramWebView =
+    typeof window.TelegramWebview !== "undefined" ||
+    typeof window.TelegramWebviewProxy !== "undefined" ||
+    userAgent.includes("Telegram");
 
-  const isFacebookWebView = /FBAN|FBAV|FB_IAB/i.test(userAgent);
+  const isFacebookWebView = /FBAN|FBAV|FB_IAB|Instagram/i.test(userAgent);
 
   return {
-    isWebView: isAndroidWebView || isiOSWebView || isFacebookWebView,
+    isWebView: isAndroidWebView || isTelegramWebView || isFacebookWebView,
   };
 };
