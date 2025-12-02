@@ -21,8 +21,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { isWebView } = useIsWebView();
 
   const handleInstall = async () => {
-    const redirected = redirectFromWebView(isWebView);
-    if (redirected) return;
+    const success = redirectFromWebView(isWebView);
+    if (success) return;
 
     promptInstall();
   };
