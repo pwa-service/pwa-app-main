@@ -6,7 +6,8 @@ import { getQueryTail } from "../../../helpers/getQueryTail";
 import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
 import { TbRating21Plus } from "react-icons/tb";
-import CircularProgress from "../../../components/markets/google/CircularProgress";
+import CircularProgress from "../CircularProgress";
+import InstallButton from "../InstallButton";
 
 interface DescriptionProps {
   imageSRC: string;
@@ -99,31 +100,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
         </div>
       </div>
 
-      {isInstalled && !isInstalling && (
-        <button
-          onClick={handleOpenPWA}
-          className={classNames(
-            "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
-            "mt-6 md:mt-10 rounded-lg bg-emerald-700/90",
-            "text-base xl:text-lg text-white font-medium"
-          )}
-        >
-          Open
-        </button>
-      )}
-
-      {!isInstalling && !isInstalled && (
-        <button
-          onClick={promptInstall}
-          className={classNames(
-            "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
-            "mt-6 md:mt-10 rounded-lg bg-emerald-700/90",
-            "text-base xl:text-lg text-white font-medium"
-          )}
-        >
-          Install
-        </button>
-      )}
+      {isInstalled && !isInstalling && <InstallButton label="Open" onClick={handleOpenPWA} />}
+      {!isInstalling && !isInstalled && <InstallButton label="Install" onClick={promptInstall} />}
     </div>
   );
 };
