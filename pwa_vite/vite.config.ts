@@ -25,8 +25,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "Quini6 Casino",
-          name: "Quini6 Casino",
+          short_name: "ICE FISHING",
+          name: "ICE FISHING",
           start_url: "/",
           scope: "/",
           display: "standalone",
