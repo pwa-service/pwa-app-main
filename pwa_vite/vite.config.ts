@@ -25,8 +25,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "ICE FISHING",
-          name: "ICE FISHING",
+          short_name: "Agüero Casino",
+          name: "Agüero Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
