@@ -1,5 +1,5 @@
 export const useIsWebView = () => {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
     return {
       isWebView: false,
     };
@@ -7,17 +7,18 @@ export const useIsWebView = () => {
 
   const userAgent = navigator.userAgent || "";
 
-  const isAndroidWebView =
-    userAgent.includes("Android") && typeof window.TelegramWebview !== "undefined";
+  const isTelegramWebApp =
+    typeof window.Telegram !== "undefined" && typeof window.Telegram.WebApp !== "undefined";
 
-  const isiOSWebView =
+  const isTelegramWebViewAndroid =
+    /Android/i.test(userAgent) && typeof window.TelegramWebview !== "undefined";
+
+  const isTelegramWebViewIOS =
     /iPad|iPhone|iPod/.test(userAgent) &&
     typeof window.TelegramWebviewProxy !== "undefined" &&
     typeof window.TelegramWebviewProxyProto !== "undefined";
 
-  const isFacebookWebView = /FBAN|FBAV|FB_IAB/i.test(userAgent);
-
   return {
-    isWebView: isAndroidWebView || isiOSWebView || isFacebookWebView,
+    isWebView: isTelegramWebApp || isTelegramWebViewAndroid || isTelegramWebViewIOS,
   };
 };
