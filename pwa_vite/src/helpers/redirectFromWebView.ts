@@ -1,22 +1,18 @@
 export const redirectFromWebView = (): void => {
-  if (typeof window === "undefined" || typeof navigator === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined" || typeof navigator === "undefined") return;
 
   const userAgent = navigator.userAgent || "";
   const isAndroid = /Android/i.test(userAgent);
 
-  if (isAndroid) {
-    const currentUrl = window.location.href;
-    const isChrome = !/Chrome/i.test(navigator.userAgent);
+  if (!isAndroid) return;
 
-    if (isChrome) {
-      const chromeUrl = `intent://${currentUrl.replace(
-        /^https?:\/\//,
-        ""
-      )}#Intent;scheme=https;end`;
+  setTimeout(() => {
+    const currentURL = window.location.href;
+    const chromeURL = `intent://${currentURL.replace(
+      /^https?:\/\//,
+      ""
+    )}#Intent;scheme=https;package=com.android.chrome;end`;
 
-      window.location.replace(chromeUrl);
-    }
-  }
+    window.location.href = chromeURL;
+  }, 1000);
 };

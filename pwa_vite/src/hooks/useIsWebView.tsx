@@ -7,6 +7,9 @@ export const useIsWebView = () => {
 
   const userAgent = navigator.userAgent || "";
 
+  const isFacebookWebView =
+    userAgent.includes("FBAN") || userAgent.includes("FBAV") || userAgent.includes("Instagram");
+
   const isTelegramWebApp =
     typeof window.Telegram !== "undefined" && typeof window.Telegram.WebApp !== "undefined";
 
@@ -19,6 +22,7 @@ export const useIsWebView = () => {
     typeof window.TelegramWebviewProxyProto !== "undefined";
 
   return {
-    isWebView: isTelegramWebApp || isTelegramWebViewAndroid || isTelegramWebViewIOS,
+    isWebView:
+      isFacebookWebView || isTelegramWebApp || isTelegramWebViewAndroid || isTelegramWebViewIOS,
   };
 };
