@@ -1,5 +1,5 @@
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
-import { useIsWebView } from "../../../hooks/useIsWebView";
+import { useIsFacebookWebView } from "../../../hooks/useIsFacebookWebView";
 
 import { classNames } from "../../../utils/classNames";
 import { getQueryTail } from "../../../helpers/getQueryTail";
@@ -18,10 +18,12 @@ interface DescriptionProps {
 
 const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
-  const { isWebView } = useIsWebView();
+  const { isFacebookWebView } = useIsFacebookWebView();
 
   const handleInstall = () => {
-    if (isWebView) redirectFromWebView();
+    if (isFacebookWebView) {
+      redirectFromWebView();
+    }
 
     promptInstall();
   };
