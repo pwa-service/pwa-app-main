@@ -1,5 +1,5 @@
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
-import { useIsFacebookWebView } from "../../../hooks/useIsFacebookWebView";
+import { useIsWebView } from "../../../hooks/useIsWebView";
 
 import { classNames } from "../../../utils/classNames";
 import { getQueryTail } from "../../../helpers/getQueryTail";
@@ -18,10 +18,10 @@ interface DescriptionProps {
 
 const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
-  const { isFacebookWebView } = useIsFacebookWebView();
+  const { isWebView } = useIsWebView();
 
   const handleInstall = () => {
-    if (isFacebookWebView) {
+    if (isWebView) {
       redirectFromWebView();
     }
 
@@ -31,7 +31,6 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const handleOpenPWA = async () => {
     const queryTail = await getQueryTail();
     const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-    console.log("open: ", url);
 
     window.open(url, "_blank", "noopener");
   };
