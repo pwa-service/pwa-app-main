@@ -25,8 +25,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "Agüero Casino",
-          name: "Agüero Casino",
+          short_name: "Boca Juniors Casino",
+          name: "Boca Juniors Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",

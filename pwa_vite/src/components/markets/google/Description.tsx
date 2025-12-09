@@ -40,8 +40,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
 
   return (
     <div className="relative flex-row md:flex-col gap-6 w-full mt-6 md:mt-12">
-      <div className="max-w-md w-full">
-        <div className="flex gap-6">
+      <div className="w-full">
+        <div className="flex items-start gap-6">
           <div
             className={classNames(
               "md:absolute top-0 right-0",
@@ -66,8 +66,8 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col truncate">
-            <div className="text-[clamp(2rem,5vw,4rem)] md:max-w-xl w-full">
+          <div className="flex flex-col">
+            <div className="text-[clamp(2rem,5vw,4rem)] w-full">
               <h1 className="font-medium leading-none mr-10">{productName}</h1>
             </div>
 
