@@ -21,7 +21,9 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const { isWebView } = useIsWebView();
 
   const handleInstall = () => {
-    if (isWebView) redirectFromWebView();
+    if (isWebView) {
+      redirectFromWebView();
+    }
 
     promptInstall();
   };
@@ -29,7 +31,6 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const handleOpenPWA = async () => {
     const queryTail = await getQueryTail();
     const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-    console.log("open: ", url);
 
     window.open(url, "_blank", "noopener");
   };

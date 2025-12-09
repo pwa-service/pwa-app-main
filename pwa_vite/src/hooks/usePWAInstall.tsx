@@ -48,6 +48,7 @@ export const usePWAInstall = () => {
 
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) {
+      alert("Something went wrong");
       console.warn("promptInstall called but deferredPrompt is null");
       return false;
     }
@@ -72,8 +73,6 @@ export const usePWAInstall = () => {
       setDeferredPrompt(null);
       return true;
     }
-
-    return false;
   }, [deferredPrompt, startProgress]);
 
   return {
