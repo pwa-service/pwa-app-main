@@ -1,10 +1,10 @@
 export class CreateAppPayload {
-    domain: string;
+    domain!: string;
     appId?: string;
 }
 
 export interface BuildFinishedPayload {
     appId: string;
-    Status: string;
-    Error?: string;
+    status: string;
+    error?: string;
 }

@@ -5,5 +5,5 @@ export class RequestRestorePasswordDto {
     @ApiProperty( {example: 'user@example.com' })
     @IsNotEmpty()
     @IsEmail()
-    email: string;
+    email!: string;
 }

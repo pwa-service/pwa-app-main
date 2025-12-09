@@ -73,6 +73,7 @@ services:
       - FB_GRAPH_VERSION=v21.0
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - TEST_PIXEL_ID=6379
     depends_on:
       postgres:
         condition: service_healthy

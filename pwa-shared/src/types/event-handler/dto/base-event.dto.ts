@@ -17,5 +17,5 @@ export class BaseEventDto {
     @IsString()
     queryStringRaw?: string;
 
-    _meta: EventMeta
+    _meta!: EventMeta
 }

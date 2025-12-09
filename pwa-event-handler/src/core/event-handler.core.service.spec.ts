@@ -1,213 +1,191 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
-import axios from 'axios';
-import { of } from 'rxjs';
 import { EventType, LogStatus } from '.prisma/client';
 import { EventHandlerCoreService } from './event-handler.core.service';
 import { EventHandlerRepository } from './event-handler.repository';
-import { EventLogProducer } from '../queues/event-log.producer';
+import { PrismaService } from '../../../pwa-prisma/src';
 import {
-    ViewContentDto, EventMeta, LeadDto, PwaFirstOpenDto,
-    CompleteRegistrationDto, PurchaseDto, SubscribeDto
+    ViewContentDto,
+    PwaFirstOpenDto,
+    FbEventEnum,
+    EventMeta,
 } from '../../../pwa-shared/src';
+import { FbEventDto } from '../../../pwa-shared/src/types/event-handler/dto/event.dto';
+import { RpcException } from '@nestjs/microservices';
+import { EventLogProducer } from '../queues/event-log.producer';
+import { of } from 'rxjs';
 
+const testPixelId = process.env.TEST_PIXEL_ID || '1212908517317952';
+const testPwaDomain = 'pwaservice.site';
+const testUserAgent = 'Mozilla/5.0 (Linux; Android 9; SM-J730G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Mobile Safari/537.36'
+const testIp = '168.197.219.100'
 
-const mockSession = {
-    id: '544d922f-9bc4-4826-aba3-732df66a0515',
-    pixelId: '1000',
-    pwaDomain: 'app.local',
-    landingUrl: 'https://app.local/land',
-    finalUrl: 'https://tracker.local/final',
-    fbclid: 'fb-test-1',
-    offerId: 'offer-a',
-    utmSource: 'fb-ad',
-};
-
-class MockRepo {
-    upsertSession = jest.fn();
-    getSessionById = jest.fn();
-    markFirstOpen = jest.fn();
-}
+const mockGeoLookup = jest.fn().mockReturnValue({ country: 'UA' });
+jest.mock('geoip-country', () => ({
+    lookup: (ip: string) => mockGeoLookup(ip),
+}));
 
 class MockLogsProducer {
     createLog = jest.fn().mockResolvedValue(of({ success: true }));
 }
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-const mockGeoLookup = jest.fn().mockReturnValue({ country: 'UA' });
-
-jest.mock('geoip-country', () => ({
-    lookup: (ip: string) => mockGeoLookup(ip),
-}));
-
-
-describe('EventHandlerCoreService', () => {
+describe('EventHandlerCoreService (integration)', () => {
     let service: EventHandlerCoreService;
-    let repo: MockRepo;
-    let logs: MockLogsProducer;
+    let prisma: PrismaService;
+    let sessionId: string;
 
-    const loggerInstance = new Logger(EventHandlerCoreService.name);
-
-    beforeEach(async () => {
+    beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 EventHandlerCoreService,
-                { provide: EventHandlerRepository, useClass: MockRepo },
+                EventHandlerRepository,
+                PrismaService,
                 { provide: EventLogProducer, useClass: MockLogsProducer },
-                { provide: Logger, useValue: loggerInstance },
             ],
         }).compile();
 
-        service = new EventHandlerCoreService(module.get(EventHandlerRepository) as any, module.get(EventLogProducer) as any);
-        repo = module.get(EventHandlerRepository) as MockRepo;
-        logs = module.get(EventLogProducer) as MockLogsProducer;
+        service = module.get(EventHandlerCoreService);
+        prisma = module.get(PrismaService);
 
         jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
         jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
         jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
-        repo.upsertSession.mockResolvedValue({ id: mockSession.id });
-        repo.getSessionById.mockResolvedValue(mockSession);
-        jest.clearAllMocks();
+        const eventMeta: EventMeta = {
+            pixelId: testPixelId,
+            fbclid: 'fb-test-1',
+            offerId: 'offer-a',
+            utmSource: 'fb-ad',
+            clientIp: testIp,
+            userAgent: testUserAgent,
+            pwaDomain: testPwaDomain,
+        };
+
+        const dto: ViewContentDto & { _meta: EventMeta } = {
+            pwaDomain: testPwaDomain,
+            landingUrl: `https://${testPwaDomain}`,
+            queryStringRaw: 'q=1',
+            _meta: eventMeta,
+        };
+
+        const res = await service.viewContent(dto);
+        sessionId = res.sessionId;
     });
 
+    afterAll(async () => {
+        await prisma.$disconnect();
+    });
 
     describe('viewContent', () => {
-        const eventMeta: any = {
-            pixelId: '1000', fbclid: 'fb-test', offerId: 'offer', utmSource: 'src',
-            clientIp: '1.1.1.1', userAgent: 'test-agent',
-        };
-        const dto: ViewContentDto = {
-            pwaDomain: 'test.app', landingUrl: 'https://test.app/page', queryStringRaw: 'q=1',
-            _meta: eventMeta
-        };
-
-        it('should successfully upsert session, send to FB, and log success', async () => {
-            mockedAxios.post.mockResolvedValue({ data: { fbtrace_id: 'fb-trace-123' }, status: 200 });
-
-            const result = await service.viewContent(dto);
-
-            expect(result.success).toBe(true);
-            expect(repo.upsertSession).toHaveBeenCalled();
-        });
-
-        it('should handle FB API error and return success: false', async () => {
-            mockedAxios.post.mockRejectedValue({ response: { status: 400, data: { error: 'Invalid access token' } }, isAxiosError: true });
-
-            const result = await service.viewContent(dto);
-
-            expect(result.success).toBe(false);
-            expect(result.fb).toContain('FB 400');
-            expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
+        it('should have created session in DB with that sessionId', async () => {
+            const sessionInDb = await prisma.pwaSession.findUnique({
+                where: { id: sessionId },
+            });
+            expect(sessionInDb).toBeDefined();
+            expect(sessionInDb?.pwaDomain).toBe(testPwaDomain);
         });
     });
-    
 
     describe('pwaFirstOpen', () => {
-        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: PwaFirstOpenDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
+        const meta: EventMeta = {
+            clientIp: testIp,
+            userAgent: testUserAgent,
+            pixelId: testPixelId,
+            pwaDomain: testPwaDomain,
+        };
 
-        it('should successfully send ViewContent (on open) and mark open', async () => {
-            mockedAxios.post.mockResolvedValue({ data: { fbtrace_id: 'open-trace' }, status: 200 });
-            repo.getSessionById.mockResolvedValue(mockSession);
+        it('should send event and update firstOpenFbStatus', async () => {
+            const dto: PwaFirstOpenDto & { _meta: EventMeta } = {
+                sessionId,
+                pwaDomain: testPwaDomain,
+                _meta: meta,
+            };
 
             const result = await service.pwaFirstOpen(dto);
+            expect(result.success).toBe(true);
+
+            const updated = await prisma.pwaSession.findUnique({ where: { id: sessionId } });
+            expect(updated?.firstOpenFbStatus).toBe(LogStatus.success);
+        });
+    });
+
+    describe('event() for different FbEventEnum', () => {
+        const baseMeta: EventMeta = {
+            clientIp: testIp,
+            userAgent: testUserAgent,
+            pixelId: testPixelId,
+            pwaDomain: testPwaDomain,
+        };
+
+        const makeDto = (): FbEventDto & { _meta: EventMeta } => ({
+            sessionId,
+            pwaDomain: testPwaDomain,
+            value: 99.99,
+            currency: 'USD',
+            _meta: baseMeta,
+        });
+
+        beforeEach(() => {
+            jest.clearAllMocks();
+            jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
+            jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+            jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+        });
+
+        it('Reg → CompleteRegistration success', async () => {
+            const dto = makeDto();
+            const result = await service.event(FbEventEnum.Reg, dto);
 
             expect(result.success).toBe(true);
-            expect(repo.markFirstOpen).toHaveBeenCalledWith(
-                expect.objectContaining({ sessionId: mockSession.id, fbStatus: LogStatus.success }),
-            );
         });
 
-        it('should mark first open as ERROR if FB API fails', async () => {
-            mockedAxios.post.mockRejectedValue({ response: { status: 400, data: { error: 'Permission Denied' } }, isAxiosError: true });
-            repo.getSessionById.mockResolvedValue(mockSession);
+        it('Dep → Purchase success', async () => {
+            const dto = makeDto();
+            const result = await service.event(FbEventEnum.Dep, dto);
 
-            const result = await service.pwaFirstOpen(dto);
-
-            expect(result.success).toBe(false);
-            expect(repo.markFirstOpen).toHaveBeenCalledWith(
-                expect.objectContaining({ fbStatus: LogStatus.error }),
-            );
-        });
-    });
-
-
-    describe('completeRegistration', () => {
-        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: CompleteRegistrationDto = { sessionId: mockSession.id, pwaDomain: 'test.app', _meta: eventMeta };
-
-        it('should send CompleteRegistration event on session and log success', async () => {
-            mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
-            //@ts-ignore
-            const result = await service.completeRegistration(dto);
-            expect(result.data).toBe(true);
-            expect(repo.getSessionById).toHaveBeenCalledWith(mockSession.id);
-            expect(logs.createLog).toHaveBeenCalledWith(
-                expect.objectContaining({ eventType: EventType.CompleteRegistration, status: LogStatus.success }),
-            );
+            expect(result.success).toBe(true);
         });
 
-        it('should handle FB API error and return success: false', async () => {
-            mockedAxios.post.mockRejectedValue({ response: { status: 500, data: { error: 'FB Internal Error' } }, isAxiosError: true });
-            //@ts-ignore
-            const result = await service.completeRegistration(dto);
-            expect(result.data).toBe(false);
-            expect(result.data).toContain('FB 500');
-            expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
+        it('Redep → Purchase success without unique-check', async () => {
+            const dto = makeDto();
+            const result = await service.event(FbEventEnum.Redep, dto);
+            expect(result.success).toBe(true);
+        });
+
+        it('Subscribe → Subscribe success', async () => {
+            const dto = makeDto();
+            const result = await service.event(FbEventEnum.Subscribe, dto);
+
+            expect(result.success).toBe(true);
+        });
+
+        it('should throw RpcException if event already logged (non-Redep)', async () => {
+            const dto = makeDto();
+            await prisma.eventLog.create({
+                data: {
+                    sessionId,
+                    pixelId: testPixelId,
+                    eventType: EventType.Purchase,
+                    eventId: 'test-event',
+                    status: LogStatus.success,
+                },
+            });
+
+            await expect(service.event(FbEventEnum.Dep, dto)).rejects.toBeInstanceOf(RpcException);
         });
     });
 
+    afterAll(async () => {
+        if (sessionId) {
+            await prisma.eventLog.deleteMany({
+                where: { sessionId },
+            });
 
-    describe('purchase', () => {
-        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: PurchaseDto = {
-            sessionId: mockSession.id, pwaDomain: 'test.app', value: 99.99, currency: 'USD', _meta: eventMeta
-        };
+            await prisma.pwaSession.deleteMany({
+                where: { id: sessionId },
+            });
+        }
 
-        it('should send Purchase event with value/currency and log success', async () => {
-            mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
-            //@ts-ignore
-            const result = await service.purchase(dto);
-            expect(result.data).toBe(true);
-            expect(logs.createLog).toHaveBeenCalledWith(
-                expect.objectContaining({ eventType: EventType.Purchase, status: LogStatus.success }),
-            );
-        });
-
-        it('should handle FB API error and return success: false', async () => {
-            mockedAxios.post.mockRejectedValue({ response: { status: 500, data: { error: 'FB Internal Error' } }, isAxiosError: true });
-            //@ts-ignore
-            const result = await service.purchase(dto);
-            expect(result.data).toBe(false);
-            expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
-        });
-    });
-
-
-    describe('subscribe', () => {
-        const eventMeta: any = { clientIp: '1.1.1.1', userAgent: 'test-agent', pixelId: '1000' };
-        const dto: SubscribeDto = {
-            sessionId: mockSession.id, pwaDomain: 'test.app', value: 19.99, currency: 'EUR', _meta: eventMeta
-        };
-
-        it('should send Subscribe event and log success', async () => {
-            mockedAxios.post.mockResolvedValue({ data: {}, status: 200 });
-            //@ts-ignore
-            const result = await service.subscribe(dto);
-            expect(result.data).toBe(true);
-            expect(logs.createLog).toHaveBeenCalledWith(
-                expect.objectContaining({ eventType: EventType.Subscribe, status: LogStatus.success }),
-            );
-        });
-
-        it('should handle FB API error and return success: false', async () => {
-            mockedAxios.post.mockRejectedValue({ response: { status: 401, data: { error: 'Unauthorized' } }, isAxiosError: true });
-            //@ts-ignore
-            const result = await service.subscribe(dto);
-            expect(result.data).toBe(false);
-            expect(logs.createLog).toHaveBeenCalledWith(expect.objectContaining({ status: LogStatus.error }));
-        });
+        await prisma.$disconnect();
     });
 });

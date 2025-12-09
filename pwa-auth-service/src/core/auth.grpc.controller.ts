@@ -35,7 +35,6 @@ export class AuthGrpcController {
   @AllowAnonymous()
   @GrpcMethod('AuthService', 'RequestPasswordReset')
   async requestPasswordReset(dto: RequestRestorePasswordDto) {
-    console.log(dto.email)
     return this.auth.requestPasswordReset(dto.email);
   }
 

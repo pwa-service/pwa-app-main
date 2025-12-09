@@ -7,17 +7,17 @@ export class CreateAppDto {
     @IsNotEmpty()
     @IsString()
     @MinLength(3)
-    name: string;
+    name!: string;
 
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
-    domain: string;
+    domain!: string;
 
     @ApiProperty()
     @IsNotEmpty()
     @IsUUID('4')
-    createdByUserId: string;
+    createdByUserId!: string;
 
     @ApiProperty()
     @IsOptional()
