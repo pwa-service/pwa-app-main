@@ -23,6 +23,7 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
   const handleInstall = () => {
     if (isWebView) {
       redirectFromWebView();
+      return;
     }
 
     promptInstall();
