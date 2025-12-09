@@ -47,8 +47,8 @@ export class GeneratorSubscriber implements OnModuleInit {
             return;
         }
 
-        const { appId, Status, Error } = statusPayload;
-        this.logger.log(`Received build status for ${appId}: ${Status}`);
+        const { appId, status, error } = statusPayload;
+        this.logger.log(`Received build status for ${appId}: ${status}`);
 
         try {
             const originalJobJSON = await this.commandClient.hget(this.PENDING_BUILDS_KEY, appId);
@@ -63,8 +63,8 @@ export class GeneratorSubscriber implements OnModuleInit {
             await this.commandClient.hdel(this.PENDING_BUILDS_KEY, appId);
             await this.commandClient.del(lockKey);
 
-            this.logger.log(`Cleanup complete for ${appId}. Status: ${Status}`);
-            if (Status === 'ERROR') {
+            this.logger.log(`Cleanup complete for ${appId}. Status: ${error}`);
+            if (status === 'ERROR') {
                 this.logger.error(`Build failed for ${appId}: ${Error}`);
             }
 
