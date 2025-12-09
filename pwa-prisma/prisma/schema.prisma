@@ -32,6 +32,13 @@ enum LogStatus {
   error
 }
 
+enum ErrorLevel {
+  info
+  warn
+  error
+  fatal
+}
+
 model User {
   id        String   @id @default(uuid())
   username  String   @unique
@@ -40,8 +47,14 @@ model User {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
   status    Status   @default(active)
-  PwaApp    PwaApp[] @relation("AppCreator")
 
+  PwaApp    PwaApp[]   @relation("AppCreator")
+  errorLogs ErrorLog[] @relation("UserErrors")
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -57,6 +70,10 @@ model PwaApp {
   createdByUserId String   @map("created_by_user_id")
   createdBy       User     @relation("AppCreator", fields: [createdByUserId], references: [id])
 
+  @@index([createdByUserId])
+  @@index([status])
+  @@index([templateId])
+  @@index([createdAt])
   @@map("pwa_apps")
 }
 
@@ -70,6 +87,9 @@ model PixelToken {
   status      Status       @default(active)
   sessions    PwaSession[] @relation("PixelTokens")
 
+  @@index([token])
+  @@index([status])
+  @@index([createdAt])
   @@map("pixel_tokens")
 }
 
@@ -91,6 +111,10 @@ model EventLog {
   @@index([sessionId], map: "idx_eventLogs_sessionId")
   @@index([eventType], map: "idx_eventLogs_eventType")
   @@index([createdAt], map: "idx_eventLogs_createdAt")
+  @@index([pixelId])
+  @@index([eventId])
+  @@index([status])
+  @@index([country])
   @@map("event_logs")
 }
 
@@ -111,7 +135,43 @@ model PwaSession {
   firstOpenFbStatus LogStatus? @map("first_open_fb_status")
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
-  logs              EventLog[] @relation("PwaSession")
 
+  logs      EventLog[] @relation("PwaSession")
+  errorLogs ErrorLog[] @relation("SessionErrors")
+
+  @@index([pixelId])
+  @@index([pwaDomain])
+  @@index([fbclid])
+  @@index([offerId])
+  @@index([utmSource])
+  @@index([sub1])
+  @@index([createdAt])
   @@map("pwa_sessions")
+}
+
+model ErrorLog {
+  id      String     @id @default(uuid())
+  level   ErrorLevel @default(error)
+  message String
+  stack   String?    @db.Text
+  service String?
+  context Json?
+  path    String?
+  method  String?
+
+  userId String? @map("user_id")
+  user   User?   @relation("UserErrors", fields: [userId], references: [id])
+
+  sessionId String?     @map("session_id")
+  session   PwaSession? @relation("SessionErrors", fields: [sessionId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([level])
+  @@index([service])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([path])
+  @@map("error_logs")
 }
