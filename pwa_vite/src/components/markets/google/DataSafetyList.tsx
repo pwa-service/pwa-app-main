@@ -27,6 +27,7 @@ const DataSafetyList = () => {
                 href="https://support.google.com/googleplay/answer/11416267?hl=en&visit_id=638999401320028096-2643835390&p=data-safety&rd=1"
                 target="_blank"
                 className="underline"
+                aria-label="Learn more about Google Play data safety policy"
               >
                 Learn more
               </a>{" "}

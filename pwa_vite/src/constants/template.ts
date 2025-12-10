@@ -1,3 +1,5 @@
+import type { TemplateData } from "../types/template";
+
 import productImage from "../assets/product_image.webp";
 
 import sliderImage1 from "../assets/slider_image_1.webp";
@@ -7,7 +9,7 @@ import sliderImage4 from "../assets/slider_image_4.webp";
 import sliderImage5 from "../assets/slider_image_5.webp";
 import sliderImage6 from "../assets/slider_image_6.webp";
 
-export const data = {
+export const data: TemplateData = {
   productImage,
   productName: "Boca Juniors Casino",
   productCreator: "CABJ Ltd",

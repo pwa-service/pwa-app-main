@@ -3,14 +3,32 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
+import viteCompression from "vite-plugin-compression";
 
 // https://vite.dev/config/
 export default defineConfig(async () => {
   return {
     base: "./",
+
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes("react")) return "react";
+            if (id.includes("node_modules")) return "vendor";
+          },
+        },
+      },
+    },
+
     plugins: [
       react(),
       tailwindcss(),
+
+      viteCompression({
+        algorithm: "gzip",
+      }),
+
       VitePWA({
         registerType: "autoUpdate",
         injectRegister: "auto",
@@ -21,7 +39,25 @@ export default defineConfig(async () => {
         },
 
         workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
+          runtimeCaching: [
+            {
+              urlPattern: /\.(png|webp|jpg|jpeg|avif)$/i,
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "images",
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 3600,
+                },
+              },
+            },
+
+            {
+              urlPattern: /\.(js|css)$/i,
+              handler: "StaleWhileRevalidate",
+              options: { cacheName: "static-resources" },
+            },
+          ],
         },
 
         manifest: {
@@ -53,16 +89,6 @@ export default defineConfig(async () => {
               sizes: "512x512",
             },
           ],
-
-          // screenshots: [
-          //   {
-          //     src: "./screenshots",
-          //     form_factor: "narrow",
-          //     sizes: "",
-          //     type: "image/png",
-          //     label: "",
-          //   },
-          // ],
         },
       }),
     ],

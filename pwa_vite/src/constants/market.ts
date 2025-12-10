@@ -1,4 +1,4 @@
-import type { AppleCommentData, GoogleCommentData } from "../types/market";
+import type { AppleCommentData, GoogleCommentData, ReviewsData } from "../types/market";
 
 import starIcon from "../assets/markets/google/google_star.svg";
 import downloadsIcon from "../assets/markets/google/google_downloads.svg";
@@ -36,7 +36,7 @@ export const googleSummary = [
 
 export const tags: string[] = ["Casino", "Slot machine", "Casual games"];
 
-export const reviews = {
+export const reviews: ReviewsData = {
   rating: 4.8,
   reviews: "499 reviews",
   percentA: 81,
