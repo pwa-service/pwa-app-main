@@ -46,10 +46,9 @@ const ImageSlider = memo(
               <img
                 key={index}
                 src={src}
-                srcSet={`${src}?w=300 300w, ${src}?w=600 600w, ${src}?w=1200 1200w`}
                 sizes="(max-width: 768px) 141px, 254px"
                 alt={alt || `slide-${index}`}
-                loading={index === 0 ? "eager" : "lazy"}
+                loading={isLast ? "lazy" : "eager"}
                 onClick={() => handleSelectImage(src)}
                 className={classNames(
                   "w-full h-full rounded-xl object-cover",

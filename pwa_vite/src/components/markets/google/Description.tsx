@@ -60,6 +60,7 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
                 height={240}
                 loading="eager"
                 fetchPriority="high"
+                sizes="(max-width: 768px) 141px, (max-width: 1280px) 180px, 240px"
                 style={{ transform: `scale(${scale})` }}
                 className={classNames(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
