@@ -35,7 +35,7 @@ const GoogleMarketPage = () => {
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
       <Description imageSRC={data.productImage} productName={data.productName} />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
         <ImageSlider
           images={data.images}
           handleSelectImage={handleSelectImage}
