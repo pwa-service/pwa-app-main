@@ -11,6 +11,8 @@ export default defineConfig(async () => {
     base: "./",
 
     build: {
+      target: "esnext",
+      brotliSize: true,
       rollupOptions: {
         output: {
           manualChunks(id: string) {
@@ -25,9 +27,8 @@ export default defineConfig(async () => {
       react(),
       tailwindcss(),
 
-      viteCompression({
-        algorithm: "gzip",
-      }),
+      viteCompression({ algorithm: "gzip" }),
+      viteCompression({ algorithm: "brotliCompress" }),
 
       VitePWA({
         registerType: "autoUpdate",
@@ -45,17 +46,18 @@ export default defineConfig(async () => {
               handler: "NetworkFirst",
               options: {
                 cacheName: "images",
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 3600,
-                },
+                expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
               },
             },
-
             {
               urlPattern: /\.(js|css)$/i,
               handler: "StaleWhileRevalidate",
               options: { cacheName: "static-resources" },
+            },
+            {
+              urlPattern: /\/api\/.*$/,
+              handler: "NetworkFirst",
+              options: { cacheName: "api-cache", networkTimeoutSeconds: 5 },
             },
           ],
         },

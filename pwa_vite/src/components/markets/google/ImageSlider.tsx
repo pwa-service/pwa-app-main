@@ -37,8 +37,8 @@ const ImageSlider = memo(
     };
 
     return (
-      <div className="relative w-full mt-6">
-        <div ref={scrollRef} className="flex h-[250px] md:h-[450px] overflow-x-auto no-scrollbar">
+      <div className="relative w-full h-[250px] md:h-[450px] mt-6">
+        <div ref={scrollRef} className="flex h-full overflow-x-auto no-scrollbar">
           {images.map(({ src, alt }, index) => {
             const isLast = index === images.length - 1;
 
@@ -46,7 +46,10 @@ const ImageSlider = memo(
               <img
                 key={index}
                 src={src}
+                srcSet={`${src}?w=300 300w, ${src}?w=600 600w, ${src}?w=1200 1200w`}
+                sizes="(max-width: 768px) 141px, 254px"
                 alt={alt || `slide-${index}`}
+                loading={index === 0 ? "eager" : "lazy"}
                 onClick={() => handleSelectImage(src)}
                 className={classNames(
                   "w-full h-full rounded-xl object-cover",
