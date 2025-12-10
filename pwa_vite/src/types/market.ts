@@ -11,6 +11,16 @@ export interface SummaryData {
   description?: string;
 }
 
+export interface ReviewsData {
+  rating: number;
+  reviews: string;
+  percentA: number;
+  percentB: number;
+  percentC: number;
+  percentD: number;
+  percentE: number;
+}
+
 export interface GoogleCommentData {
   id: number;
   type: "user" | "support";

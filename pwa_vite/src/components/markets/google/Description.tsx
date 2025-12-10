@@ -56,6 +56,10 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
               <img
                 src={imageSRC}
                 alt="product image"
+                width={240}
+                height={240}
+                loading="eager"
+                fetchPriority="high"
                 style={{ transform: `scale(${scale})` }}
                 className={classNames(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",

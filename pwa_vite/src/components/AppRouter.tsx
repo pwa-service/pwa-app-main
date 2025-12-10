@@ -1,12 +1,16 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router";
 
-import GoogleMarketPage from "../pages/GoogleMarketPage";
+const GoogleMarketPage = lazy(() => import("../pages/GoogleMarketPage"));
+import Loader from "../ui/Loader";
 
 const AppRouter = () => {
   return (
-    <Routes>
-      <Route path="/" element={<GoogleMarketPage />} />
-    </Routes>
+    <Suspense fallback={<Loader />}>
+      <Routes>
+        <Route path="/" element={<GoogleMarketPage />} />
+      </Routes>
+    </Suspense>
   );
 };
 

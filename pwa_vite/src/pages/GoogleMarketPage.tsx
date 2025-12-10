@@ -1,19 +1,20 @@
-import { useState, useCallback, Suspense, lazy } from "react";
+import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
 
 import { data } from "../constants/template";
-import { reviews, googleComments } from "../constants/market";
+import { googleComments, reviews } from "../constants/market";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
-import ImageSlider from "../components/markets/google/ImageSlider";
+
 import SectionContainer from "../components/markets/google/SectionContainer";
 import TagsList from "../components/markets/google/TagsList";
 import DataSafetyList from "../components/markets/google/DataSafetyList";
-import Reviews from "../components/markets/google/Reviews";
-import Comments from "../components/markets/google/Comments";
 
+const ImageSlider = lazy(() => import("../components/markets/google/ImageSlider"));
 const ExpandedGallery = lazy(() => import("../components/markets/ExpandedGallery"));
+const Reviews = lazy(() => import("../components/markets/google/Reviews"));
+const Comments = lazy(() => import("../components/markets/google/Comments"));
 
 const GoogleMarketPage = () => {
   const [selectedImage, setSelectedImage] = useState<string>("");
@@ -34,14 +35,16 @@ const GoogleMarketPage = () => {
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
       <Description imageSRC={data.productImage} productName={data.productName} />
 
-      <ImageSlider
-        images={data.images}
-        handleSelectImage={handleSelectImage}
-        showGallery={showGallery}
-      />
+      <Suspense fallback={null}>
+        <ImageSlider
+          images={data.images}
+          handleSelectImage={handleSelectImage}
+          showGallery={showGallery}
+        />
+      </Suspense>
 
       {showGallery && (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={null}>
           <ExpandedGallery
             images={data.images}
             selectedImage={selectedImage}
@@ -73,10 +76,14 @@ const GoogleMarketPage = () => {
       </SectionContainer>
 
       <SectionContainer title="Rating and reviews">
-        <Reviews {...reviews} />
+        <Suspense fallback={null}>
+          <Reviews {...reviews} />
+        </Suspense>
       </SectionContainer>
 
-      <Comments comments={googleComments} />
+      <Suspense fallback={null}>
+        <Comments comments={googleComments} />
+      </Suspense>
     </main>
   );
 };
