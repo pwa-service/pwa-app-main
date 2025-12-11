@@ -1,19 +1,23 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { createClient, RedisClientType } from 'redis';
 
-type Item = { token: string; exp: number };
-
 @Injectable()
-export class RefreshStore implements OnModuleInit {
-    private data = new Map<string, Item>();
+export class RefreshStore implements OnModuleInit, OnModuleDestroy {
     private redis!: RedisClientType;
 
     async onModuleInit() {
         this.redis = createClient({
             url: `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? 6379}`,
         });
+
         this.redis.on('error', (err) => console.error('Redis Client Error', err));
         await this.redis.connect();
+    }
+
+    async onModuleDestroy() {
+        if (this.redis) {
+            this.redis.destroy();
+        }
     }
 
     async save(userId: string, token: string, exp: number) {
@@ -21,23 +25,15 @@ export class RefreshStore implements OnModuleInit {
         if (ttl > 0) {
             await this.redis.setEx(`refresh:${userId}`, ttl, token);
         }
-        this.data.set(userId, { token, exp });
     }
 
     async check(userId: string, token: string): Promise<boolean> {
-        const now = Math.floor(Date.now() / 1000);
         const stored = await this.redis.get(`refresh:${userId}`);
-        if (stored) {
-            return stored === token;
-        }
-
-        const it = this.data.get(userId);
-        return it ? it.token === token && it.exp > now : false;
+        return stored === token;
     }
 
     async revoke(userId: string) {
         await this.redis.del(`refresh:${userId}`);
-        this.data.delete(userId);
     }
 
     async saveOneTime(tokenHash: string, userId: string, exp: number) {
@@ -46,7 +42,6 @@ export class RefreshStore implements OnModuleInit {
             await this.redis.setEx(`one-time:${tokenHash}`, ttl, userId);
         }
     }
-
 
     async checkAndGetOneTime(tokenHash: string): Promise<string | null> {
         const key = `one-time:${tokenHash}`;
@@ -57,9 +52,5 @@ export class RefreshStore implements OnModuleInit {
             return userId;
         }
         return null;
-    }
-
-    async revokeOneTime(tokenHash: string) {
-        await this.redis.del(`one-time:${tokenHash}`);
     }
 }

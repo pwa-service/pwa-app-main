@@ -6,12 +6,9 @@ import { PrismaService } from '../../../pwa-prisma/src';
 export class AuthRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findByEmailOrUsername(emailOrUsername: string): Promise<User | null> {
+    async findByEmail(email: string): Promise<User | null> {
         return this.prisma.user.findFirst({
-            where: {
-                OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
-                status: Status.active,
-            },
+            where: { email },
         });
     }
 

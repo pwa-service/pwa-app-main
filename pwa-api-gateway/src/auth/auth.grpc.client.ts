@@ -10,10 +10,12 @@ import {
     ConfirmEmailDto,
     RequestRestorePasswordDto
 } from "../../../pwa-shared/src";
+import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 interface AuthService {
     signUp(data: SignUpDto, md?: Metadata, opts?: Record<string, any>): any;
     signIn(data: SignInDto, md?: Metadata, opts?: Record<string, any>): any;
+    telegramAuth(data: TelegramAuthDto, md?: Metadata, opts?: Record<string, any>): any;
     refresh(data: RefreshDto, md?: Metadata, opts?: Record<string, any>): any;
     signOut(data: any, md?: Metadata, opts?: Record<string, any>): any;
     requestPasswordReset(data: RequestRestorePasswordDto, md?: Metadata, opts?: Record<string, any>): any;
@@ -60,5 +62,9 @@ export class AuthGrpcClient {
 
     async me(metadata?: Metadata) {
         return await lastValueFrom(this.svc.me({}, metadata));
+    }
+
+    async telegramAuth(dto: TelegramAuthDto, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.telegramAuth(dto, metadata));
     }
 }

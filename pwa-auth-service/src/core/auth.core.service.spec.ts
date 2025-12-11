@@ -8,6 +8,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../../../pwa-prisma/src';
 import * as bcrypt from 'bcryptjs';
 import { jwtVerify, importJWK } from 'jose';
+import * as crypto from 'crypto';
+import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
 
 
 class MailerServiceMock {
@@ -20,6 +22,7 @@ describe('AuthCoreService', () => {
     let repo: AuthRepository;
     let store: RefreshStore;
     let mailer: MailerServiceMock;
+    let jwt: JwtVerifierService;
 
     const testEmail = 'auth_integration_test@example.com';
     const testPassword = 'Test1234!';
@@ -37,7 +40,8 @@ describe('AuthCoreService', () => {
                 AuthCoreService,
                 AuthRepository,
                 PrismaService,
-                { provide: RefreshStore, useClass: RefreshStore },
+                RefreshStore,
+                JwtVerifierService,
                 { provide: MailerService, useClass: MailerServiceMock },
             ],
         }).compile();
@@ -47,8 +51,10 @@ describe('AuthCoreService', () => {
         repo = module.get(AuthRepository);
         store = module.get(RefreshStore) as any;
         mailer = module.get(MailerService) as any;
+        jwt = module.get(JwtVerifierService) as any;
 
         await prisma.user.deleteMany({ where: { email: testEmail } });
+        await store.onModuleInit();
         await service.onModuleInit();
     });
 
@@ -68,7 +74,7 @@ describe('AuthCoreService', () => {
         expect(res.refreshToken).toBeDefined();
         expect(res.user.email).toBe(testEmail);
 
-        const dbUser = await repo.findByEmailOrUsername(testEmail);
+        const dbUser = await repo.findByEmail(testEmail);
 
         expect(dbUser).toBeDefined();
         expect(dbUser!.email).toBe(testEmail);
@@ -144,7 +150,7 @@ describe('AuthCoreService', () => {
         expect(res.accessToken).toBeDefined();
         expect(res.refreshToken).toBeDefined();
 
-        const updatedUser = await repo.findByEmailOrUsername(testEmail);
+        const updatedUser = await repo.findByEmail(testEmail);
 
         expect(updatedUser).toBeDefined();
         const ok = await bcrypt.compare(newPassword, updatedUser!.password);
@@ -152,7 +158,7 @@ describe('AuthCoreService', () => {
     });
 
     it('confirmEmail', async () => {
-        const dbUser = await repo.findByEmailOrUsername(testEmail);
+        const dbUser = await repo.findByEmail(testEmail);
         expect(dbUser).toBeDefined();
 
         const confirmToken = 'confirm_' + Math.random().toString(36).slice(2, 18);
@@ -175,5 +181,95 @@ describe('AuthCoreService', () => {
                 message: 'No refresh token provided',
             }),
         );
+    });
+
+    describe('telegramAuth', () => {
+        process.env.TELEGRAM_BOT_TOKEN = '12345:FakeBotTokenForTesting'
+        const botToken = process.env.TELEGRAM_BOT_TOKEN!;
+        const telegramId = 123456789;
+        const now = Math.floor(Date.now() / 1000);
+        const generateHash = (data: any) => {
+            const dataCheckArr = [];
+            const keys = Object.keys(data).sort();
+            for (const key of keys) {
+                if (key !== 'hash' && data[key]) {
+                    dataCheckArr.push(`${key}=${data[key]}`);
+                }
+            }
+            const dataCheckString = dataCheckArr.join('\n');
+            const secretKey = crypto.createHash('sha256').update(botToken).digest();
+            return crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+        };
+
+        it('should authenticate existing user via Telegram', async () => {
+            const tgEmail = `tg_${telegramId}@telegram.user`;
+            const authData = {
+                id: telegramId,
+                first_name: 'John',
+                username: 'johndoe',
+                auth_date: now,
+            };
+            const hash = generateHash(authData);
+            const res = await service.telegramAuth({
+                ...authData,
+                hash: hash,
+            });
+            expect(res.accessToken).toBeDefined();
+            expect(res.refreshToken).toBeDefined();
+            expect(res.user.email).toBe(tgEmail);
+        });
+
+        it('should create NEW user via Telegram if not exists', async () => {
+            const newTgId = 987654321;
+            const authData = {
+                id: newTgId,
+                first_name: 'New',
+                last_name: 'User',
+                auth_date: now,
+            };
+            const hash = generateHash(authData);
+
+            const res = await service.telegramAuth({
+                ...authData,
+                hash: hash,
+            });
+
+            expect(res.accessToken).toBeDefined();
+
+            const dbUser = await repo.findByEmail(`tg_${newTgId}@telegram.user`);
+            expect(dbUser).toBeDefined();
+            expect(dbUser!.username).toBe(`tg_user_${newTgId}`);
+        });
+
+        it('should throw UNAUTHENTICATED if hash is invalid', async () => {
+            const authData = {
+                id: telegramId,
+                auth_date: now,
+                hash: 'invalid_fake_hash',
+            };
+
+            await expect(service.telegramAuth(authData)).rejects.toEqual(
+                new RpcException({
+                    code: status.UNAUTHENTICATED,
+                    message: 'Invalid Telegram hash (Integrity check failed)',
+                }),
+            );
+        });
+
+        it('should throw UNAUTHENTICATED if auth_date is too old', async () => {
+            const oldDate = now - 86401;
+            const authData = {
+                id: telegramId,
+                auth_date: oldDate,
+            };
+            const hash = generateHash(authData);
+
+            await expect(service.telegramAuth({ ...authData, hash })).rejects.toEqual(
+                new RpcException({
+                    code: status.UNAUTHENTICATED,
+                    message: 'Telegram auth data is outdated',
+                }),
+            );
+        });
     });
 });

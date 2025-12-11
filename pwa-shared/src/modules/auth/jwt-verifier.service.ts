@@ -7,7 +7,7 @@ export class JwtVerifierService implements OnModuleDestroy {
 
     onModuleDestroy() {}
 
-    private getJwks() {
+    getJwks() {
         if (!this.jwks) {
             const url = new URL(process.env.AUTH_JWKS_URL ?? 'http://localhost:4040/.well-known/jwks.json');
             this.jwks = createRemoteJWKSet(url);

@@ -37,11 +37,14 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - AUTH_ISSUER=https://pwaservice.site/
+      - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
       - AUTH_ACCESS_TTL=900
       - AUTH_REFRESH_TTL=604800
       - FRONTEND_URL=https://pwaservice.site/apps
+      - MAIL_USER=petrotraktorsit07@gmail.com
+      - MAIL_PASSWORD=gfcoyvhdoqvqrbob
+      - MAIL_FROM="PWA Service <support@beton.win>"
     depends_on:
       postgres:
         condition: service_healthy

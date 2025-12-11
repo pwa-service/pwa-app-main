@@ -11,6 +11,7 @@ service AuthService {
   rpc RequestPasswordReset  (RequestRestorePasswordRequest) returns (RequestResetResponse); // 👈 ДОДАНО
   rpc RestorePassword       (RestorePasswordRequest)        returns (AuthResponse);
   rpc ConfirmEmail          (ConfirmEmailRequest)           returns (AuthResponse);
+  rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
 }
 
 
@@ -59,4 +60,14 @@ message User {
   string email = 2;
   string username  = 3;
   string role  = 4;
+}
+
+message TelegramAuthRequest {
+  int64  id         = 1;
+  string first_name = 2;
+  string last_name  = 3;
+  string username   = 4;
+  string photo_url  = 5;
+  int64  auth_date  = 6;
+  string hash       = 7;
 }
