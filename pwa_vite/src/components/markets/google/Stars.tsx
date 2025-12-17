@@ -10,8 +10,8 @@ interface StarsProps {
 const Stars = ({ className, size }: StarsProps) => {
   return (
     <div className={classNames("flex items-center", className)}>
-      {Array.from({ length: 5 }).map(() => (
-        <FaStar size={size} />
+      {Array.from({ length: 5 }).map((_, index) => (
+        <FaStar key={index} size={size} />
       ))}
     </div>
   );
