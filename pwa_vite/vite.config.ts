@@ -66,8 +66,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "ICE FISHING",
-          name: "ICE FISHING",
+          short_name: "Kino Casino",
+          name: "Kino Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
