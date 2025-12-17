@@ -26,6 +26,7 @@ export default defineConfig(async () => {
 
     plugins: [
       react(),
+
       preload(),
       tailwindcss(),
 
@@ -77,6 +78,14 @@ export default defineConfig(async () => {
             {
               protocol: "web+myapp",
               url: "/?data=%s",
+            },
+          ],
+
+          icons: [
+            {
+              src: "./app_icon.webp",
+              type: "image/webp",
+              sizes: "512x512",
             },
           ],
         },
