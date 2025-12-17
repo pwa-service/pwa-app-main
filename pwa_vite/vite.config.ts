@@ -66,8 +66,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "Boca Juniors Casino",
-          name: "Boca Juniors Casino",
+          short_name: "ICE FISHING",
+          name: "ICE FISHING",
           start_url: "/",
           scope: "/",
           display: "standalone",
