@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
 import react from "@vitejs/plugin-react";
+import preload from "vite-plugin-preload";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import viteCompression from "vite-plugin-compression";
@@ -25,6 +26,7 @@ export default defineConfig(async () => {
 
     plugins: [
       react(),
+      preload(),
       tailwindcss(),
 
       viteCompression({ algorithm: "gzip" }),
@@ -75,20 +77,6 @@ export default defineConfig(async () => {
             {
               protocol: "web+myapp",
               url: "/?data=%s",
-            },
-          ],
-
-          icons: [
-            {
-              src: "./favicon.ico",
-              type: "image/x-icon",
-              sizes: "256x256",
-            },
-
-            {
-              src: "./app_icon.webp",
-              type: "image/webp",
-              sizes: "512x512",
             },
           ],
         },

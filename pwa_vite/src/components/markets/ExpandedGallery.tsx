@@ -46,12 +46,17 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
 
   return (
     <div className="w-full h-screen p-5 bg-black/50 fixed top-0 left-0 z-10">
-      <button onClick={onClose} className="absolute left-5 top-5 mb-5 z-20 cursor-pointer">
+      <button
+        aria-label="close gallery"
+        onClick={onClose}
+        className="absolute left-5 top-5 mb-5 z-20 cursor-pointer"
+      >
         <MdArrowBack size={32} className="text-white" />
       </button>
 
       <Fragment>
         <button
+          aria-label="prev image"
           onClick={handlePrev}
           className={classNames(
             "hidden lg:flex items-center justify-center xxl:hidden",
@@ -64,6 +69,7 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
         </button>
 
         <button
+          aria-label="next image"
           onClick={handleNext}
           className={classNames(
             "hidden lg:flex items-center justify-center xxl:hidden",
@@ -85,7 +91,12 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
             key={index}
             className="w-full h-[80%] snap-center flex items-center justify-center shrink-0"
           >
-            <img src={image.src} alt={image.alt} className="w-full h-full object-contain p-[5px]" />
+            <img
+              loading="lazy"
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-full object-contain p-[5px]"
+            />
           </div>
         ))}
       </div>
