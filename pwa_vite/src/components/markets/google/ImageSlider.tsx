@@ -46,9 +46,9 @@ const ImageSlider = memo(
               <img
                 key={index}
                 src={src}
+                loading="lazy"
                 sizes="(max-width: 768px) 141px, 254px"
                 alt={alt || `slide-${index}`}
-                loading={isLast ? "lazy" : "eager"}
                 onClick={() => handleSelectImage(src)}
                 className={classNames(
                   "w-full h-full rounded-xl object-cover",
@@ -62,6 +62,7 @@ const ImageSlider = memo(
         {variant === "google" && !showGallery && (
           <Fragment>
             <button
+              aria-label="prev image"
               onClick={handlePrev}
               className={classNames(
                 "hidden lg:flex items-center justify-center xxl:hidden",
@@ -74,6 +75,7 @@ const ImageSlider = memo(
             </button>
 
             <button
+              aria-label="next image"
               onClick={handleNext}
               className={classNames(
                 "hidden lg:flex items-center justify-center xxl:hidden",
