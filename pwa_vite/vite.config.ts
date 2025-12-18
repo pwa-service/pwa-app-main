@@ -45,11 +45,14 @@ export default defineConfig(async () => {
         workbox: {
           runtimeCaching: [
             {
-              urlPattern: /\.(png|webp|jpg|jpeg|avif)$/i,
-              handler: "NetworkFirst",
+              urlPattern: /\.(png|webp|jpg|jpeg|avif|svg)$/i,
+              handler: "CacheFirst",
               options: {
                 cacheName: "images",
-                expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 3600,
+                },
               },
             },
             {
