@@ -31,9 +31,11 @@ async function bootstrap() {
             whitelist: true,
         }),
     );
-
     app.useGlobalInterceptors(new GrpcErrorInterceptor())
-    app.enableCors();
+    app.enableCors({
+        origin: '*',
+        credentials: true,
+    });
     app.enableShutdownHooks();
     await app.listen(3000, '0.0.0.0');
     console.log('🚀 Gateway on http://localhost:3000');
