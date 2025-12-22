@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { classNames } from "../../../utils/classNames";
 
-import starsIcon from "../../../assets/markets/google/google_five_stars.svg";
+import Stars from "./Stars";
 
 interface ReviewsProps {
   rating: number;
@@ -20,9 +20,9 @@ const Reviews = memo(
     return (
       <div className="flex flex-col gap-2 mt-8">
         <div className="w-full flex items-center gap-10">
-          <div className="h-full flex flex-col gap-2">
+          <div className="h-full flex flex-col items-center gap-2">
             <span className="text-6xl font-medium text-[#202124]">{rating}</span>
-            <img src={starsIcon} alt="five_stars" />
+            <Stars size={14} className="gap-0.5 text-[#3B8562]" />
           </div>
 
           <div className={classNames("w-full h-full", "flex flex-col justify-end gap-3")}>

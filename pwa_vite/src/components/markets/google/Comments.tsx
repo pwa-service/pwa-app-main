@@ -1,6 +1,7 @@
 import type { GoogleCommentData } from "../../../types/market";
-
 import { memo } from "react";
+
+import Stars from "./Stars";
 
 interface CommentsProps {
   comments: GoogleCommentData[];
@@ -9,16 +10,15 @@ interface CommentsProps {
 const Comments = memo(({ comments }: CommentsProps) => {
   return (
     <div className="w-full flex flex-col gap-10 mt-16">
-      {comments.map(({ type, id, avatar, fullName, starImage, date, text }) =>
+      {comments.map(({ type, id, fullName, date, text }) =>
         type === "user" ? (
           <div key={id} className="flex flex-col">
             <div className="flex items-center gap-4 mb-6">
-              <img src={avatar?.src} alt={avatar?.alt} className="w-8 h-8" />
               <span className="font-medium text-zinc-800">{fullName}</span>
             </div>
 
             <div className="flex items-center gap-2 mb-2">
-              <img src={starImage?.src} alt={starImage?.alt} />
+              <Stars size={12} className="gap-0.5 text-[#3B8562]" />
               <p className="text-xs text-zinc-600">{date}</p>
             </div>
 

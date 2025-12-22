@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
 
 import { data } from "../constants/template";
-import { googleComments, reviews } from "../constants/market";
+import { googleComments, reviews, tags } from "../constants/market";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
@@ -62,7 +62,7 @@ const GoogleMarketPage = () => {
           ))}
         </ul>
 
-        <TagsList tags={["Gambling"]} />
+        <TagsList tags={tags} />
       </SectionContainer>
 
       <SectionContainer title="Data safety">

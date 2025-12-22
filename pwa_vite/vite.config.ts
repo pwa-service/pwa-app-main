@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
 import react from "@vitejs/plugin-react";
+import preload from "vite-plugin-preload";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import viteCompression from "vite-plugin-compression";
@@ -25,6 +26,8 @@ export default defineConfig(async () => {
 
     plugins: [
       react(),
+
+      preload(),
       tailwindcss(),
 
       viteCompression({ algorithm: "gzip" }),
@@ -42,11 +45,14 @@ export default defineConfig(async () => {
         workbox: {
           runtimeCaching: [
             {
-              urlPattern: /\.(png|webp|jpg|jpeg|avif)$/i,
-              handler: "NetworkFirst",
+              urlPattern: /\.(png|webp|jpg|jpeg|avif|svg)$/i,
+              handler: "CacheFirst",
               options: {
                 cacheName: "images",
-                expiration: { maxEntries: 50, maxAgeSeconds: 3600 },
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 3600,
+                },
               },
             },
             {
@@ -63,8 +69,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "Boca Juniors Casino",
-          name: "Boca Juniors Casino",
+          short_name: "Agüero Casino",
+          name: "Agüero Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
@@ -79,12 +85,6 @@ export default defineConfig(async () => {
           ],
 
           icons: [
-            {
-              src: "./favicon.ico",
-              type: "image/x-icon",
-              sizes: "256x256",
-            },
-
             {
               src: "./app_icon.webp",
               type: "image/webp",
