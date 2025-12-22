@@ -1,0 +1,26 @@
+apiVersion: 1
+
+providers:
+  - name: system
+    orgId: 1
+    folder: "System"
+    type: file
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/system
+
+  - name: auth
+    orgId: 1
+    folder: "Auth"
+    type: file
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/auth
+
+  - name: fb_capi
+    orgId: 1
+    folder: "FB Events"
+    type: file
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/fb-capi

@@ -1,0 +1,64 @@
+{
+  "uid": "fb-capi-metrics",
+  "title": "FB CAPI Metrics",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "timezone": "browser",
+  "tags": ["fb-capi", "prometheus"],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "label": "Prometheus",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Events / sec (by event, status)",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event, status) (rate(fb_capi_events_total[5m]))",
+          "legendFormat": "{{event}} / {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Duration p95 (seconds)",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, event, http_status) (rate(fb_capi_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{event}} / {{http_status}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Avg duration (seconds)",
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (event, http_status) (rate(fb_capi_duration_seconds_sum[5m])) / clamp_min(sum by (event, http_status) (rate(fb_capi_duration_seconds_count[5m])), 1e-9)",
+          "legendFormat": "{{event}} / {{http_status}}"
+        }
+      ]
+    }
+  ]
+}

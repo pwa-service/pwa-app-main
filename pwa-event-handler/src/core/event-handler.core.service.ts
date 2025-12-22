@@ -206,7 +206,6 @@ export class EventHandlerCoreService {
     switch (event) {
       case FbEventEnum.Reg:
         eventName = 'CompleteRegistration';
-        // Фіксуємо спробу обробки реєстрації
         this.eventsCounter.labels(eventName, 'processing_start').inc();
         payload = await this.completeRegistration(dto, sess, eventName, sourceUrl);
         break;
