@@ -18,12 +18,14 @@ import {RpcException} from "@nestjs/microservices";
 import {status} from '@grpc/grpc-js';
 import {FbEventDto} from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
 import {PwaSession} from "@prisma/client";
+import {InjectMetric} from "@willsoto/nestjs-prometheus";
+import {Counter, Histogram} from "prom-client";
 
 const eventMap = new Map<FbEventEnum, EventType>([
-    [FbEventEnum.Dep, EventType.Purchase],
-    [FbEventEnum.Redep, EventType.Purchase],
-    [FbEventEnum.Subscribe, EventType.Subscribe],
-    [FbEventEnum.Reg, EventType.CompleteRegistration],
+  [FbEventEnum.Dep, EventType.Purchase],
+  [FbEventEnum.Redep, EventType.Purchase],
+  [FbEventEnum.Subscribe, EventType.Subscribe],
+  [FbEventEnum.Reg, EventType.CompleteRegistration],
 ])
 
 class FacebookApiError extends Error {
@@ -38,7 +40,6 @@ class FacebookApiError extends Error {
   }
 }
 
-
 @Injectable()
 export class EventHandlerCoreService {
   private readonly log = new Logger(EventHandlerCoreService.name);
@@ -47,22 +48,25 @@ export class EventHandlerCoreService {
 
   constructor(
       private readonly repo: EventHandlerRepository,
-      private readonly logs: EventLogProducer
+      private readonly logs: EventLogProducer,
+      @InjectMetric('fb_capi_events_total') public eventsCounter: Counter<string>,
+      @InjectMetric('fb_capi_duration_seconds') public durationHistogram: Histogram<string>,
   ) {}
 
 
   async viewContent(event: ViewContentDto) {
-    this.log.debug({ tag: 'viewContent:input', event });
-    const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta
+    this.log.debug({tag: 'viewContent:input', event});
+    const {pixelId, fbclid, offerId, utmSource, clientIp} = event._meta
 
     if (!pixelId) {
+      this.eventsCounter.labels('ViewContent', 'missing_pixel_id').inc();
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
         message: 'pixel_id is required in DTO body or query string'
       });
     }
 
-    const { id: sessionId } = await this.repo.upsertSession({
+    const {id: sessionId} = await this.repo.upsertSession({
       pwaDomain: event.pwaDomain,
       landingUrl: event.landingUrl ?? null,
       queryStringRaw: event.queryStringRaw ?? null,
@@ -82,24 +86,24 @@ export class EventHandlerCoreService {
       clientIp,
       sessionId,
     });
-    this.log.debug({ tag: 'viewContent:payload', payload });
+    this.log.debug({tag: 'viewContent:payload', payload});
 
     try {
       const fb = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({ tag: 'viewContent:fb-response', fb });
-      return { success: true, fb, sessionId };
+      this.log.log({tag: 'viewContent:fb-response', fb});
+      return {success: true, fb, sessionId};
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
-        this.log.error({ tag: 'viewContent:fb-error', error: e.message, fb: e.fb });
-        return { success: false, fb: e.fb, sessionId };
+        this.log.error({tag: 'viewContent:fb-error', error: e.message, fb: e.fb});
+        return {success: false, fb: e.fb, sessionId};
       }
       throw e;
     }
   }
 
   async prepareInstallLink(event: PrepareInstallLinkDto) {
-    this.log.debug({ tag: 'prepareInstallLink:input', event });
-    const { sessionId, pwaDomain } = event;
+    this.log.debug({tag: 'prepareInstallLink:input', event});
+    const {sessionId, pwaDomain} = event;
     const base = process.env.TRACKER_BASE_URL || 'https://tracker.example.com/landing';
     const url = new URL(base);
 
@@ -107,18 +111,22 @@ export class EventHandlerCoreService {
     const finalUrl = url.toString();
 
     await this.repo.setFinalUrl(sessionId, finalUrl);
-    this.log.log({ event: 'prepare-install-link', sessionId, pwaDomain, finalUrl });
-    return { finalUrl };
+    this.log.log({event: 'prepare-install-link', sessionId, pwaDomain, finalUrl});
+    return {finalUrl};
   }
 
 
   async pwaFirstOpen(event: PwaFirstOpenDto) {
-    this.log.debug({ tag: 'pwaFirstOpen:input', event });
+    this.log.debug({tag: 'pwaFirstOpen:input', event});
 
     const sessionId = event.sessionId
     const sess = await this.repo.getSessionById(sessionId);
-    this.log.debug({ tag: 'pwaFirstOpen:session', sess });
-    if (!sess) return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) };
+    this.log.debug({tag: 'pwaFirstOpen:session', sess});
+
+    if (!sess) {
+      this.eventsCounter.labels('Lead', 'session_not_found').inc();
+      return {success: true, fb: JSON.stringify({message: 'Session not found for first open.'})};
+    }
 
     const pixelId = sess.pixelId;
     const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
@@ -126,6 +134,7 @@ export class EventHandlerCoreService {
     const eventName = 'Lead';
     const exists = await this.repo.isSessionEventLogExists(sessionId, eventName);
     if (exists) {
+      this.eventsCounter.labels('Lead', 'duplicate').inc();
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
         message: 'You can not use this session for this type of event'
@@ -142,22 +151,22 @@ export class EventHandlerCoreService {
       sessionId,
     });
 
-    this.log.debug({ tag: 'pwaFirstOpen:payload', payload });
+    this.log.debug({tag: 'pwaFirstOpen:payload', payload});
     const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined;
 
     let fbResponse: string;
     let success = true;
     try {
       fbResponse = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({ tag: 'pwaFirstOpen:fb-response', fb: fbResponse });
+      this.log.log({tag: 'pwaFirstOpen:fb-response', fb: fbResponse});
     } catch (e: any) {
       success = false;
       if (e instanceof FacebookApiError) {
-        this.log.error({ tag: 'pwaFirstOpen:fb-error', error: e.message, fb: e.fb });
+        this.log.error({tag: 'pwaFirstOpen:fb-error', error: e.message, fb: e.fb});
         fbResponse = e.fb;
       } else {
-        this.log.error({ tag: 'pwaFirstOpen:unknown-error', error: e.message });
-        fbResponse = JSON.stringify({ error: e.message });
+        this.log.error({tag: 'pwaFirstOpen:unknown-error', error: e.message});
+        fbResponse = JSON.stringify({error: e.message});
       }
     }
 
@@ -167,13 +176,14 @@ export class EventHandlerCoreService {
       fbStatus: success ? LogStatus.success : LogStatus.error,
       finalUrl: sourceUrl,
     });
-    return { success, fb: fbResponse };
+    return {success, fb: fbResponse};
   }
 
   async event(event: FbEventEnum, dto: FbEventDto) {
     if (event !== FbEventEnum.Redep) {
       const exists = await this.repo.isSessionEventLogExists(dto.sessionId, eventMap.get(event)!);
       if (exists) {
+        this.eventsCounter.labels(event, 'duplicate').inc();
         throw new RpcException({
           code: status.INVALID_ARGUMENT,
           message: 'You can not use this session for this type of event'
@@ -183,7 +193,10 @@ export class EventHandlerCoreService {
 
     const sessionId = dto.sessionId;
     const sess = await this.repo.getSessionById(sessionId);
-    if (!sess) return { success: false, fb: JSON.stringify({ message: 'Session not found for.' }) };
+    if (!sess) {
+      this.eventsCounter.labels(event, 'session_not_found').inc();
+      return {success: false, fb: JSON.stringify({message: 'Session not found for.'})};
+    }
 
     const pixelId = sess.pixelId;
     const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || dto.pwaDomain}`;
@@ -192,22 +205,32 @@ export class EventHandlerCoreService {
 
     switch (event) {
       case FbEventEnum.Reg:
-        eventName = 'CompleteRegistration'
+        eventName = 'CompleteRegistration';
+        // Фіксуємо спробу обробки реєстрації
+        this.eventsCounter.labels(eventName, 'processing_start').inc();
         payload = await this.completeRegistration(dto, sess, eventName, sourceUrl);
         break;
+
       case FbEventEnum.Redep:
-        eventName = 'Purchase'
+        eventName = 'Purchase';
+        this.eventsCounter.labels(eventName, 'processing_redep').inc();
         payload = await this.purchase(dto as PurchaseDto, sess, eventName, sourceUrl);
         break;
+
       case FbEventEnum.Dep:
-        eventName = 'Purchase'
+        eventName = 'Purchase';
+        this.eventsCounter.labels(eventName, 'processing_dep').inc();
         payload = await this.purchase(dto as PurchaseDto, sess, eventName, sourceUrl);
         break;
+
       case FbEventEnum.Subscribe:
-        eventName = 'Subscribe'
+        eventName = 'Subscribe';
+        this.eventsCounter.labels(eventName, 'processing_start').inc();
         payload = await this.subscribe(dto as SubscribeDto, sess, eventName, sourceUrl);
         break;
+
       default:
+        this.eventsCounter.labels('Unknown', 'invalid_enum_arg').inc();
         throw new RpcException({
           code: status.INVALID_ARGUMENT,
           message: 'Invalid event name.'
@@ -216,19 +239,19 @@ export class EventHandlerCoreService {
 
     try {
       const fb = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({ tag: `${event}:fb-response`, fb });
-      return { success: true, fb };
+      this.log.log({tag: `${event}:fb-response`, fb});
+      return {success: true, fb};
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
-        this.log.error({ tag: `${event}:fb-error`, error: e.message, fb: e.fb });
-        return { success: false, fb: e.fb };
+        this.log.error({tag: `${event}:fb-error`, error: e.message, fb: e.fb});
+        return {success: false, fb: e.fb};
       }
       throw e;
     }
   }
 
   async completeRegistration(event: CompleteRegistrationDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({ tag: 'completeRegistration:input', event });
+    this.log.debug({tag: 'completeRegistration:input', event});
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
       eventName,
@@ -239,12 +262,12 @@ export class EventHandlerCoreService {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({ tag: 'completeRegistration:payload', payload });
+    this.log.debug({tag: 'completeRegistration:payload', payload});
     return payload
   }
 
   async purchase(event: PurchaseDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({ tag: 'purchase:input', event });
+    this.log.debug({tag: 'purchase:input', event});
 
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
@@ -258,12 +281,12 @@ export class EventHandlerCoreService {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({ tag: 'purchase:payload', payload });
+    this.log.debug({tag: 'purchase:payload', payload});
     return payload;
   }
 
   async subscribe(event: SubscribeDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({ tag: 'subscribe:input', event });
+    this.log.debug({tag: 'subscribe:input', event});
 
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
@@ -277,7 +300,7 @@ export class EventHandlerCoreService {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({ tag: 'subscribe:payload', payload });
+    this.log.debug({tag: 'subscribe:payload', payload});
     return payload
   }
 
@@ -287,8 +310,13 @@ export class EventHandlerCoreService {
       eventType: EventType,
       payload: unknown,
   ) {
+    const endTimer = this.durationHistogram.labels(eventType).startTimer();
+
     const pixelToken = await this.repo.findPixelTokenId(pixelId);
     if (!pixelToken) {
+      this.eventsCounter.labels(eventType, 'missing_token').inc();
+      endTimer({ http_status: '400' });
+
       throw new RpcException({
         code: status.INVALID_ARGUMENT,
         message: 'No token token fond by pixelId'
@@ -317,6 +345,8 @@ export class EventHandlerCoreService {
         this.log.debug({tag: 'fb-capi:mock', mock});
         responseData = mock;
         finalResult = JSON.stringify(mock);
+        endTimer({ http_status: '200' });
+
       } else {
         url = `${url}?access_token=${fbToken}`;
         const {data, status: httpStatus} = await axios.post(url, payload, {
@@ -326,18 +356,24 @@ export class EventHandlerCoreService {
         this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
         responseData = data;
         finalResult = JSON.stringify(data);
+
+        this.eventsCounter.labels(eventType, 'success').inc();
+        endTimer({ http_status: String(httpStatus) });
       }
     } catch (e) {
       logStatus = LogStatus.error;
       let errorMessage: string;
       const err = e as AxiosError;
+      let statusCode = 'unknown';
 
       if (err.response) {
         const {status: httpStatus, data} = err.response;
+        statusCode = String(httpStatus);
         this.log.warn({tag: 'fb-capi:response-error', status: httpStatus, body: data});
         responseData = {error: `FB ${httpStatus}: ${JSON.stringify(data)}`};
         errorMessage = `Facebook API Error ${httpStatus}`;
       } else if (axios.isAxiosError(err)) {
+        statusCode = 'timeout_or_network';
         this.log.error({tag: 'fb-capi:axios-error', stage: 'axios', error: err.message});
         responseData = {error: `FB request failed: ${err.message}`};
         errorMessage = `Request Failed: ${err.message}`;
@@ -346,6 +382,10 @@ export class EventHandlerCoreService {
         responseData = {error: String(e)};
         errorMessage = `Unknown Error: ${String(e)}`;
       }
+
+      this.eventsCounter.labels(eventType, 'error').inc();
+      endTimer({ http_status: statusCode });
+
       finalResult = new FacebookApiError(errorMessage, responseData);
     } finally {
       try {
@@ -360,8 +400,9 @@ export class EventHandlerCoreService {
           clientIp,
           country: clientIp ? geo.lookup(clientIp)?.country : null,
         });
-      } catch(logError) {
+      } catch (logError) {
         this.log.error({tag: 'db-logging-error', error: logError});
+        this.eventsCounter.labels(eventType, 'db_log_error').inc();
       }
     }
     if (finalResult instanceof FacebookApiError) {
@@ -383,7 +424,10 @@ export class EventHandlerCoreService {
     };
 
     const monetary =
-        'value' in input || 'currency' in input ? { value: (input as any).value, currency: (input as any).currency } : undefined;
+        'value' in input || 'currency' in input ? {
+          value: (input as any).value,
+          currency: (input as any).currency
+        } : undefined;
 
     const event = {
       event_name: (input as any).eventName,
@@ -398,9 +442,9 @@ export class EventHandlerCoreService {
         fbc,
         fbp,
       },
-      custom_data: { ...customBase, ...(monetary ?? {}) },
+      custom_data: {...customBase, ...(monetary ?? {})},
     };
 
-    return { data: [event] };
+    return {data: [event]};
   }
 }
