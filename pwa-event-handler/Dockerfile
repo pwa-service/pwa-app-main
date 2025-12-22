@@ -27,6 +27,9 @@ COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
 
+WORKDIR /workspace/pwa-shared
+RUN npm ci
+
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
