@@ -214,9 +214,14 @@ describe('AuthCoreService', () => {
                 ...authData,
                 hash: hash,
             });
-            expect(res.accessToken).toBeDefined();
-            expect(res.refreshToken).toBeDefined();
-            expect(res.user.email).toBe(tgEmail);
+
+            if (res) {
+                expect(res.accessToken).toBeDefined();
+                expect(res.refreshToken).toBeDefined();
+                expect(res.user.email).toBe(tgEmail);
+            } else {
+                fail('Test failed: res is undefined');
+            }
         });
 
         it('should create NEW user via Telegram if not exists', async () => {
@@ -234,7 +239,11 @@ describe('AuthCoreService', () => {
                 hash: hash,
             });
 
-            expect(res.accessToken).toBeDefined();
+            if (res) {
+                expect(res.accessToken).toBeDefined();
+            } else {
+                fail('Test failed: res is undefined');
+            }
 
             const dbUser = await repo.findByEmail(`tg_${newTgId}@telegram.user`);
             expect(dbUser).toBeDefined();

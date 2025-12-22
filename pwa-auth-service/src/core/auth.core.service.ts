@@ -16,6 +16,8 @@ import * as crypto from 'crypto';
 import {MailerService} from "@nestjs-modules/mailer";
 import {RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import {Counter} from "prom-client";
+import {InjectMetric} from "@willsoto/nestjs-prometheus";
 
 type UserPayload = { id: string; email: string; username: string };
 
@@ -26,6 +28,8 @@ export class AuthCoreService {
     private kid!: string;
 
     constructor(
+        @InjectMetric('auth_login_success_total') public loginSuccessCounter: Counter,
+        @InjectMetric('auth_login_errors_total') public loginErrorCounter: Counter,
         private readonly store: RefreshStore,
         private readonly repo: AuthRepository,
         private readonly mailerService: MailerService,
@@ -83,7 +87,7 @@ export class AuthCoreService {
                 message: 'Invalid credentials',
             });
         }
-
+        this.loginSuccessCounter.labels('email').inc();
         return {
             id: String(user.id),
             email: user.email ?? '',
@@ -298,56 +302,60 @@ export class AuthCoreService {
     }
 
     async telegramAuth(dto: TelegramAuthDto) {
-        const botToken = process.env.TELEGRAM_BOT_TOKEN;
-        if (!botToken) {
-            throw new RpcException({
-                code: status.INTERNAL,
-                message: 'TELEGRAM_BOT_TOKEN is not configured',
+        try {
+            const botToken = process.env.TELEGRAM_BOT_TOKEN;
+            if (!botToken) {
+                throw new RpcException({
+                    code: status.INTERNAL,
+                    message: 'TELEGRAM_BOT_TOKEN is not configured',
+                });
+            }
+
+            const dataCheckArr = [];
+            if (dto.auth_date) dataCheckArr.push(`auth_date=${dto.auth_date}`);
+            if (dto.first_name) dataCheckArr.push(`first_name=${dto.first_name}`);
+            if (dto.id) dataCheckArr.push(`id=${dto.id}`);
+            if (dto.last_name) dataCheckArr.push(`last_name=${dto.last_name}`);
+            if (dto.photo_url) dataCheckArr.push(`photo_url=${dto.photo_url}`);
+            if (dto.username) dataCheckArr.push(`username=${dto.username}`);
+
+            const dataCheckString = dataCheckArr.sort().join('\n');
+            const secretKey = crypto.createHash('sha256').update(botToken).digest();
+            const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+            if (hmac !== dto.hash) {
+                throw new RpcException({
+                    code: status.UNAUTHENTICATED,
+                    message: 'Invalid Telegram hash (Integrity check failed)',
+                });
+            }
+
+            const now = Math.floor(Date.now() / 1000);
+            if (now - dto.auth_date > 86400) {
+                throw new RpcException({
+                    code: status.UNAUTHENTICATED,
+                    message: 'Telegram auth data is outdated',
+                });
+            }
+
+            const telegramEmail = `tg_${dto.id}@telegram.user`;
+            let user = await this.repo.findByEmail(telegramEmail);
+
+            if (!user) {
+                user = await this.repo.createUser({
+                    email: telegramEmail,
+                    password: await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10),
+                    username: dto.username || `tg_user_${dto.id}`,
+                });
+            }
+            this.loginSuccessCounter.labels('telegram').inc();
+            return this.issueTokens({
+                id: String(user.id),
+                email: user.email ?? '',
+                username: user.username ?? '',
             });
+        } catch {
+            this.loginErrorCounter.labels('telegram_integrity').inc();
         }
-
-        const dataCheckArr = [];
-        if (dto.auth_date) dataCheckArr.push(`auth_date=${dto.auth_date}`);
-        if (dto.first_name) dataCheckArr.push(`first_name=${dto.first_name}`);
-        if (dto.id) dataCheckArr.push(`id=${dto.id}`);
-        if (dto.last_name) dataCheckArr.push(`last_name=${dto.last_name}`);
-        if (dto.photo_url) dataCheckArr.push(`photo_url=${dto.photo_url}`);
-        if (dto.username) dataCheckArr.push(`username=${dto.username}`);
-
-        const dataCheckString = dataCheckArr.sort().join('\n');
-        const secretKey = crypto.createHash('sha256').update(botToken).digest();
-        const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-
-        if (hmac !== dto.hash) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'Invalid Telegram hash (Integrity check failed)',
-            });
-        }
-
-        const now = Math.floor(Date.now() / 1000);
-        if (now - dto.auth_date > 86400) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'Telegram auth data is outdated',
-            });
-        }
-
-        const telegramEmail = `tg_${dto.id}@telegram.user`;
-        let user = await this.repo.findByEmail(telegramEmail);
-
-        if (!user) {
-            user = await this.repo.createUser({
-                email: telegramEmail,
-                password: await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10),
-                username: dto.username || `tg_user_${dto.id}`,
-            });
-        }
-
-        return this.issueTokens({
-            id: String(user.id),
-            email: user.email ?? '',
-            username: user.username ?? '',
-        });
     }
 }
