@@ -31,6 +31,7 @@ async function bootstrap() {
             whitelist: true,
         }),
     );
+
     app.useGlobalInterceptors(new GrpcErrorInterceptor())
     app.enableCors();
     app.enableShutdownHooks();
