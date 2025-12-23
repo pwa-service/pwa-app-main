@@ -208,6 +208,19 @@ export class AuthCoreService {
             username: name ?? email.split('@')[0],
         });
 
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const exp = Math.floor(Date.now() / 1000) + 3600;
+        await this.store.saveOneTime(token, created.id, exp);
+
+        const confirmEmail = `${process.env.FRONTEND_URL}/user/confirm-email?token=${token}`;
+        await this.mailerService.sendMail({
+            to: email,
+            subject: 'Email confirm',
+            text: `Use this link to confirm your email: ${confirmEmail}`,
+            html: `<p>Click <a href="${confirmEmail}">here</a>.The link expires in 1 hour.</p>`,
+        });
+
         return this.issueTokens({
             id: String(created.id),
             email: created.email ?? '',
@@ -254,7 +267,10 @@ export class AuthCoreService {
     async requestPasswordReset(email: string) {
         const user = await this.repo.findByEmail(email);
         if (!user || !user.email) {
-            return { message: 'If user exists, reset email was sent.' };
+            throw new RpcException({
+                code: status.NOT_FOUND,
+                message: 'User not found',
+            });
         }
 
         const token = crypto.randomBytes(32).toString('hex');
@@ -262,14 +278,12 @@ export class AuthCoreService {
         await this.store.saveOneTime(token, user.id, exp);
 
         const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}&email=${user.email}`;
-
         await this.mailerService.sendMail({
             to: user.email,
             subject: 'Password Reset Request',
             text: `Use this link to reset your password: ${resetLink}`,
             html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 1 hour.</p>`,
         });
-
         return { message: token };
     }
 
