@@ -41,7 +41,7 @@ services:
       - AUTH_AUDIENCE=api
       - AUTH_ACCESS_TTL=900
       - AUTH_REFRESH_TTL=604800
-      - FRONTEND_URL=https://pwaservice.site/apps
+      - FRONTEND_URL=http://localhost:3000
       - MAIL_USER=petrotraktorist07@gmail.com
       - MAIL_PASSWORD=gfcoyvhdoqvqrbob
       - MAIL_FROM="PWA Service <support@beton.win>"

@@ -213,7 +213,7 @@ export class AuthCoreService {
         const exp = Math.floor(Date.now() / 1000) + 3600;
         await this.store.saveOneTime(token, created.id, exp);
 
-        const confirmEmail = `${process.env.FRONTEND_URL}/user/confirm-email?token=${token}`;
+        const confirmEmail = `${process.env.FRONTEND_URL}/confirm-email?token=${token}`;
         await this.mailerService.sendMail({
             to: email,
             subject: 'Email confirm',
@@ -277,7 +277,7 @@ export class AuthCoreService {
         const exp = Math.floor(Date.now() / 1000) + 3600;
         await this.store.saveOneTime(token, user.id, exp);
 
-        const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}&email=${user.email}`;
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${user.email}`;
         await this.mailerService.sendMail({
             to: user.email,
             subject: 'Password Reset Request',
