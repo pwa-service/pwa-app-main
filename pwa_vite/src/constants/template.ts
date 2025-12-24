@@ -9,8 +9,8 @@ import sliderImage4 from "../assets/slider_image_4.webp";
 
 export const data: TemplateData = {
   productImage,
-  productName: "Agüero Casino",
-  productCreator: "Beton",
+  productName: "Casino Arturo Vidal",
+  productCreator: "BetOn Win®",
 
   images: [
     { src: sliderImage1, alt: "image 1" },
@@ -20,10 +20,10 @@ export const data: TemplateData = {
   ],
 
   description: [
-    "¡El legendario futbolista Sergio Agüero te lo presenta!",
-    "La potencia de la plataforma internacional Ace ahora se combina con la experiencia exclusiva del casino Agüero, creada con la participación directa del gran futbolista argentino. Esta plataforma única te ofrece lo mejor de los dos mundos: la elegancia incomparable de los juegos en vivo y la comodidad moderna del casino online… ¡todo en un solo lugar!",
-    "Bono de bienvenida exclusivo de Agüero:",
-    "100% hasta 300.000 ARS + 100 giros gratis.",
-    "Oferta disponible por tiempo limitado para nuevos jugadores de Argentina.",
+    "🎯 ¡Top Slots te regala un BONUS ÉPICO: 700% + 600 GIROS GRATIS! 💎🎰\n ¡Bienvenido a Top Slots Chile — donde la suerte, la emoción y las ganancias MEGA se unen en un solo lugar!",
+    "🔥 ¡Regístrate HOY y lleva tu bono completo:\n✔ 700% de bono en tu primer depósito\n✔ 600 giros gratis en las tragamonedas más TOP\n✔ ¡Diversión sin límites desde el primer clic!",
+    "🎮 Juega a los éxitos que están rompiendo récords en Chile:\n📘 Book of Dead\n 🍭 Sweet Bonanza\n ⚡ Gates of Olympus\n 🎣 Big Bass Bonanza\n ✨ Starburst",
+    "🚀 Retiros ultra rápidos • Soporte 24/7 • Juega desde tu celular o computadora.📱💻\n👑 ¡Top Slots ya es el favorito de los jugadores en Chile! ¿Listo para convertirte en el próximo GANADOR?",
+    "👉 ¡Haz clic YA y reclama tu BONUS ÉPICO! \n¡La suerte te está esperando… y trae 700% + 600 giros contigo!🎉",
   ],
 };
