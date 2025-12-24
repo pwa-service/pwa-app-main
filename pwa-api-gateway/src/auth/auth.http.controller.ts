@@ -27,7 +27,7 @@ export class AuthHttpController {
     @Post('sign-in')
     @HttpCode(200)
     async signIn(@Body() dto: SignInDto, @Req() req: Request) {
-        console.log(req.cookies)
+        console.log(req.cookies, req.headers)
         return this.auth.signIn(dto, buildGrpcMetadata(req));
     }
 
