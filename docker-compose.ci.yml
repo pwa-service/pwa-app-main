@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d pwa_test"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pwa_db"]
       interval: 3s
       timeout: 3s
       retries: 20
