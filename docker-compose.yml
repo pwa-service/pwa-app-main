@@ -45,6 +45,7 @@ services:
       - MAIL_USER=petrotraktorist07@gmail.com
       - MAIL_PASSWORD=gfcoyvhdoqvqrbob
       - MAIL_FROM="PWA Service <support@beton.win>"
+      - TELEGRAM_BOT_TOKEN=5762342430:AAG1Miw9VodQ00y4vvHxeZNmgAWHmriK6VQ
     depends_on:
       postgres:
         condition: service_healthy

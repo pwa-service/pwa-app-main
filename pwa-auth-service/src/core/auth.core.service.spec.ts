@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs';
 import { jwtVerify, importJWK } from 'jose';
 import * as crypto from 'crypto';
 import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import {Counter} from "prom-client";
 
 
 class MailerServiceMock {
@@ -34,6 +35,12 @@ describe('AuthCoreService', () => {
     let refreshToken: string;
     let resetToken: string;
 
+    const counterChild = { inc: jest.fn() };
+    const counterMock = {
+        inc: jest.fn(),
+        labels: jest.fn(() => counterChild),
+    } as unknown as Counter<string>;
+
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -42,6 +49,8 @@ describe('AuthCoreService', () => {
                 PrismaService,
                 RefreshStore,
                 JwtVerifierService,
+                { provide: 'PROM_METRIC_AUTH_LOGIN_SUCCESS_TOTAL', useValue: counterMock },
+                { provide: 'PROM_METRIC_AUTH_LOGIN_ERRORS_TOTAL', useValue: counterMock },
                 { provide: MailerService, useClass: MailerServiceMock },
             ],
         }).compile();
@@ -184,7 +193,7 @@ describe('AuthCoreService', () => {
     });
 
     describe('telegramAuth', () => {
-        process.env.TELEGRAM_BOT_TOKEN = '12345:FakeBotTokenForTesting'
+        process.env.TELEGRAM_BOT_TOKEN = '5762342430:AAG1Miw9VodQ00y4vvHxeZNmgAWHmriK6VQ'
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
         const telegramId = 123456789;
         const now = Math.floor(Date.now() / 1000);

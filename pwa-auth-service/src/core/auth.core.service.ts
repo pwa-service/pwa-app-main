@@ -368,8 +368,9 @@ export class AuthCoreService {
                 email: user.email ?? '',
                 username: user.username ?? '',
             });
-        } catch {
+        } catch (e) {
             this.loginErrorCounter.labels('telegram_integrity').inc();
+            throw e;
         }
     }
 }
