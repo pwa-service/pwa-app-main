@@ -59,7 +59,7 @@ services:
       dockerfile: pwa-event-handler/Dockerfile.test
     environment:
       NODE_ENV: test
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_test?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TEST_PIXEL_ID: 826333636840272
