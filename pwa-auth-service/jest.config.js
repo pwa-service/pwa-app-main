@@ -20,6 +20,7 @@ module.exports = {
     },
 
     transformIgnorePatterns: [
+        '/node_modules/(?!jose)/',
         'node_modules/(?!(jose)/)'
     ],
 
