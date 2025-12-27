@@ -50,7 +50,7 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    command: ["npm", "test:ci"]
+    command: ["npm", "run", "test:ci"]
 
   event-handler-tests:
     build:
@@ -68,5 +68,5 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    command: ["npm", "test:ci"]
+    command: ["npm", "run", "test:ci"]
 
