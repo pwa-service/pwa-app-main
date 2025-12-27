@@ -7,6 +7,8 @@
     "start:dev": "nest start --watch",
     "build": "nest build",
     "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
+    "test": "jest",
+    "test:ci": "jest --runInBand --detectOpenHandles",
     "local": "nest build && node ./dist/pwa-auth-service/src/main.js"
   },
   "dependencies": {

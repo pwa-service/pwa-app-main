@@ -33,6 +33,7 @@ jobs:
         run: docker compose -f docker-compose.ci.yml down -v
 
   deploy:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
