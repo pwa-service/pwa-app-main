@@ -1,4 +1,4 @@
-import {Injectable, Logger} from '@nestjs/common';
+import {Injectable, Logger, OnModuleInit} from '@nestjs/common';
 import axios, {AxiosError} from 'axios';
 import {EventType, LogStatus} from '.prisma/client';
 import {EventHandlerRepository} from './event-handler.repository';
@@ -41,7 +41,7 @@ class FacebookApiError extends Error {
 }
 
 @Injectable()
-export class EventHandlerCoreService {
+export class EventHandlerCoreService implements OnModuleInit {
   private readonly log = new Logger(EventHandlerCoreService.name);
   private readonly graphVersion = process.env.FB_GRAPH_VERSION ?? 'v21.0';
   private readonly baseGraphUrl = process.env.BASE_GRAPH_URL || 'https://graph.facebook.com'
@@ -52,6 +52,10 @@ export class EventHandlerCoreService {
       @InjectMetric('fb_capi_events_total') public eventsCounter: Counter<string>,
       @InjectMetric('fb_capi_duration_seconds') public durationHistogram: Histogram<string>,
   ) {}
+
+  onModuleInit() {
+    this.eventsCounter.labels('Init', 'boot').inc(0);
+  }
 
 
   async viewContent(event: ViewContentDto) {
