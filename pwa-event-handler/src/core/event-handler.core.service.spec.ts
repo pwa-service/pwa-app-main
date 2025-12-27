@@ -14,6 +14,7 @@ import { FbEventDto } from '../../../pwa-shared/src/types/event-handler/dto/even
 import { RpcException } from '@nestjs/microservices';
 import { EventLogProducer } from '../queues/event-log.producer';
 import { of } from 'rxjs';
+import {Counter, Histogram} from "prom-client";
 
 const testPixelId = process.env.TEST_PIXEL_ID || '1212908517317952';
 const testPwaDomain = 'pwaservice.site';
@@ -34,12 +35,32 @@ describe('EventHandlerCoreService (integration)', () => {
     let prisma: PrismaService;
     let sessionId: string;
 
+    const counterChild = { inc: jest.fn() };
+    const counterMock = {
+        inc: jest.fn(),
+        labels: jest.fn(() => counterChild),
+    } as unknown as Counter<string>;
+
+    const histogramChild = {
+        observe: jest.fn(),
+        startTimer: jest.fn(() => jest.fn()),
+    };
+
+    const histogramMock = {
+        observe: jest.fn(),
+        startTimer: jest.fn(() => jest.fn()),
+        labels: jest.fn(() => histogramChild),
+    } as unknown as Histogram<string>;
+
+
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 EventHandlerCoreService,
                 EventHandlerRepository,
                 PrismaService,
+                { provide: 'PROM_METRIC_FB_CAPI_EVENTS_TOTAL', useValue: counterMock },
+                { provide: 'PROM_METRIC_FB_CAPI_DURATION_SECONDS', useValue: histogramMock },
                 { provide: EventLogProducer, useClass: MockLogsProducer },
             ],
         }).compile();
