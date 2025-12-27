@@ -49,7 +49,7 @@ services:
       context: .
       dockerfile: pwa-prisma/Dockerfile
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_test?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
     depends_on:
       postgres:
         condition: service_healthy
