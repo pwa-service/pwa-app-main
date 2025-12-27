@@ -1,48 +1,25 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres
     env_file:
       - ./.env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    networks:
-      - pwa-network
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: "4g"
-
-  redis:
-    image: redis:7-alpine
-    container_name: redis
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    command: [ "redis-server", "--appendonly", "yes" ]
-    volumes:
-      - redis_data:/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pwa_db
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pwa_db"]
       interval: 5s
       timeout: 3s
       retries: 10
-    networks:
-      - pwa-network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "4g"
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   prisma-migrator:
     build:
@@ -54,8 +31,7 @@ services:
       postgres:
         condition: service_healthy
     entrypoint: ["/bin/sh", "-c"]
-    command: >
-      npx prisma migrate deploy
+    command: ["npx prisma migrate deploy"]
 
   auth-tests:
     build:
@@ -66,13 +42,11 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      TELEGRAM_BOT_TOKEN: test_token
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
-
 
   event-handler-tests:
     build:
@@ -83,9 +57,8 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      TEST_PIXEL_ID: 826333636840272
-      TEST_PIXEL_TOKEN: EAAaLM2BeV9oBQbB0JKp9coqezWRqe0FSJ7W3wYbkWNrVTtW3JvZAjdDNGqDS5R1JqLlGUAfwMeyb4kIpQ4b8fnK5ZAUAZAZA1N3Rg1iScZCF6Kl5ZCkRxP8Ux0XuOL8ZC96Xkcn9Djs33cf9mdwbmiIJTnjgf2kR8XZCI5UlxlU8jLZCx3tZAbG8y2wt04ZBnfK7uhSNwZDZD
     depends_on:
-      - postgres
-      - redis
-
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
