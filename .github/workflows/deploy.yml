@@ -22,6 +22,7 @@ jobs:
       - name: Integration tests
         run: |
           docker compose -f docker-compose.ci.yml build
+          docker compose -f docker-compose.ci.yml up -d postgres redis
           docker compose -f docker-compose.ci.yml up --abort-on-container-exit prisma-migrator
           
           docker compose -f docker-compose.ci.yml up --abort-on-container-exit auth-tests
