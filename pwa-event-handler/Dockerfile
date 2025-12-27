@@ -48,7 +48,8 @@ ENV NODE_ENV=production
 
 COPY --from=build /workspace/pwa-event-handler/dist         ./dist
 COPY --from=build /workspace/pwa-event-handler/node_modules ./node_modules
-COPY ./pwa-auth-service/package*.json ./
+COPY ./pwa-event-handler/package*.json ./
 COPY --from=build /workspace/pwa-event-handler/protos       ./protos
 
 CMD ["node", "dist/pwa-event-handler/src/main.js"]
+

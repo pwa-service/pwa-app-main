@@ -1,0 +1,40 @@
+FROM node:22-alpine
+
+WORKDIR /workspace
+RUN apk add --no-cache python3 make g++ libc6-compat
+
+COPY ./pwa-auth-service/package*.json ./pwa-auth-service/
+COPY ./pwa-prisma/package*.json      ./pwa-prisma/
+COPY ./pwa-shared/package*.json      ./pwa-shared/
+COPY ./pwa-protos/package*.json      ./pwa-protos/
+
+WORKDIR /workspace/pwa-auth-service
+RUN npm ci
+
+WORKDIR /workspace/pwa-prisma
+RUN npm ci
+
+WORKDIR /workspace/pwa-shared
+RUN npm ci
+
+WORKDIR /workspace
+COPY ./pwa-auth-service ./pwa-auth-service
+COPY ./pwa-prisma       ./pwa-prisma
+COPY ./pwa-shared       ./pwa-shared
+COPY ./pwa-protos       ./pwa-protos
+
+WORKDIR /workspace/pwa-prisma
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+WORKDIR /workspace/pwa-auth-service
+RUN mkdir -p ./prisma \
+ && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma \
+ && npx prisma generate --schema=./prisma/schema.prisma
+
+RUN mkdir -p ./protos \
+ && cp -r ../pwa-protos/protos/* ./protos/
+
+ENV NODE_ENV=test
+
+WORKDIR /workspace/pwa-auth-service
+CMD ["npm", "run", "test:ci"]

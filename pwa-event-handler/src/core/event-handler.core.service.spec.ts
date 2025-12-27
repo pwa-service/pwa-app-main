@@ -16,7 +16,8 @@ import { EventLogProducer } from '../queues/event-log.producer';
 import { of } from 'rxjs';
 import {Counter, Histogram} from "prom-client";
 
-const testPixelId = process.env.TEST_PIXEL_ID || '1212908517317952';
+const testPixelId = process.env.TEST_PIXEL_ID || '826333636840272';
+const testPixelToken = process.env.TEST_PIXEL_TOKEN || 'EAAaLM2BeV9oBQbB0JKp9coqezWRqe0FSJ7W3wYbkWNrVTtW3JvZAjdDNGqDS5R1JqLlGUAfwMeyb4kIpQ4b8fnK5ZAUAZAZA1N3Rg1iScZCF6Kl5ZCkRxP8Ux0XuOL8ZC96Xkcn9Djs33cf9mdwbmiIJTnjgf2kR8XZCI5UlxlU8jLZCx3tZAbG8y2wt04ZBnfK7uhSNwZDZD';
 const testPwaDomain = 'pwaservice.site';
 const testUserAgent = 'Mozilla/5.0 (Linux; Android 9; SM-J730G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Mobile Safari/537.36'
 const testIp = '168.197.219.100'
@@ -71,6 +72,12 @@ describe('EventHandlerCoreService (integration)', () => {
         jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
         jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
         jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+
+        if (!await prisma.pixelToken.findFirst({ where: { id: testPixelId } })) {
+            await prisma.pixelToken.create({
+                data: { id: testPixelId, token: testPixelToken },
+            });
+        }
 
         const eventMeta: EventMeta = {
             pixelId: testPixelId,

@@ -12,6 +12,8 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
@@ -37,36 +39,32 @@ services:
   auth-tests:
     build:
       context: .
-      dockerfile: pwa-auth-service/Dockerfile
-    working_dir: /workspace/pwa-auth-service
+      dockerfile: pwa-auth-service/Dockerfile.test
     environment:
       NODE_ENV: test
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_test?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_db?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TELEGRAM_BOT_TOKEN: test_token
     depends_on:
-      prisma-migrator:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_started
       redis:
-        condition: service_healthy
-    command: ["npm", "run", "test:ci"]
+        condition: service_started
+
 
   event-handler-tests:
     build:
       context: .
-      dockerfile: pwa-event-handler/Dockerfile
-    working_dir: /workspace/pwa-event-handler
+      dockerfile: pwa-event-handler/Dockerfile.test
     environment:
       NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/pwa_test?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      FB_MOCK: "true"
+      TEST_PIXEL_ID: 826333636840272
+      TEST_PIXEL_TOKEN: EAAaLM2BeV9oBQbB0JKp9coqezWRqe0FSJ7W3wYbkWNrVTtW3JvZAjdDNGqDS5R1JqLlGUAfwMeyb4kIpQ4b8fnK5ZAUAZAZA1N3Rg1iScZCF6Kl5ZCkRxP8Ux0XuOL8ZC96Xkcn9Djs33cf9mdwbmiIJTnjgf2kR8XZCI5UlxlU8jLZCx3tZAbG8y2wt04ZBnfK7uhSNwZDZD
     depends_on:
-      prisma-migrator:
-        condition: service_completed_successfully
-      redis:
-        condition: service_healthy
-    command: ["npm", "run", "test:ci"]
+      - postgres
+      - redis
 

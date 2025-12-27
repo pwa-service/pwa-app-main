@@ -6,8 +6,6 @@ services:
     container_name: postgres
     env_file:
       - ./.env
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -143,8 +141,6 @@ services:
         limits:
           cpus: "0.25"
           memory: "0.6g"
-    ports:
-      - "3000:3000"
 
   pwa-generator:
     build:
@@ -347,7 +343,6 @@ services:
       - --path.rootfs=/rootfs
     networks:
       - pwa-network
-
 
 
 volumes:
