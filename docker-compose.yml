@@ -142,6 +142,8 @@ services:
         limits:
           cpus: "0.25"
           memory: "0.6g"
+    ports:
+      - "3000:3000"
 
   pwa-generator:
     build:
@@ -224,8 +226,6 @@ services:
         limits:
           cpus: "0.5"
           memory: "4g"
-    ports:
-      - "6379:6379"
 
   prisma-migrator:
     build:
@@ -299,6 +299,8 @@ services:
     image: prom/prometheus
     ports:
       - "9090:9090"
+    networks:
+      - pwa-network
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
@@ -311,6 +313,8 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - pwa-network
     depends_on:
       - prometheus
     volumes:
@@ -323,8 +327,8 @@ services:
     restart: unless-stopped
     environment:
       - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
-    ports:
-      - "9187:9187"
+    networks:
+      - pwa-network
 
   node-exporter:
     image: prom/node-exporter
@@ -340,6 +344,8 @@ services:
       - --path.procfs=/host/proc
       - --path.sysfs=/host/sys
       - --path.rootfs=/rootfs
+    networks:
+      - pwa-network
 
 
 
