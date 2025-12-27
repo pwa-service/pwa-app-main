@@ -57,7 +57,13 @@ const GoogleMarketPage = () => {
         <ul className="flex flex-col gap-5">
           {data.description.map((row, index) => (
             <li key={index}>
-              <p className="text-zinc-600">{row}</p>
+              <p className="text-zinc-600">
+                {row.split("\n").map((line, i) => (
+                  <span key={i} className="block">
+                    {line}
+                  </span>
+                ))}
+              </p>
             </li>
           ))}
         </ul>
