@@ -309,8 +309,7 @@ export class EventHandlerCoreService {
       eventType: EventType,
       payload: unknown,
   ) {
-    const endTimer = this.durationHistogram.labels(eventType).startTimer();
-
+    const endTimer = this.durationHistogram.startTimer({ event: eventType });
     const pixelToken = await this.repo.findPixelTokenId(pixelId);
     if (!pixelToken) {
       this.eventsCounter.labels(eventType, 'missing_token').inc();

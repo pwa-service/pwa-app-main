@@ -9,7 +9,7 @@ export class ViewContentEnrichmentPipe
         const params = this.getSearchParams(value);
         const pixelId = value.pixelId || params.get('pixel_id');
         const currency = value.currency === "" || value.currency === undefined || value.currency === null ? "USD" : value.currency
-        console.log(value)
+
         const _meta: EventMeta = {
             clientIp: value._meta.clientIp,
             userAgent: value._meta.userAgent,
