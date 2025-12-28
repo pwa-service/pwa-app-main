@@ -9,7 +9,7 @@
     "prisma:generate": "../pwa-prisma/prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
     "local": "nest build && node ./dist/pwa-event-handler/src/main.js",
     "test": "jest",
-    "test:ci": "jest --runInBand --detectOpenHandles"
+    "test:ci": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.10.6",
