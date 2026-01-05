@@ -31,15 +31,15 @@ export class GrpcAuthInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const allowAnon = this.reflector.get<boolean>('ALLOW_ANON', context.getHandler()) ||
             this.reflector.get<boolean>('ALLOW_ANON', context.getClass());
+        if (allowAnon) return next.handle();
+
         const rpc = context.switchToRpc();
         const metadata = context.getArgByIndex(1) as Metadata | undefined;
         const data = rpc.getData() as any;
 
         const authHeader = (metadata?.get('authorization')?.[0] as string | undefined) ?? '';
         const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-
         if (!token) {
-            if (allowAnon) return next.handle();
             return throwError(() => new RpcException({ code: status.UNAUTHENTICATED, message: 'Missing access token' }));
         }
         return from(this.jwt.verify(token)).pipe(
