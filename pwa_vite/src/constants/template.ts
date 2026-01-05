@@ -6,10 +6,11 @@ import sliderImage1 from "../assets/slider_image_1.webp";
 import sliderImage2 from "../assets/slider_image_2.webp";
 import sliderImage3 from "../assets/slider_image_3.webp";
 import sliderImage4 from "../assets/slider_image_4.webp";
+import sliderImage5 from "../assets/slider_image_5.webp";
 
 export const data: TemplateData = {
   productImage,
-  productName: "Casino Arturo Vidal",
+  productName: "Agüero Casino",
   productCreator: "BetOn Win®",
 
   images: [
@@ -17,13 +18,12 @@ export const data: TemplateData = {
     { src: sliderImage2, alt: "image 2" },
     { src: sliderImage3, alt: "image 3" },
     { src: sliderImage4, alt: "image 4" },
+    { src: sliderImage5, alt: "image 5" },
   ],
 
   description: [
-    "🎯 ¡Top Slots te regala un BONUS ÉPICO: 700% + 600 GIROS GRATIS! 💎🎰\n ¡Bienvenido a Top Slots Chile — donde la suerte, la emoción y las ganancias MEGA se unen en un solo lugar!",
-    "🔥 ¡Regístrate HOY y lleva tu bono completo:\n✔ 700% de bono en tu primer depósito\n✔ 600 giros gratis en las tragamonedas más TOP\n✔ ¡Diversión sin límites desde el primer clic!",
-    "🎮 Juega a los éxitos que están rompiendo récords en Chile:\n📘 Book of Dead\n 🍭 Sweet Bonanza\n ⚡ Gates of Olympus\n 🎣 Big Bass Bonanza\n ✨ Starburst",
-    "🚀 Retiros ultra rápidos • Soporte 24/7 • Juega desde tu celular o computadora.📱💻\n👑 ¡Top Slots ya es el favorito de los jugadores en Chile! ¿Listo para convertirte en el próximo GANADOR?",
-    "👉 ¡Haz clic YA y reclama tu BONUS ÉPICO! \n¡La suerte te está esperando… y trae 700% + 600 giros contigo!🎉",
+    "¡Agüero Casino, la app oficial para los que aman jugar en Argentina! :flag-ar:¡Acá te regalamos un BONO de $3.000.000 + 600 Giros Gratis para que empieces a jugar a lo grande!",
+    "Lo mejor: tus premios llegan rapidísimo. Es fácil, rápido y miles de argentinos ya están jugando y ganando todos los días.",
+    "Solo tenés que descargar la app, registrarte, hacer tu primer depósito ¡y arrancar la diversión! La suerte puede estar de tu lado en el próximo giro… ¿listo para ganar en grande?",
   ],
 };
