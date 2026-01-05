@@ -69,8 +69,8 @@ export default defineConfig(async () => {
         },
 
         manifest: {
-          short_name: "Casino Arturo Vidal",
-          name: "Casino Arturo Vidal",
+          short_name: "Agüero Casino",
+          name: "Agüero Casino",
           start_url: "/",
           scope: "/",
           display: "standalone",
