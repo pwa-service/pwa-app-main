@@ -131,7 +131,7 @@ services:
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - GENERATOR_GRPC_URL=pwa-generator:50055
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
-      - AUTH_ISSUER=https://pwaservice.site/
+      - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
     depends_on:
       auth-service:
