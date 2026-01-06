@@ -70,7 +70,7 @@ export class AuthHttpController {
 
     @Post('telegram')
     @HttpCode(200)
-    async telegramAuth(@Body() dto: TelegramAuthDto, @Req() req: Request) {
+    async telegramAuth(@Body() dto: any, @Req() req: Request) {
         return this.auth.telegramAuth(dto, buildGrpcMetadata(req));
     }
 }

@@ -64,7 +64,13 @@ export class AuthGrpcClient {
         return await lastValueFrom(this.svc.me({}, metadata));
     }
 
-    async telegramAuth(dto: TelegramAuthDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.telegramAuth(dto, metadata));
+    async telegramAuth(dto: any, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.telegramAuth({
+            authDate: dto.auth_date,
+            firstName: dto.first_name,
+            lastName: dto.last_name,
+            photoUrl: dto.photo_url,
+            ...dto
+        }, metadata));
     }
 }

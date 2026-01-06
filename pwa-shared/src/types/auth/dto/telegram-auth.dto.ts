@@ -9,12 +9,12 @@ export class TelegramAuthDto {
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    first_name?: string;
+    firstName?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    last_name?: string;
+    lastName?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
@@ -24,11 +24,11 @@ export class TelegramAuthDto {
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    photo_url?: string;
+    photoUrl?: string;
 
     @ApiProperty()
     @IsNumber()
-    auth_date!: number;
+    authDate!: number;
 
     @ApiProperty()
     @IsNotEmpty()

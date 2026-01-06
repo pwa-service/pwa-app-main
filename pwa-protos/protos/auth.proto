@@ -1,5 +1,7 @@
 syntax = "proto3";
+
 package auth.v1;
+
 import "google/protobuf/empty.proto";
 
 service AuthService {
@@ -14,7 +16,6 @@ service AuthService {
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
 }
 
-
 message SignUpRequest {
   string email = 1;
   string password = 2;
@@ -27,7 +28,7 @@ message SignInRequest {
 }
 
 message RefreshRequest {
-  string refreshToken = 1;
+  string refresh_token = 1;
 }
 
 message RequestRestorePasswordRequest {
@@ -36,7 +37,7 @@ message RequestRestorePasswordRequest {
 
 message RestorePasswordRequest {
   string email = 1;
-  string newPassword = 2;
+  string new_password = 2;
   string token = 3;
 }
 
@@ -45,10 +46,10 @@ message ConfirmEmailRequest {
 }
 
 message AuthResponse {
-  string accessToken = 1;
-  string refreshToken = 2;
-  int32  expiresIn   = 3;
-  User   user        = 4;
+  string access_token = 1;
+  string refresh_token = 2;
+  int32  expires_in = 3;
+  User   user = 4;
 }
 
 message RequestResetResponse {
@@ -56,18 +57,18 @@ message RequestResetResponse {
 }
 
 message User {
-  string id    = 1;
+  string id = 1;
   string email = 2;
-  string username  = 3;
-  string role  = 4;
+  string username = 3;
+  string role = 4;
 }
 
 message TelegramAuthRequest {
-  int64  id         = 1;
+  int64  id = 1;
   string first_name = 2;
-  string last_name  = 3;
-  string username   = 4;
-  string photo_url  = 5;
-  int64  auth_date  = 6;
-  string hash       = 7;
+  string last_name = 3;
+  string username = 4;
+  string photo_url = 5;
+  int64  auth_date = 6;
+  string hash = 7;
 }

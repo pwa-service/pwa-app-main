@@ -326,7 +326,7 @@ export class AuthCoreService {
             }
 
             const checkData: Record<string, string> = {};
-            const fields = ['auth_date', 'first_name', 'id', 'last_name', 'photo_url', 'username'];
+            const fields = ['authDate', 'firstName', 'id', 'lastName', 'photoUrl', 'username'];
 
             for (const key of fields) {
                 const val = dto[key as keyof TelegramAuthDto];
@@ -358,7 +358,7 @@ export class AuthCoreService {
             }
 
             const now = Math.floor(Date.now() / 1000);
-            const authDate = Number(dto.auth_date);
+            const authDate = Number(dto.authDate);
             if (now - authDate > 86400) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,

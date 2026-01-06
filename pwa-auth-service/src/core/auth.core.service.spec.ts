@@ -214,9 +214,9 @@ describe('AuthCoreService', () => {
             const tgEmail = `tg_${telegramId}@telegram.user`;
             const authData = {
                 id: telegramId,
-                first_name: 'John',
+                firstName: 'John',
                 username: 'johndoe',
-                auth_date: now,
+                authDate: now,
             };
             const hash = generateHash(authData);
             const res = await service.telegramAuth({
@@ -237,9 +237,9 @@ describe('AuthCoreService', () => {
             const newTgId = 987654321;
             const authData = {
                 id: newTgId,
-                first_name: 'New',
-                last_name: 'User',
-                auth_date: now,
+                firstName: 'New',
+                lastName: 'User',
+                authDate: now,
             };
             const hash = generateHash(authData);
 
@@ -262,7 +262,7 @@ describe('AuthCoreService', () => {
         it('should throw UNAUTHENTICATED if hash is invalid', async () => {
             const authData = {
                 id: telegramId,
-                auth_date: now,
+                authDate: now,
                 hash: 'invalid_fake_hash',
             };
 
@@ -278,7 +278,7 @@ describe('AuthCoreService', () => {
             const oldDate = now - 86401;
             const authData = {
                 id: telegramId,
-                auth_date: oldDate,
+                authDate: oldDate,
             };
             const hash = generateHash(authData);
 
