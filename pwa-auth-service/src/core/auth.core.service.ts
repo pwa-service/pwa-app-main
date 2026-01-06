@@ -326,12 +326,19 @@ export class AuthCoreService {
             }
 
             const checkData: Record<string, string> = {};
-            const fields = ['authDate', 'firstName', 'id', 'lastName', 'photoUrl', 'username'];
+            const fieldMapping: Record<string, string> = {
+                authDate: 'auth_date',
+                firstName: 'first_name',
+                id: 'id',
+                lastName: 'last_name',
+                photoUrl: 'photo_url',
+                username: 'username'
+            };
 
-            for (const key of fields) {
-                const val = dto[key as keyof TelegramAuthDto];
+            for (const [camelKey, snakeKey] of Object.entries(fieldMapping)) {
+                const val = dto[camelKey as keyof TelegramAuthDto];
                 if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
-                    checkData[key] = String(val);
+                    checkData[snakeKey] = String(val);
                 }
             }
 
