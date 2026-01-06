@@ -325,18 +325,29 @@ export class AuthCoreService {
                 });
             }
 
-            const dataCheckArr = [];
-            if (dto.auth_date) dataCheckArr.push(`auth_date=${dto.auth_date}`);
-            if (dto.first_name) dataCheckArr.push(`first_name=${dto.first_name}`);
-            if (dto.id) dataCheckArr.push(`id=${dto.id}`);
-            if (dto.last_name) dataCheckArr.push(`last_name=${dto.last_name}`);
-            if (dto.photo_url) dataCheckArr.push(`photo_url=${dto.photo_url}`);
-            if (dto.username) dataCheckArr.push(`username=${dto.username}`);
+            const checkData: Record<string, string> = {};
+            const fields = ['auth_date', 'first_name', 'id', 'last_name', 'photo_url', 'username'];
 
-            const dataCheckString = dataCheckArr.sort().join('\n');
+            for (const key of fields) {
+                const val = dto[key as keyof TelegramAuthDto];
+                if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
+                    checkData[key] = String(val);
+                }
+            }
+
+            const dataCheckString = Object.keys(checkData)
+                .sort()
+                .map(key => `${key}=${checkData[key]}`)
+                .join('\n');
+
             const secretKey = crypto.createHash('sha256').update(botToken).digest();
-            const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-            console.log(hmac, dto.hash)
+            const hmac = crypto
+                .createHmac('sha256', secretKey)
+                .update(dataCheckString)
+                .digest('hex');
+            console.log("token:", botToken)
+            console.log("data check", dataCheckString)
+            console.log(dto.hash)
             if (hmac !== dto.hash) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,
@@ -345,7 +356,8 @@ export class AuthCoreService {
             }
 
             const now = Math.floor(Date.now() / 1000);
-            if (now - dto.auth_date > 86400) {
+            const authDate = Number(dto.auth_date);
+            if (now - authDate > 86400) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,
                     message: 'Telegram auth data is outdated',
@@ -356,21 +368,27 @@ export class AuthCoreService {
             let user = await this.repo.findByEmail(telegramEmail);
 
             if (!user) {
+                const randomPassword = crypto.randomBytes(16).toString('hex');
+                const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
                 user = await this.repo.createUser({
                     email: telegramEmail,
-                    password: await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10),
+                    password: hashedPassword,
                     username: dto.username || `tg_user_${dto.id}`,
                 });
             }
-            this.loginSuccessCounter.labels('telegram').inc();
+
             return this.issueTokens({
                 id: String(user.id),
-                email: user.email ?? '',
-                username: user.username ?? '',
+                email: user.email || '',
+                username: user.username || '',
             });
         } catch (e) {
-            this.loginErrorCounter.labels('telegram_integrity').inc();
-            throw e;
+            if (e instanceof RpcException) throw e;
+            throw new RpcException({
+                code: status.INTERNAL,
+                message: 'Internal server error during Telegram authentication',
+            });
         }
     }
 }

@@ -8,7 +8,7 @@ service AuthService {
   rpc Refresh               (RefreshRequest)                returns (AuthResponse);
   rpc SignOut               (google.protobuf.Empty)         returns (google.protobuf.Empty);
   rpc Me                    (google.protobuf.Empty)         returns (User);
-  rpc RequestPasswordReset  (RequestRestorePasswordRequest) returns (RequestResetResponse); // 👈 ДОДАНО
+  rpc RequestPasswordReset  (RequestRestorePasswordRequest) returns (RequestResetResponse);
   rpc RestorePassword       (RestorePasswordRequest)        returns (AuthResponse);
   rpc ConfirmEmail          (ConfirmEmailRequest)           returns (AuthResponse);
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
