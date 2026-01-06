@@ -345,7 +345,8 @@ export class AuthCoreService {
                 .createHmac('sha256', secretKey)
                 .update(dataCheckString)
                 .digest('hex');
-            console.log("token:", checkData)
+            console.log(dto)
+            console.log(checkData)
             console.log("token:", botToken)
             console.log(dataCheckString)
             console.log(dto.hash)
