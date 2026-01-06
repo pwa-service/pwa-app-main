@@ -349,7 +349,7 @@ export class AuthCoreService {
             console.log(checkData)
             console.log("token:", botToken)
             console.log(dataCheckString)
-            console.log(dto.hash)
+            console.log(hmac)
             if (hmac !== dto.hash) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,
