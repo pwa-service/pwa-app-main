@@ -336,7 +336,7 @@ export class AuthCoreService {
             const dataCheckString = dataCheckArr.sort().join('\n');
             const secretKey = crypto.createHash('sha256').update(botToken).digest();
             const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-
+            console.log(hmac, dto.hash)
             if (hmac !== dto.hash) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,
