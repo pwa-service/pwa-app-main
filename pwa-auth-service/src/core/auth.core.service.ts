@@ -345,8 +345,9 @@ export class AuthCoreService {
                 .createHmac('sha256', secretKey)
                 .update(dataCheckString)
                 .digest('hex');
+            console.log("token:", checkData)
             console.log("token:", botToken)
-            console.log("data check", dataCheckString)
+            console.log(dataCheckString)
             console.log(dto.hash)
             if (hmac !== dto.hash) {
                 throw new RpcException({
