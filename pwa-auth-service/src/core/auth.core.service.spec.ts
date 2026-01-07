@@ -198,14 +198,27 @@ describe('AuthCoreService', () => {
         const telegramId = 123456789;
         const now = Math.floor(Date.now() / 1000);
         const generateHash = (data: any) => {
-            const dataCheckArr = [];
-            const keys = Object.keys(data).sort();
-            for (const key of keys) {
-                if (key !== 'hash' && data[key]) {
-                    dataCheckArr.push(`${key}=${data[key]}`);
+            const mapping: Record<string, string> = {
+                authDate: 'auth_date',
+                firstName: 'first_name',
+                id: 'id',
+                lastName: 'last_name',
+                photoUrl: 'photo_url',
+                username: 'username'
+            };
+
+            const checkData: Record<string, string> = {};
+            for (const [camelKey, snakeKey] of Object.entries(mapping)) {
+                const val = data[camelKey] ?? data[snakeKey];
+
+                if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
+                    checkData[snakeKey] = String(val);
                 }
             }
-            const dataCheckString = dataCheckArr.join('\n');
+            const dataCheckString = Object.keys(checkData)
+                .sort()
+                .map(key => `${key}=${checkData[key]}`)
+                .join('\n');
             const secretKey = crypto.createHash('sha256').update(botToken).digest();
             return crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
         };
