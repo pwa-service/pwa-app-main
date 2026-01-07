@@ -34,7 +34,7 @@ services:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_ISSUER=https://pwaservice.space/
@@ -71,7 +71,7 @@ services:
     environment:
       - PORT=4041
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - TRACKER_BASE_URL=https://tracker.example.com/landing
       - FB_MOCK=false
       - FB_GRAPH_VERSION=v21.0
@@ -99,7 +99,7 @@ services:
     container_name: logger-service
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUEUE_NAME=PWA_EVENTS_QUEUE
@@ -153,7 +153,7 @@ services:
     env_file:
       - ./.env
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - GENERATOR_GRPC_URL=pwa-generator:50055
@@ -231,7 +231,7 @@ services:
       context: .
       dockerfile: pwa-prisma/Dockerfile
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
@@ -256,7 +256,7 @@ services:
       dockerfile: pwa-prisma/Dockerfile.studio
     container_name: prisma-studio
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
@@ -325,7 +325,7 @@ services:
     image: prometheuscommunity/postgres-exporter
     restart: unless-stopped
     environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}/pwa_db?schema=public
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
     networks:
       - pwa-network
 
