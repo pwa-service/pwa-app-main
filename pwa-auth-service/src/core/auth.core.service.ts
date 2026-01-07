@@ -352,11 +352,7 @@ export class AuthCoreService {
                 .createHmac('sha256', secretKey)
                 .update(dataCheckString)
                 .digest('hex');
-            console.log(dto)
-            console.log(checkData)
-            console.log("token:", botToken)
-            console.log(dataCheckString)
-            console.log(hmac)
+
             if (hmac !== dto.hash) {
                 throw new RpcException({
                     code: status.UNAUTHENTICATED,

@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package eventhandler.v1;
 
 service EventHandlerService {
@@ -9,73 +10,72 @@ service EventHandlerService {
 }
 
 message EventRequest {
-    string pixelId        = 1;
-    string sessionId      = 2;
-    string pwaDomain      = 3;
-    string landingUrl     = 4;
-    string queryStringRaw = 5;
-    double value          = 6;
-    string currency       = 7;
-    string eventType      = 8;
+    string pixel_id         = 1;
+    string session_id       = 2;
+    string pwa_domain       = 3;
+    string landing_url      = 4;
+    string query_string_raw = 5;
+    double value            = 6;
+    string currency         = 7;
+    string event_type       = 8;
 }
 
-
 message ViewContentRequest {
-    string pwaDomain      = 1;
-    string landingUrl     = 2;
-    string queryStringRaw = 3;
-    string pixelId        = 4;
+    string pwa_domain       = 1;
+    string landing_url      = 2;
+    string query_string_raw = 3;
+    string pixel_id         = 4;
 }
 
 message PrepareInstallLinkRequest {
-    string pwaDomain = 1;
-    string sessionId = 2;
+    string pwa_domain = 1;
+    string session_id = 2;
 }
 
 message PwaFirstOpenRequest {
-    string pwaDomain = 1;
-    string sessionId = 2;
+    string pwa_domain = 1;
+    string session_id = 2;
 }
 
 message LeadRequest {
-    string pwaDomain      = 1;
-    string sessionId      = 2;
-    string pixelId        = 3;
+    string pwa_domain = 1;
+    string session_id = 2;
+    string pixel_id   = 3;
 }
 
 message CompleteRegistrationRequest {
-    string sessionId      = 1;
-    string pixelId        = 2;
-    string pwaDomain      = 3;
+    string session_id = 1;
+    string pixel_id   = 2;
+    string pwa_domain = 3;
 }
 
 message PurchaseRequest {
-    string pwaDomain      = 2;
-    string sessionId      = 3;
-    string pixelId        = 4;
-    double value          = 5;
-    string currency       = 6;
+    string pwa_domain = 2;
+    string session_id = 3;
+    string pixel_id   = 4;
+    double value      = 5;
+    string currency   = 6;
 }
 
 message SubscribeRequest {
-    string pwaDomain      = 2;
-    string sessionId      = 3;
-    string pixelId        = 4;
-    double value          = 5;
-    string currency       = 6;
+    string pwa_domain = 2;
+    string session_id = 3;
+    string pixel_id   = 4;
+    double value      = 5;
+    string currency   = 6;
 }
 
 message FirstOpenResponse {
-    bool success     = 1;
-    string fb        = 2;
-    string sessionId = 3;
+    bool   success    = 1;
+    string fb         = 2;
+    string session_id = 3;
 }
 
 message GenericOk {
-    bool success = 1;
-    string fb    = 2;
+    bool   success = 1;
+    string fb      = 2;
 }
 
 message PrepareInstallLinkResponse {
-    string finalUrl = 1;
+    string final_url = 1;
 }

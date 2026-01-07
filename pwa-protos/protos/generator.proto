@@ -7,18 +7,17 @@ service GeneratorService {
     rpc GetAppById (GetAppByIdRequest) returns (PwaAppResponse);
 }
 
-
 message CreateAppRequest {
     string name = 1;
     string domain = 2;
-    string createdByUserId = 3;
-    int32 templateId = 4;
+    string created_by_user_id = 3;
+    int32 template_id = 4;
     string description = 5;
-    string appId = 6;
+    string app_id = 6;
 }
 
 message GetAppByIdRequest {
-    string appId = 1;
+    string app_id = 1;
 }
 
 message PwaAppResponse {
@@ -26,7 +25,7 @@ message PwaAppResponse {
     string name = 2;
     string domain = 3;
     string description = 4;
-    string createdByUserId = 5;
+    string created_by_user_id = 5;
     string status = 6;
-    string buildUrl = 7;
+    string build_url = 7;
 }
