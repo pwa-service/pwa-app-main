@@ -13,7 +13,7 @@ async function bootstrap() {
       url: process.env.EVENT_HANDLER_GRPC_URL || '0.0.0.0:50053',
       loader: {
         includeDirs: [join(process.cwd(), 'protos')],
-        keepCase: true,
+        keepCase: false,
         longs: String,
         enums: String,
         defaults: true,
