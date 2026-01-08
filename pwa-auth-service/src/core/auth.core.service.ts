@@ -192,20 +192,32 @@ export class AuthCoreService {
     }
 
     async signUp(input: SignUpDto) {
-        const { email, name, password } = input;
-        const existing = await this.repo.findByEmail(email);
-        if (existing) {
+        const { email, username, password } = input;
+        const [emailResult, usernameResult] = await Promise.all([
+            this.repo.findByEmail(email),
+            this.repo.findByIUsername(username)
+        ]);
+
+        if (emailResult) {
             throw new RpcException({
                 code: status.ALREADY_EXISTS,
-                message: 'User already exists',
+                message: 'User with this email already exists',
             });
         }
+
+        else if (usernameResult) {
+            throw new RpcException({
+                code: status.ALREADY_EXISTS,
+                message: 'This username already taken',
+            });
+        }
+
 
         const hash = await bcrypt.hash(password, 10);
         const created = await this.repo.createUser({
             email,
             password: hash,
-            username: name ?? email.split('@')[0],
+            username: username ?? email.split('@')[0],
         });
 
 

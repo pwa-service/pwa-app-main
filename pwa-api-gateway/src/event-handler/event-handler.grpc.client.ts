@@ -1,31 +1,19 @@
-import {BadRequestException, Inject, Injectable, OnModuleInit} from '@nestjs/common';
+import {Inject, Injectable, OnModuleInit} from '@nestjs/common';
 import {ClientGrpc} from '@nestjs/microservices';
 import {Metadata} from '@grpc/grpc-js';
 import {lastValueFrom} from 'rxjs';
 import {
-    CompleteRegistrationDto,
-    FbEventEnum, LeadDto,
-    PrepareInstallLinkDto, PurchaseDto,
+    PrepareInstallLinkDto,
     PwaFirstOpenDto,
-    SubscribeDto,
     ViewContentDto
 } from "../../../pwa-shared/src";
 import {Request} from 'express';
-import {FbEventDto} from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
 
 interface EventHandlerService {
     viewContent(data: ViewContentDto, md?: Metadata, opts?: Record<string, any>): any;
     prepareInstallLink(data: PrepareInstallLinkDto, md?: Metadata, opts?: Record<string, any>): any;
     pwaFirstOpen(data: PwaFirstOpenDto, md?: Metadata, opts?: Record<string, any>): any;
     event(data: any, md?: Metadata, opts?: Record<string, any>): any;
-}
-
-interface EventRequest {
-    lead?: LeadDto;
-    completeRegistration?: CompleteRegistrationDto;
-    purchase?: PurchaseDto;
-    subscribe?: SubscribeDto;
-    eventType?: EventRequest;
 }
 
 @Injectable()

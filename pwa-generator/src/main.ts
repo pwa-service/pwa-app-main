@@ -12,6 +12,13 @@ async function bootstrap() {
                 package: 'generator.v1',
                 protoPath: join(process.env.PROTO_DIR || process.cwd(), 'protos', 'generator.proto'),
                 url: process.env.GENERATOR_GRPC_URL || '0.0.0.0:50055',
+                loader: {
+                    keepCase: false,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                },
             },
         },
     );
