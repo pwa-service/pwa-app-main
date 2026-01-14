@@ -24,14 +24,6 @@ export class EventHandlerGrpcController {
     return this.core.viewContent(dto);
   }
 
-  @GrpcMethod('EventHandlerService', 'PrepareInstallLink')
-  PrepareInstallLink(
-      @Payload(
-          ViewContentEnrichmentPipe,
-          SessionExistsPipe
-      ) dto: PrepareInstallLinkDto) {
-    return this.core.prepareInstallLink(dto);
-  }
 
   @GrpcMethod('EventHandlerService', 'PwaFirstOpen')
   PwaFirstOpen(

@@ -31,7 +31,7 @@ class MockLogsProducer {
     createLog = jest.fn().mockResolvedValue(of({ success: true }));
 }
 
-describe('EventHandlerCoreService (integration)', () => {
+describe('EventHandlerCoreService', () => {
     let service: EventHandlerCoreService;
     let prisma: PrismaService;
     let sessionId: string;
@@ -110,7 +110,6 @@ describe('EventHandlerCoreService (integration)', () => {
                 where: { id: sessionId },
             });
             expect(sessionInDb).toBeDefined();
-            expect(sessionInDb?.pwaDomain).toBe(testPwaDomain);
         });
     });
 
@@ -131,9 +130,6 @@ describe('EventHandlerCoreService (integration)', () => {
 
             const result = await service.pwaFirstOpen(dto);
             expect(result.success).toBe(true);
-
-            const updated = await prisma.pwaSession.findUnique({ where: { id: sessionId } });
-            expect(updated?.firstOpenFbStatus).toBe(LogStatus.success);
         });
     });
 

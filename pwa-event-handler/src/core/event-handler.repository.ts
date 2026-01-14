@@ -1,89 +1,61 @@
-import {Injectable} from '@nestjs/common';
-import {MarkFirstOpenInput, UpsertSessionInput} from "../types/repository.types";
-import {PrismaService} from "../../../pwa-prisma/src";
-import {EventType} from ".prisma/client";
-import {RpcException} from "@nestjs/microservices";
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
+import { PrismaService } from '../../../pwa-prisma/src';
+import { EventType } from '.prisma/client';
+import { MarkFirstOpenInput, UpsertSessionInput } from '../types/repository.types';
 
 @Injectable()
 export class EventHandlerRepository {
     constructor(private readonly prisma: PrismaService) {}
 
     async upsertSession(input: UpsertSessionInput) {
-        if (!input.sessionId) {
-            const pixelToken = await this.findPixelTokenId(input.pixelId);
+        const pixelToken = await this.prisma.pixelToken.findUnique({
+            where: { id: input.pixelId.toString() },
+        });
 
-            if (!pixelToken) {
-                throw new RpcException({
-                    code: status.NOT_FOUND,
-                    message: `Pixel token with pixelId ${input.pixelId} not found.`
-                });
-            }
+        if (!pixelToken) {
+            throw new RpcException({
+                code: status.NOT_FOUND,
+                message: `Pixel token with ID ${input.pixelId} not found.`,
+            });
+        }
+
+        if (!input.sessionId) {
             return this.prisma.pwaSession.create({
                 data: {
-                    pwaDomain: input.pwaDomain,
-                    landingUrl: input.landingUrl ?? null,
-                    queryStringRaw: input.queryStringRaw ?? null,
                     pixelId: pixelToken.id,
-                    fbclid: input.fbclid ?? null,
-                    offerId: input.offerId ?? null,
-                    utmSource: input.utmSource ?? null,
-                    sub1: input.sub1 ?? null,
-                }
+                    queryStringRaw: input.queryStringRaw ?? null,
+                },
             });
         }
 
         return this.prisma.pwaSession.update({
-            where: {id: input.sessionId},
+            where: { id: input.sessionId },
             data: {
-                pwaDomain: input.pwaDomain,
-                landingUrl: input.landingUrl ?? undefined,
+                pixelId: pixelToken.id,
                 queryStringRaw: input.queryStringRaw ?? undefined,
-                pixelId: input.pixelId.toString(),
-                fbclid: input.fbclid ?? undefined,
-                offerId: input.offerId ?? undefined,
-                utmSource: input.utmSource ?? undefined,
-                sub1: input.sub1 ?? undefined,
-            }
+            },
         });
     }
 
     async getSessionById(id: string) {
-        return this.prisma.pwaSession.findFirst({ where: { id } });
+        return this.prisma.pwaSession.findUnique({ where: { id } });
     }
 
     async findPixelTokenId(id: number | bigint | string) {
-        return this.prisma.pixelToken.findFirst({ where: { id: id.toString() } });
-    }
-
-    async setFinalUrl(id: string, finalUrl: string): Promise<void> {
-        await this.prisma.pwaSession.update({
-            where: { id },
-            data: { finalUrl },
+        return this.prisma.pixelToken.findUnique({
+            where: { id: id.toString() }
         });
     }
 
     async isSessionEventLogExists(sessionId: string, event: EventType) {
-        return !!(await this.prisma.eventLog.findFirst({
+        const count = await this.prisma.eventLog.count({
             where: {
                 eventType: event,
-                sessionId
-            },
-        }))
-    }
-
-    async markFirstOpen(input: MarkFirstOpenInput): Promise<void> {
-        await this.prisma.pwaSession.updateMany({
-            where: {
-                id: input.sessionId,
-                firstOpenAt: null,
-            },
-            data: {
-                firstOpenAt: new Date(),
-                firstOpenEventId: input.eventId ?? undefined,
-                firstOpenFbStatus: input.fbStatus ?? undefined,
-                finalUrl: input.finalUrl ?? undefined,
+                sessionId,
             },
         });
+        return count > 0;
     }
 }

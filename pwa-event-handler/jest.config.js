@@ -20,7 +20,9 @@ module.exports = {
         "^@pwa/shared/(.*)$": "<rootDir>/../pwa-shared/src/$1"
     },
 
-    transformIgnorePatterns: ['/node_modules/'],
+    transformIgnorePatterns: [
+        "/node_modules/(?!(jose)/)"
+    ],
     moduleDirectories: ['node_modules', '<rootDir>'],
     coveragePathIgnorePatterns: [
         '/node_modules/',

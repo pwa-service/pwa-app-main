@@ -4,6 +4,8 @@ export * from './types/auth/dto/refresh.dto';
 export * from './types/auth/dto/confirm-email.dto';
 export * from './types/auth/dto/request-restore-password.dto';
 export * from './types/auth/dto/restore-password.dto';
+export * from '../../pwa-prisma/src/global/repository/auth.repository';
+export * from './modules/auth/interceptors/grpc-auth.interceptor';
 
 export * from './types/event-handler/dto/view-content.dto';
 export * from './types/event-handler/dto/prepare-install-link.dto';
@@ -15,8 +17,8 @@ export * from './types/event-handler/dto/subscribe.dto';
 export * from './types/event-handler/payload/capi.payload';
 export * from './types/event-handler/common.types';
 
-export * from './types/generator/dto/get-app.dto';
-export * from './types/generator/dto/create-app.dto';
+export * from './types/pwa-manager/apps-manager/dto/get-app.dto';
+export * from './types/pwa-manager/apps-manager/dto/create-app.dto';
 
 export * from './types/bullmq/payload/event-log.payload';
 export * from './types/bullmq/payload/create-app.payload';

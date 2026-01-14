@@ -11,7 +11,6 @@ import {Request} from 'express';
 
 interface EventHandlerService {
     viewContent(data: ViewContentDto, md?: Metadata, opts?: Record<string, any>): any;
-    prepareInstallLink(data: PrepareInstallLinkDto, md?: Metadata, opts?: Record<string, any>): any;
     pwaFirstOpen(data: PwaFirstOpenDto, md?: Metadata, opts?: Record<string, any>): any;
     event(data: any, md?: Metadata, opts?: Record<string, any>): any;
 }
@@ -30,9 +29,6 @@ export class EventHandlerGrpcClient implements OnModuleInit {
         return await lastValueFrom(this.svc.viewContent(data, metadata));
     }
 
-    async prepareInstallLink(data: PrepareInstallLinkDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.prepareInstallLink(data, metadata));
-    }
 
     async pwaFirstOpen(data: PwaFirstOpenDto, metadata?: Metadata) {
         return await lastValueFrom(this.svc.pwaFirstOpen(data, metadata)) as any;

@@ -6,7 +6,7 @@ import { GrpcAuthInterceptor, USER_LOOKUP_PORT } from '../../../pwa-shared/src/m
 import { AuthGrpcController } from './auth.grpc.controller';
 import { JwksController } from './jwks.controller';
 import { AuthCoreService } from './auth.core.service';
-import { AuthRepository } from './auth.repository';
+import { AuthRepository } from '../../../pwa-prisma/src/global/repository/auth.repository';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
 import {ConfigModule, ConfigService} from "@nestjs/config";
 import {getMailConfig} from "../mail/mail.config";

@@ -129,7 +129,7 @@ services:
       - PORT=3000
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
-      - GENERATOR_GRPC_URL=pwa-generator:50055
+      - GENERATOR_GRPC_URL=pwa-apps-manager:50055
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
@@ -144,19 +144,19 @@ services:
           cpus: "0.25"
           memory: "0.6g"
 
-  pwa-generator:
+  pwa-manager:
     build:
       context: .
-      dockerfile: pwa-generator/Dockerfile
-    working_dir: /workspace/pwa-generator
-    container_name: pwa-generator
+      dockerfile: pwa-manager/Dockerfile
+    working_dir: /workspace/pwa-apps-manager
+    container_name: pwa-apps-manager
     env_file:
       - ./.env
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - GENERATOR_GRPC_URL=pwa-generator:50055
+      - GENERATOR_GRPC_URL=pwa-apps-manager:50055
       - QUEUE_NAME=BUILD_QUEUE
       - QUEUE_PREFIX=pwa
     depends_on:

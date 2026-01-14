@@ -3,7 +3,6 @@ import { Request } from 'express';
 import { EventHandlerGrpcClient } from './event-handler.grpc.client';
 import { buildGrpcMetadata } from '../common/jwt-to-metadata';
 import {
-    PrepareInstallLinkDto,
     PwaFirstOpenDto,
     ViewContentDto
 } from "../../../pwa-shared/src";
@@ -16,12 +15,6 @@ export class EventHandlerHttpController {
     @HttpCode(200)
     async viewContent(@Body() dto: ViewContentDto, @Req() req: Request) {
         return await this.pwa.viewContent(dto, buildGrpcMetadata(req));
-    }
-
-    @Post('prepare-install-link')
-    @HttpCode(200)
-    async prepareInstallLink(@Body() dto: PrepareInstallLinkDto, @Req() req: Request) {
-        return await this.pwa.prepareInstallLink(dto, buildGrpcMetadata(req));
     }
 
     @Post('first-open')

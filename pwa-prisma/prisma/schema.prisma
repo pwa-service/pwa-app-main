@@ -1,21 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
-}
-
-enum Role {
-  admin
-  buyer
-}
+// =========================
+// ENUMS
+// =========================
 
 enum Status {
   active
   inactive
+  // Legacy status values (if any)
+}
+
+enum PwaStatus {
+  draft
+  published
+  archived
+}
+
+enum FlowStatus {
+  draft
+  published
+  archived
+}
+
+enum TaskStatus {
+  open
+  in_progress
+  closed
+}
+
+enum LogStatus {
+  success
+  error
+}
+
+enum AlertType {
+  info
+  warn
+  error
+  fatal
 }
 
 enum EventType {
@@ -27,151 +56,783 @@ enum EventType {
   Subscribe
 }
 
-enum LogStatus {
-  success
-  error
-}
-
 enum ErrorLevel {
+  Anomaly
+  TechError
+  TokenExpirity
+  TrashholdReached
   info
   warn
   error
   fatal
 }
 
+enum AccessLevel {
+  None
+  View
+  Edit
+  Manage
+}
+
+enum WorkingObjectType {
+  PWA
+  FLOW
+  PIXEL_TOKEN
+}
+
+enum ObjectRelationType {
+  DependsOn
+  Owns
+  Uses
+}
+
+enum DeviceType {
+  mobile
+  desktop
+}
+
+enum DeviceOs {
+  Linux
+  Windows
+  MacOS
+  Android
+  IOS
+}
+
+enum WorkingObjectUserRelation {
+  Owner
+  Editor
+  Viewer
+}
+
+// =========================
+// IAM / USERS / ORG
+// =========================
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  isGlobal    Boolean @default(false) @map("is_global")
+  description String? @db.Text
+
+  // Relations
+  userCampaignMemberships UserCampaignMembership[]
+  userTeamMemberships     UserTeamMembership[]
+  globalAccessRoles       GlobalAccessRole[]
+  sharesRoles             ShareRole[]
+
+  @@map("roles")
+}
+
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  password  String
-  role      Role     @default(buyer)
-  email     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  status    Status   @default(active)
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String?  @map("password_hash")
+  email        String?
+  status       Status   @default(inactive)
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  PwaApp    PwaApp[]   @relation("AppCreator")
-  errorLogs ErrorLog[] @relation("UserErrors")
+  // Relations - Org
+  campaignsOwned      Campaign[]               @relation("CampaignOwner")
+  teamsLed            Team[]                   @relation("TeamLead")
+  campaignMemberships UserCampaignMembership[]
+  teamMemberships     UserTeamMembership[]
 
-  @@index([email])
-  @@index([role])
-  @@index([status])
-  @@index([createdAt])
+  // Relations - Assets Ownership
+  domainsOwned     Domain[]
+  pixelTokensOwned PixelToken[]
+  pwaAppsOwned     PwaApp[]     @relation("PwaOwner")
+  flowsOwned       Flow[]       @relation("FlowOwner")
+
+  // Relations - Access & Working Objects
+  globalAccess       GlobalAccessUser?
+  workingObjectLinks WorkingObjectUser[]
+  sharesCreatedRole  ShareRole[]         @relation("ShareRoleCreator")
+  sharesCreatedUser  ShareUser[]         @relation("ShareUserCreator")
+  sharesReceived     ShareUser[]         @relation("UserShares")
+
+  // Relations - Operations (Creator/Changer)
+  pwaVersionsChanged  PwaVersion[]
+  flowVersionsCreated FlowVersion[]
+
+  // Relations - Analytics & Ops
+  pwaSessionsOwned PwaSession[]
+  eventLogsOwned   EventLog[]
+  tasks            Task[]
+  auditLogs        AuditLog[]
+  errorLogs        ErrorLog[]
+
   @@map("users")
 }
 
-model PwaApp {
+model Admin {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String?  @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin")
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  ownerId   String?  @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  owner       User?                    @relation("CampaignOwner", fields: [ownerId], references: [id])
+  teams       Team[]
+  userMembers UserCampaignMembership[]
+  pwaApps     PwaApp[]
+  flows       Flow[]
+
+  // Analytics & Ops
+  pwaSessions PwaSession[]
+  eventLogs   EventLog[]
+  financials  Financial[]
+  alerts      Alert[]
+  tasks       Task[]
+
+  // Working Object Polymorph
+  workingObjectLinks WorkingObjectCampaign[]
+
+  @@map("campaigns")
+}
+
+model Team {
+  id                 String   @id @default(uuid())
+  name               String
+  campaignId         String   @map("campaign_id")
+  teamLeadId         String?  @map("team_lead_id")
+  sharePwaWithinTeam Boolean  @default(false) @map("share_pwa_within_team")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  campaign    Campaign             @relation(fields: [campaignId], references: [id])
+  teamLead    User?                @relation("TeamLead", fields: [teamLeadId], references: [id])
+  userMembers UserTeamMembership[]
+  pwaApps     PwaApp[]
+  flows       Flow[]
+
+  // Analytics
+  pwaSessions PwaSession[]
+  eventLogs   EventLog[]
+
+  // Working Object Polymorph
+  workingObjectLinks WorkingObjectTeam[]
+
+  @@map("teams")
+}
+
+model UserCampaignMembership {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  campaignId String   @map("campaign_id")
+  roleId     Int      @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  role     Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, campaignId])
+  @@map("user_campaign_memberships")
+}
+
+model UserTeamMembership {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  teamId    String   @map("team_id")
+  roleId    Int      @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, teamId])
+  @@map("user_team_memberships")
+}
+
+// =========================
+// ACCESS MODEL
+// =========================
+
+model AccessProfile {
+  id   String @id @default(uuid())
+  name String @unique
+
+  statAccess    AccessLevel @default(View) @map("stat_access")
+  finAccess     AccessLevel @default(None) @map("fin_access")
+  logAccess     AccessLevel @default(None) @map("log_access")
+  crudAccess    AccessLevel @default(None) @map("crud_access")
+  sharingAccess Boolean     @default(false) @map("sharing_access")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  globalRoles GlobalAccessRole[]
+  globalUsers GlobalAccessUser[]
+  sharesRoles ShareRole[]
+  sharesUsers ShareUser[]
+
+  @@map("access_profiles")
+}
+
+model GlobalAccessRole {
   id              String   @id @default(uuid())
-  name            String   @unique
-  domain          String   @unique
-  description     String?
-  templateId      Int?
+  roleId          Int      @map("role_id")
+  accessProfileId String   @map("access_profile_id")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
-  status          Status   @default(active)
-  createdByUserId String   @map("created_by_user_id")
-  createdBy       User     @relation("AppCreator", fields: [createdByUserId], references: [id])
 
-  @@index([createdByUserId])
-  @@index([status])
-  @@index([templateId])
-  @@index([createdAt])
-  @@map("pwa_apps")
+  role          Role          @relation(fields: [roleId], references: [id])
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+
+  @@unique([roleId])
+  @@map("global_access_role")
+}
+
+model GlobalAccessUser {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  accessProfileId String   @map("access_profile_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user          User          @relation(fields: [userId], references: [id])
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+
+  @@unique([userId])
+  @@map("global_access_user")
+}
+
+model Domain {
+  id        String   @id @default(uuid())
+  hostname  String   @unique
+  status    Status   @default(active)
+  pwaAppId  String   @map("pwa_app_id")
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pwaApp    PwaApp     @relation(fields: [pwaAppId], references: [id])
+  owner     User       @relation(fields: [ownerId], references: [id])
+  eventLogs EventLog[]
+
+  @@map("domains")
 }
 
 model PixelToken {
-  id          String       @id @default(uuid())
-  token       String
-  name        String?
+  id          String    @id @default(uuid())
+  token       String    @unique
   description String?
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-  status      Status       @default(active)
-  sessions    PwaSession[] @relation("PixelTokens")
+  ownerId     String?   @map("owner_id")
+  status      Status    @default(active)
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
 
-  @@index([token])
-  @@index([status])
-  @@index([createdAt])
-  @@map("pixel_tokens")
+  owner User? @relation(fields: [ownerId], references: [id])
+
+  // Relations
+  pwaApps   PwaApp[]
+  sessions  PwaSession[]
+  eventLogs EventLog[]
+
+  // Working Object Polymorph
+  workingObjectLink WorkingObjectPixelToken?
+
+  @@map("pixel-token-manager")
 }
 
-model EventLog {
-  id           String      @id @default(uuid())
-  sessionId    String?     @map("session_id")
-  pixelId      String?     @map("pixel_id")
-  session      PwaSession? @relation("PwaSession", fields: [sessionId], references: [id])
-  eventType    EventType   @map("event_type")
-  eventId      String      @map("event_id")
-  revenue      Decimal?    @db.Decimal(18, 8)
-  country      String?
-  clientIp     String?     @map("ip_address")
-  userAgent    String?     @map("user_agent")
-  responseData String?     @map("response_data")
-  status       LogStatus
-  createdAt    DateTime    @default(now()) @map("created_at")
+model PwaApp {
+  id           String            @id @default(uuid())
+  name         String            @unique
+  status       PwaStatus         @default(draft)
+  campaignId   String            @map("campaign_id")
+  teamId       String?           @map("team_id")
+  ownerUserId  String            @map("owner_user_id")
+  pixelTokenId String?           @map("pixel_token_id")
+  domainId     String            @map("domain_id")
+  isDeleted    Boolean           @default(false) @map("is_deleted")
+  createdAt    DateTime?         @default(now()) @map("created_at")
+  updatedAt    DateTime?         @updatedAt @map("updated_at")
+  campaign     Campaign          @relation(fields: [campaignId], references: [id])
+  team         Team?             @relation(fields: [teamId], references: [id])
+  owner        User              @relation("PwaOwner", fields: [ownerUserId], references: [id])
+  pixelToken   PixelToken?       @relation(fields: [pixelTokenId], references: [id])
+  domains      Domain[]
+  details      PwaDetails?
+  contents     PwaContent[]
+  eventsConfig PwaEventsConfig[]
+  versions     PwaVersion[]
+  flows        Flow[]
+  sessions     PwaSession[]
+  eventLogs    EventLog[]
 
-  @@index([sessionId], map: "idx_eventLogs_sessionId")
-  @@index([eventType], map: "idx_eventLogs_eventType")
-  @@index([createdAt], map: "idx_eventLogs_createdAt")
-  @@index([pixelId])
-  @@index([eventId])
-  @@index([status])
-  @@index([country])
-  @@map("event_logs")
+  // Working Object Polymorph
+  workingObjectLink WorkingObjectPwa?
+
+  @@map("pwa_apps")
 }
+
+model PwaDetails {
+  id             String  @id @default(uuid())
+  pwaAppId       String  @unique @map("pwa_app_id")
+  publicName     String? @map("public_name")
+  iconUrl        String? @map("icon_url")
+  logoUrl        String? @map("logo_url")
+  themeColor     String? @map("theme_color")
+  screenshots    Json?
+  privacyPolicy  String? @map("privacy_policy") @db.Text
+  termsOfService String? @map("terms_of_service") @db.Text
+  tags           String?
+
+  pwaApp PwaApp @relation(fields: [pwaAppId], references: [id])
+
+  @@map("pwa_details")
+}
+
+model PwaContent {
+  id          String  @id @default(uuid())
+  pwaAppId    String  @map("pwa_app_id")
+  locale      String?
+  title       String?
+  description String? @db.Text
+  comments    Json?
+
+  pwaApp PwaApp @relation(fields: [pwaAppId], references: [id])
+
+  @@map("pwa_contents")
+}
+
+model PwaEventsConfig {
+  id          String     @id @default(uuid())
+  pwaAppId    String     @map("pwa_app_id")
+  eventType   EventType? @map("event_type")
+  destination String?
+
+  pwaApp PwaApp @relation(fields: [pwaAppId], references: [id])
+
+  @@map("pwa_events_config")
+}
+
+model PwaVersion {
+  id            String    @id @default(uuid())
+  pwaAppId      String    @map("pwa_app_id")
+  versionNumber Int?      @map("version_number")
+  changedBy     String?   @map("changed_by")
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  pwaApp  PwaApp @relation(fields: [pwaAppId], references: [id])
+  changer User?  @relation(fields: [changedBy], references: [id])
+
+  @@map("pwa_versions")
+}
+
+model Flow {
+  id              String     @id @default(uuid())
+  name            String
+  status          FlowStatus @default(draft)
+  campaignId      String     @map("campaign_id")
+  teamId          String?    @map("team_id")
+  ownerUserId     String     @map("owner_user_id")
+  pwaAppId        String?    @map("pwa_app_id")
+  activeVersionId String?    @map("active_version_id")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  team     Team?    @relation(fields: [teamId], references: [id])
+  owner    User     @relation("FlowOwner", fields: [ownerUserId], references: [id])
+  pwaApp   PwaApp?  @relation(fields: [pwaAppId], references: [id])
+
+  versions      FlowVersion[] @relation("FlowVersions")
+  activeVersion FlowVersion?  @relation("ActiveFlowVersion", fields: [activeVersionId], references: [id])
+
+  eventLogs EventLog[]
+
+  workingObjectLink WorkingObjectFlow?
+
+  @@index([campaignId, teamId])
+  @@map("flows")
+}
+
+model FlowVersion {
+  id            String     @id @default(uuid())
+  flowId        String     @map("flow_id")
+  versionNumber Int        @map("version_number")
+  status        FlowStatus @default(published)
+  createdBy     String     @map("created_by")
+  createdAt     DateTime   @default(now()) @map("created_at")
+
+  flow    Flow @relation("FlowVersions", fields: [flowId], references: [id])
+  creator User @relation(fields: [createdBy], references: [id])
+
+  activeForFlows Flow[] @relation("ActiveFlowVersion")
+
+  @@unique([flowId, versionNumber])
+  @@map("flow_versions")
+}
+
+// =========================
+// WORKING OBJECTS (Polymorphic Access)
+// =========================
+
+model WorkingObject {
+  id        String            @id @default(uuid())
+  type      WorkingObjectType
+  status    Status            @default(active)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  // Polymorphic Links
+  pwaLink        WorkingObjectPwa?
+  flowLink       WorkingObjectFlow?
+  pixelTokenLink WorkingObjectPixelToken?
+
+  // Context Links
+  campaignLinks WorkingObjectCampaign[]
+  teamLinks     WorkingObjectTeam[]
+  userLinks     WorkingObjectUser[]
+
+  // Shares
+  sharesRole ShareRole[]
+  sharesUser ShareUser[]
+
+  @@index([type])
+  @@map("working_objects")
+}
+
+model WorkingObjectPwa {
+  workingObjectId String @id @map("working_object_id")
+  pwaAppId        String @unique @map("pwa_app_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  pwaApp        PwaApp        @relation(fields: [pwaAppId], references: [id])
+
+  @@map("working_object_pwa")
+}
+
+model WorkingObjectFlow {
+  workingObjectId String @id @map("working_object_id")
+  flowId          String @unique @map("flow_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  flow          Flow          @relation(fields: [flowId], references: [id])
+
+  @@map("working_object_flow")
+}
+
+model WorkingObjectPixelToken {
+  workingObjectId String @id @map("working_object_id")
+  pixelTokenId    String @unique @map("pixel_token_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  pixelToken    PixelToken    @relation(fields: [pixelTokenId], references: [id])
+
+  @@map("working_object_pixel_token")
+}
+
+model WorkingObjectCampaign {
+  workingObjectId String @id @map("working_object_id")
+  campaignId      String @map("campaign_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  campaign      Campaign      @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@map("working_object_campaign")
+}
+
+model WorkingObjectTeam {
+  workingObjectId String   @map("working_object_id")
+  teamId          String   @map("team_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  team          Team          @relation(fields: [teamId], references: [id])
+
+  @@unique([workingObjectId, teamId])
+  @@index([teamId])
+  @@map("working_object_team")
+}
+
+model WorkingObjectUser {
+  workingObjectId String                    @map("working_object_id")
+  userId          String                    @map("user_id")
+  relation        WorkingObjectUserRelation @default(Owner)
+  createdAt       DateTime                  @default(now()) @map("created_at")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+
+  @@unique([workingObjectId, userId, relation])
+  @@index([userId])
+  @@map("working_object_user")
+}
+
+model ShareRole {
+  id              String    @id @default(uuid())
+  roleId          Int       @map("role_id")
+  workingObjectId String    @map("working_object_id")
+  accessProfileId String    @map("access_profile_id")
+  createdBy       String    @map("created_by")
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  role          Role          @relation(fields: [roleId], references: [id])
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+  creator       User          @relation("ShareRoleCreator", fields: [createdBy], references: [id])
+
+  @@unique([roleId, workingObjectId, accessProfileId])
+  @@map("shares_role")
+}
+
+model ShareUser {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  workingObjectId String    @map("working_object_id")
+  accessProfileId String    @map("access_profile_id")
+  createdBy       String    @map("created_by")
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user          User          @relation("UserShares", fields: [userId], references: [id])
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+  creator       User          @relation("ShareUserCreator", fields: [createdBy], references: [id])
+
+  @@unique([userId, workingObjectId, accessProfileId])
+  @@map("shares_user")
+}
+
+// =========================
+// EVENTS / SESSIONS / LOG PIPELINE
+// =========================
 
 model PwaSession {
-  id                String     @id @unique @default(uuid())
-  pwaDomain         String     @map("pwa_domain")
-  landingUrl        String?    @map("landing_url")
-  queryStringRaw    String?    @map("query_string_raw")
-  pixelId           String     @map("pixel_id")
-  pixel             PixelToken @relation("PixelTokens", fields: [pixelId], references: [id])
-  fbclid            String?    @map("fbclid")
-  offerId           String?    @map("offer_id")
-  utmSource         String?    @map("utm_source")
-  sub1              String?    @map("sub1")
-  finalUrl          String?    @map("final_url")
-  firstOpenAt       DateTime?  @map("first_open_at")
-  firstOpenEventId  String?    @map("first_open_event_id")
-  firstOpenFbStatus LogStatus? @map("first_open_fb_status")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  id          String  @id @default(uuid())
+  pixelId     String  @map("pixel_id")
+  pwaAppId    String? @map("pwa_app_id")
+  campaignId  String? @map("campaign_id")
+  teamId      String? @map("team_id")
+  ownerUserId String? @map("owner_user_id")
 
-  logs      EventLog[] @relation("PwaSession")
-  errorLogs ErrorLog[] @relation("SessionErrors")
+  queryStringRaw String? @map("query_string_raw")
 
-  @@index([pixelId])
-  @@index([pwaDomain])
-  @@index([fbclid])
-  @@index([offerId])
-  @@index([utmSource])
-  @@index([sub1])
-  @@index([createdAt])
+  // REMOVED: firstOpenEventLogId
+
+  leadEventLogId     String? @unique @map("lead_event_log_id")
+  regEventLogId      String? @unique @map("reg_event_log_id")
+  subEventLogId      String? @unique @map("sub_event_log_id")
+  firstDepEventLogId String? @unique @map("first_dep_event_log_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pixelToken PixelToken @relation(fields: [pixelId], references: [id])
+  pwaApp     PwaApp?    @relation(fields: [pwaAppId], references: [id])
+  campaign   Campaign?  @relation(fields: [campaignId], references: [id])
+  team       Team?      @relation(fields: [teamId], references: [id])
+  owner      User?      @relation(fields: [ownerUserId], references: [id])
+
+  // Relations to Logs (Specific)
+  // REMOVED: firstOpenLog relation
+  leadLog     EventLog? @relation("SessionLead", fields: [leadEventLogId], references: [id])
+  regLog      EventLog? @relation("SessionReg", fields: [regEventLogId], references: [id])
+  subLog      EventLog? @relation("SessionSub", fields: [subEventLogId], references: [id])
+  firstDepLog EventLog? @relation("SessionFirstDep", fields: [firstDepEventLogId], references: [id])
+
+  // Relation to ALL logs
+  allLogs   EventLog[] @relation("SessionLogs")
+  errorLogs ErrorLog[]
+
+  @@index([pixelId, createdAt])
   @@map("pwa_sessions")
 }
 
-model ErrorLog {
-  id      String     @id @default(uuid())
-  level   ErrorLevel @default(error)
-  message String
-  stack   String?    @db.Text
-  service String?
-  context Json?
-  path    String?
-  method  String?
+model SessionDeposit {
+  id          String    @id @default(uuid())
+  eventLogId  String    @map("event_log_id")
+  amount      Decimal   @db.Decimal(18, 2)
+  depositedAt DateTime? @map("deposited_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
-  userId String? @map("user_id")
-  user   User?   @relation("UserErrors", fields: [userId], references: [id])
+  eventLog EventLog @relation(fields: [eventLogId], references: [id])
 
-  sessionId String?     @map("session_id")
-  session   PwaSession? @relation("SessionErrors", fields: [sessionId], references: [id])
+  @@index([depositedAt])
+  @@map("session_deposits")
+}
 
+// =========================
+// GEO DICTIONARIES
+// =========================
+
+model Country {
+  id        String     @id @default(uuid())
+  code      String     @unique @db.Char(2)
+  name      String
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at")
+  regions   Region[]
+  EventLog  EventLog[]
+
+  @@index([code])
+  @@map("countries")
+}
+
+model Region {
+  id        String   @id @default(uuid())
+  countryId String   @map("country_id")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([level])
-  @@index([service])
-  @@index([createdAt])
-  @@index([userId])
-  @@index([sessionId])
-  @@index([path])
+  country   Country    @relation(fields: [countryId], references: [id])
+  eventLogs EventLog[]
+
+  @@index([countryId, name])
+  @@map("regions")
+}
+
+model EventLog {
+  id          String  @id @default(uuid())
+  sessionId   String? @map("session_id")
+  pixelId     String  @map("pixel_id")
+  campaignId  String? @map("campaign_id")
+  teamId      String? @map("team_id")
+  ownerUserId String? @map("owner_user_id")
+  pwaAppId    String? @map("pwa_app_id")
+  flowId      String? @map("flow_id")
+
+  eventType EventType @map("event_type")
+  eventId   String    @map("event_id")
+  status    LogStatus
+
+  installId String? @map("install_id")
+  fbclid    String?
+  rawQuery  String? @map("raw_query")
+  regionId  String? @map("region_id")
+
+  os          DeviceOs?
+  deviceType  DeviceType? @map("device_type")
+  browser     String?
+  ipAddress   String?     @map("ip_address")
+  userAgent   String?     @map("user_agent")
+  language    String?
+  domainId    String?     @map("domain_id")
+  isWhitepage Boolean?    @default(false) @map("is_whitepage")
+
+  responseData String?  @map("response_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  session    PwaSession? @relation("SessionLogs", fields: [sessionId], references: [id])
+  pixelToken PixelToken  @relation(fields: [pixelId], references: [id])
+  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
+  team       Team?       @relation(fields: [teamId], references: [id])
+  owner      User?       @relation(fields: [ownerUserId], references: [id])
+  pwaApp     PwaApp?     @relation(fields: [pwaAppId], references: [id])
+  flow       Flow?       @relation(fields: [flowId], references: [id])
+
+  domain Domain? @relation(fields: [domainId], references: [id])
+  region Region? @relation(fields: [regionId], references: [id])
+
+  // REMOVED: sessionAsFirstOpen relation
+  sessionAsLead     PwaSession? @relation("SessionLead")
+  sessionAsReg      PwaSession? @relation("SessionReg")
+  sessionAsSub      PwaSession? @relation("SessionSub")
+  sessionAsFirstDep PwaSession? @relation("SessionFirstDep")
+
+  deposits  SessionDeposit[]
+  Country   Country?         @relation(fields: [countryId], references: [id])
+  countryId String?
+
+  @@unique([pixelId, eventId])
+  @@index([campaignId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([regionId, createdAt])
+  @@map("event_logs")
+}
+
+// =========================
+// FINANCE / OPS
+// =========================
+
+model Financial {
+  id              String   @id @default(uuid())
+  campaignId      String   @map("campaign_id")
+  spend           Decimal  @default(0.00) @db.Decimal(10, 2)
+  payouts         Decimal  @default(0.00) @db.Decimal(10, 2)
+  profit          Decimal  @default(0.00) @db.Decimal(10, 2)
+  transactionDate DateTime @map("transaction_date") @db.Date
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId, transactionDate])
+  @@map("financials")
+}
+
+model Alert {
+  id         String      @id @default(uuid())
+  campaignId String?     @map("campaign_id")
+  type       AlertType?
+  message    String?     @db.Text
+  severity   ErrorLevel?
+  isResolved Boolean     @default(false) @map("is_resolved")
+  createdAt  DateTime?   @default(now()) @map("created_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@map("alerts")
+}
+
+model Task {
+  id         String      @id @default(uuid())
+  campaignId String?     @map("campaign_id")
+  userId     String?     @map("user_id")
+  title      String?
+  status     TaskStatus?
+  priority   String?
+  dueDate    DateTime?   @map("due_date")
+  createdAt  DateTime?   @default(now()) @map("created_at")
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id])
+
+  @@map("tasks")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model ErrorLog {
+  id        String     @id @default(uuid())
+  level     ErrorLevel @default(info)
+  message   String
+  stack     String?    @db.Text
+  service   String?
+  userId    String?    @map("user_id")
+  sessionId String?    @map("session_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  user    User?       @relation(fields: [userId], references: [id])
+  session PwaSession? @relation(fields: [sessionId], references: [id])
+
   @@map("error_logs")
 }

@@ -8,7 +8,9 @@ export interface CreateEventLogPayload {
     eventId: string;
     status: LogStatus;
     responseData?: any;
-    country?: string | null;
+    region?: string | null;
+    countryCode?: string | null;
+    countryName?: string | null;
     clientIp?: string | null;
     userAgent?: string | null;
     revenue?: number | null;

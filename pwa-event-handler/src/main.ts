@@ -8,7 +8,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options: {
-      package: 'eventhandler.v1',
+      package: 'event_handler.v1',
       protoPath: join(process.env.PROTO_DIR || process.cwd(), 'protos', 'event_handler.proto'),
       url: process.env.EVENT_HANDLER_GRPC_URL || '0.0.0.0:50053',
       loader: {

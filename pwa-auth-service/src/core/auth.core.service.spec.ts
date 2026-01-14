@@ -3,7 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { AuthCoreService } from './auth.core.service';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import { AuthRepository } from './auth.repository';
+import { AuthRepository } from '../../../pwa-prisma/src/global/repository/auth.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../../../pwa-prisma/src';
 import * as bcrypt from 'bcryptjs';
@@ -25,7 +25,7 @@ describe('AuthCoreService', () => {
     let mailer: MailerServiceMock;
     let jwt: JwtVerifierService;
 
-    const testEmail = 'auth_integration_test@example.com';
+    const testEmail = 'rizoks29@gmail.com';
     const testPassword = 'Test1234!';
     const newPassword = 'NewTest1234!';
     const testName = 'integration-user';
@@ -162,7 +162,7 @@ describe('AuthCoreService', () => {
         const updatedUser = await repo.findByEmail(testEmail);
 
         expect(updatedUser).toBeDefined();
-        const ok = await bcrypt.compare(newPassword, updatedUser!.password);
+        const ok = await bcrypt.compare(newPassword, updatedUser!.passwordHash!);
         expect(ok).toBe(true);
     });
 

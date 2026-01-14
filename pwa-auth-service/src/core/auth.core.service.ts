@@ -11,7 +11,7 @@ import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import { AuthRepository } from './auth.repository';
+import { AuthRepository } from '../../../pwa-prisma/src/global/repository/auth.repository';
 import * as crypto from 'crypto';
 import {MailerService} from "@nestjs-modules/mailer";
 import {RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
@@ -80,7 +80,7 @@ export class AuthCoreService {
             });
         }
 
-        const ok = await bcrypt.compare(password, user.password).catch(() => false);
+        const ok = await bcrypt.compare(password, user.passwordHash!).catch(() => false);
         if (!ok) {
             throw new RpcException({
                 code: status.UNAUTHENTICATED,
@@ -216,7 +216,7 @@ export class AuthCoreService {
         const hash = await bcrypt.hash(password, 10);
         const created = await this.repo.createUser({
             email,
-            password: hash,
+            passwordHash: hash,
             username: username ?? email.split('@')[0],
         });
 
@@ -390,7 +390,7 @@ export class AuthCoreService {
 
                 user = await this.repo.createUser({
                     email: telegramEmail,
-                    password: hashedPassword,
+                    passwordHash: hashedPassword,
                     username: dto.username || `tg_user_${dto.id}`,
                 });
             }

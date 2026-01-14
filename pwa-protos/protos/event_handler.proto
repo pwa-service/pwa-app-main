@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package eventhandler.v1;
+package event_handler.v1;
 
 service EventHandlerService {
     rpc ViewContent          (ViewContentRequest)          returns (FirstOpenResponse);

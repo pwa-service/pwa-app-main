@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package pwa_apps_manager.v1;
+
+service PwaAppsManagerService {
+    rpc CreateApp (CreateAppRequest) returns (PwaAppResponse);
+    rpc GetAppById (GetAppByIdRequest) returns (PwaAppResponse);
+}
+
+message CreateAppRequest {
+    string name = 1;
+    string domain = 2;
+    string created_by_user_id = 3;
+    int32 template_id = 4;
+    string description = 5;
+    string app_id = 6;
+}
+
+message GetAppByIdRequest {
+    string app_id = 1;
+}
+
+message PwaAppResponse {
+    string id = 1;
+    string name = 2;
+    string domain = 3;
+    string description = 4;
+    string created_by_user_id = 5;
+    string status = 6;
+    string build_url = 7;
+}

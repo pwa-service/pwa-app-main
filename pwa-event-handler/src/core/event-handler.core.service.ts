@@ -7,7 +7,6 @@ import {
   CompleteRegistrationDto,
   FbEventEnum,
   FBPayload,
-  PrepareInstallLinkDto,
   PurchaseDto,
   PwaFirstOpenDto,
   SubscribeDto,
@@ -105,20 +104,6 @@ export class EventHandlerCoreService implements OnModuleInit {
     }
   }
 
-  async prepareInstallLink(event: PrepareInstallLinkDto) {
-    this.log.debug({tag: 'prepareInstallLink:input', event});
-    const {sessionId, pwaDomain} = event;
-    const base = process.env.TRACKER_BASE_URL || 'https://tracker.example.com/landing';
-    const url = new URL(base);
-
-    url.searchParams.set('session_id', sessionId);
-    const finalUrl = url.toString();
-
-    await this.repo.setFinalUrl(sessionId, finalUrl);
-    this.log.log({event: 'prepare-install-link', sessionId, pwaDomain, finalUrl});
-    return {finalUrl};
-  }
-
 
   async pwaFirstOpen(event: PwaFirstOpenDto) {
     this.log.debug({tag: 'pwaFirstOpen:input', event});
@@ -133,7 +118,7 @@ export class EventHandlerCoreService implements OnModuleInit {
     }
 
     const pixelId = sess.pixelId;
-    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || event.pwaDomain}`;
+    const sourceUrl = `https://${event.pwaDomain}`;
 
     const eventName = 'Lead';
     const exists = await this.repo.isSessionEventLogExists(sessionId, eventName);
@@ -148,16 +133,11 @@ export class EventHandlerCoreService implements OnModuleInit {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      fbclid: sess.fbclid || undefined,
-      offerId: sess.offerId || undefined,
-      utmSource: sess.utmSource || undefined,
       clientIp: event._meta.clientIp,
       sessionId,
     });
 
     this.log.debug({tag: 'pwaFirstOpen:payload', payload});
-    const eventId = (payload?.data?.[0] as any)?.event_id as string | undefined;
-
     let fbResponse: string;
     let success = true;
     try {
@@ -173,13 +153,6 @@ export class EventHandlerCoreService implements OnModuleInit {
         fbResponse = JSON.stringify({error: e.message});
       }
     }
-
-    await this.repo.markFirstOpen({
-      sessionId: event.sessionId,
-      eventId: eventId ?? null,
-      fbStatus: success ? LogStatus.success : LogStatus.error,
-      finalUrl: sourceUrl,
-    });
     return {success, fb: fbResponse};
   }
 
@@ -203,7 +176,7 @@ export class EventHandlerCoreService implements OnModuleInit {
     }
 
     const pixelId = sess.pixelId;
-    const sourceUrl = sess.finalUrl || sess.landingUrl || `https://${sess.pwaDomain || dto.pwaDomain}`;
+    const sourceUrl = `https://${dto.pwaDomain}`;
     let payload: any
     let eventName: EventType
 
@@ -259,9 +232,6 @@ export class EventHandlerCoreService implements OnModuleInit {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      fbclid: sess.fbclid || undefined,
-      offerId: sess.offerId || undefined,
-      utmSource: sess.utmSource || undefined,
       clientIp: event._meta.clientIp,
       sessionId,
     });
@@ -276,9 +246,6 @@ export class EventHandlerCoreService implements OnModuleInit {
     const payload = this.payloadFbBuilder({
       eventName: eventName,
       sourceUrl,
-      fbclid: sess.fbclid || undefined,
-      offerId: sess.offerId || undefined,
-      utmSource: sess.utmSource || undefined,
       value: event.value,
       currency: event.currency,
       clientIp: event._meta.clientIp,
@@ -295,9 +262,6 @@ export class EventHandlerCoreService implements OnModuleInit {
     const payload = this.payloadFbBuilder({
       eventName,
       sourceUrl,
-      fbclid: sess.fbclid || undefined,
-      offerId: sess.offerId || undefined,
-      utmSource: sess.utmSource || undefined,
       value: event.value,
       currency: event.currency,
       clientIp: event._meta.clientIp,
@@ -331,6 +295,8 @@ export class EventHandlerCoreService implements OnModuleInit {
         Math.random().toString(36).slice(2, 12);
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
+    const userAgent = (payload as any)?.data?.[0]?.user_data?.client_user_agent as string | undefined;
+
 
     let logStatus: LogStatus = LogStatus.success;
     let responseData: any = null;
@@ -391,6 +357,19 @@ export class EventHandlerCoreService implements OnModuleInit {
       finalResult = new FacebookApiError(errorMessage, responseData);
     } finally {
       try {
+        const geoData = clientIp ? geo.lookup(clientIp) : null;
+        const countryCode = geoData?.country ?? null;
+
+        let countryName: string | null = null;
+        if (countryCode) {
+          try {
+            const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+            countryName = regionNames.of(countryCode) ?? null;
+          } catch (e) {
+            console.warn('Could not resolve country name via Intl', e);
+            countryName = null;
+          }
+        }
         await this.logs.createLog({
           sessionId,
           pixelId: pixelId as string,
@@ -399,8 +378,11 @@ export class EventHandlerCoreService implements OnModuleInit {
           status: logStatus,
           responseData,
           revenue: null,
-          clientIp,
-          country: clientIp ? geo.lookup(clientIp)?.country : null,
+          clientIp: clientIp ?? null,
+          userAgent: userAgent ?? null,
+          countryCode: countryCode,
+          countryName: countryName,
+          region: null,
         });
       } catch (logError) {
         this.log.error({tag: 'db-logging-error', error: logError});

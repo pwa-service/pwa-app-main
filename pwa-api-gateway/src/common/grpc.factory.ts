@@ -26,7 +26,7 @@ export const eventHandlerClient: ClientProviderOptions = {
     name: 'EVENT_HANDLER_GRPC',
     transport: Transport.GRPC,
     options: {
-        package: 'eventhandler.v1',
+        package: 'event_handler.v1',
         protoPath: join(PROTOS_DIR, 'event_handler.proto'),
         url: process.env.EVENT_HANDLER_GRPC_URL || 'localhost:50053',
         loader: {
@@ -40,13 +40,31 @@ export const eventHandlerClient: ClientProviderOptions = {
     },
 };
 
-export const generatorClient: ClientProviderOptions = {
-    name: 'GENERATOR_GRPC',
+export const appsManager: ClientProviderOptions = {
+    name: 'APPS_MANAGER_GRPC',
     transport: Transport.GRPC,
     options: {
-        package: 'generator.v1',
-        protoPath: join(PROTOS_DIR, 'generator.proto'),
-        url: process.env.GENERATOR_GRPC_URL || 'localhost:50055',
+        package: 'pwa_apps_manager.v1',
+        protoPath: join(PROTOS_DIR, 'pwa_apps_manager.proto'),
+        url: process.env.PWA_MANAGER_GRPC_URL || 'localhost:50055',
+        loader: {
+            includeDirs: [PROTOS_DIR],
+            keepCase: false,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true,
+        },
+    },
+};
+
+export const pixelTokenManager: ClientProviderOptions = {
+    name: 'PIXEL_TOKEN_MANAGER_GRPC',
+    transport: Transport.GRPC,
+    options: {
+        package: 'pixel_token.v1',
+        protoPath: join(PROTOS_DIR, 'pixel_token_manager.proto'),
+        url: process.env.PWA_MANAGER_GRPC_URL || 'localhost:50055',
         loader: {
             includeDirs: [PROTOS_DIR],
             keepCase: false,

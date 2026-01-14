@@ -11,7 +11,6 @@ import {
 } from '../../../pwa-shared/src';
 import {JwtAuthGuard} from "../common/jwt-auth.guard";
 import {ApiTags} from "@nestjs/swagger";
-import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -27,7 +26,6 @@ export class AuthHttpController {
     @Post('sign-in')
     @HttpCode(200)
     async signIn(@Body() dto: SignInDto, @Req() req: Request) {
-        console.log(req.cookies, req.headers)
         return this.auth.signIn(dto, buildGrpcMetadata(req));
     }
 
