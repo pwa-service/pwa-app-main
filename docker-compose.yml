@@ -136,6 +136,13 @@ services:
     depends_on:
       auth-service:
         condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-gateway.rule=Host(`pwaservice.space`)"
+      - "traefik.http.routers.api-gateway.entrypoints=web"
+      - "traefik.http.routers.api-gateway.tls=true"
+      - "traefik.http.routers.api-gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api-gateway.loadbalancer.server.port=3000"
     networks:
       - pwa-network
     deploy:
