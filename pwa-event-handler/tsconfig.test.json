@@ -12,6 +12,10 @@
     "outDir": "./dist-test",
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts",
+    "../pwa-shared/src/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"],
 }

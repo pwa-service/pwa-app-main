@@ -10,8 +10,16 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "outDir": "./dist-test",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "baseUrl": "./",
+    "paths": {
+      "*": ["node_modules/*"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts",
+    "../pwa-shared/src/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
