@@ -10,7 +10,7 @@ export class RefreshStore implements OnModuleInit, OnModuleDestroy {
             url: `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? 6379}`,
         });
 
-        this.redis.on('error', (err) => console.error('Redis Client Error', err));
+        this.redis.on('error', (err: any) => console.error('Redis Client Error', err));
         await this.redis.connect();
     }
 
