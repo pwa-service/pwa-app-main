@@ -29,11 +29,26 @@ export class GrpcAuthInterceptor implements NestInterceptor {
     ) {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const allowAnon = this.reflector.get<boolean>('ALLOW_ANON', context.getHandler()) ||
-            this.reflector.get<boolean>('ALLOW_ANON', context.getClass());
-        const handlerName = context.getHandler().name;
+        const handler = context.getHandler();
+        const handlerName = handler.name;
         const className = context.getClass().name;
-        console.log(`🔒 Intercepting gRPC call: ${className}.${handlerName}`);
+
+        const isSystemMethod = [
+            'check',
+            'watch',
+            'list',
+            'serverReflectionInfo',
+            'index'
+        ].includes(handlerName);
+
+        const isSystemClass = className === 'PrometheusController';
+
+        if (isSystemMethod || isSystemClass) {
+            return next.handle();
+        }
+
+        const allowAnon = this.reflector.get<boolean>('ALLOW_ANON', handler) ||
+            this.reflector.get<boolean>('ALLOW_ANON', context.getClass());
 
         if (allowAnon) return next.handle();
 
