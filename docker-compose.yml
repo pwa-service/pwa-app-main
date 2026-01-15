@@ -155,8 +155,7 @@ services:
     build:
       context: .
       dockerfile: pwa-manager/Dockerfile
-    working_dir: /workspace/pwa-apps-manager
-    container_name: pwa-apps-manager
+    container_name: pwa-manager
     env_file:
       - ./.env
     environment:
