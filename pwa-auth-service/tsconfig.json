@@ -21,8 +21,7 @@
     "esModuleInterop": true
   },
   "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts",
+    "src/**/*",
     "../pwa-shared/src/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", "test", "**/app.spec.ts"]

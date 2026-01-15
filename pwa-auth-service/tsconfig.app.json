@@ -14,8 +14,7 @@
     }
   },
   "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts",
+    "src/**/*",
     "../pwa-shared/src/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
