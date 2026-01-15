@@ -1,23 +1,33 @@
 name: Deploy via Rsync & Docker Compose
 
+
+
 on:
   push:
     branches:
       - main
 
+
+
 concurrency:
   group: production-deploy
   cancel-in-progress: false
 
+
+
 env:
   DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
   DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+
+
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+
 
       - name: Integration tests
         run: |
@@ -28,22 +38,32 @@ jobs:
           docker compose -f docker-compose.ci.yml run --rm event-handler-tests
           docker compose -f docker-compose.ci.yml down -v
 
+
+
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.ci.yml down -v
+
+
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
 
+
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+
 
       - name: Sync repository via rsync
         run: |
@@ -53,6 +73,8 @@ jobs:
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/
+
+
 
       - name: Upload environment variables
         env:
@@ -65,6 +87,8 @@ jobs:
           echo "*********** Uploading .env file to remote server ***********"
           ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "mkdir -p ~/pwa-app"
 
+
+
           cat > .env <<EOL
           POSTGRES_DB=${POSTGRES_DB}
           POSTGRES_USER=${POSTGRES_USER}
@@ -73,7 +97,11 @@ jobs:
           PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
           EOL
 
+
+
           scp -o StrictHostKeyChecking=no .env $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/.env
+
+
 
       - name: Deploy on remote server
         run: |
@@ -130,28 +158,60 @@ jobs:
               sleep 2
             done
               
-            echo "*********** Waiting for services to become healthy ***********"
-            for i in {1..30}; do
-              unhealthy=$(docker ps --filter "health=unhealthy" --format '{{.Names}}')
-              starting=$(docker ps --filter "health=starting" --format '{{.Names}}')
+            echo "*********** Checking services status ***********"
+            MAX_TRIES=30
+            COUNT=0
+            
+            while [ $COUNT -lt $MAX_TRIES ]; do
+              COUNT=$((COUNT+1))
+              echo "Checking services... ($COUNT/$MAX_TRIES)"
               
-              exited=$(docker ps -a --filter "status=exited" --format '{{.Names}}' | grep -v "prisma-migrator" || true)
+              # Get status of all containers
+              STATUS_OUTPUT=$(docker compose ps --format "table {{.Name}}\t{{.Status}}")
               
-              if [ -z "$unhealthy" ] && [ -z "$starting" ] && [ -z "$exited" ]; then
-                echo "All services healthy"
-                docker compose ps
-                break
+              # Check if there are any unhealthy containers
+              UNHEALTHY=$(echo "$STATUS_OUTPUT" | grep -i "unhealthy" || true)
+              
+              if [ ! -z "$UNHEALTHY" ]; then
+                echo "Found unhealthy services:"
+                echo "$UNHEALTHY"
+                
+                if [ $COUNT -eq $MAX_TRIES ]; then
+                  echo "Services failed to become healthy"
+                  docker compose ps
+                  docker compose logs --tail=100
+                  exit 1
+                fi
+                
+                echo ""
+                sleep 1
+                continue
               fi
               
-              if [ $i -eq 30 ]; then
-                echo "Services failed to start"
-                docker compose ps
-                docker compose logs --tail=100
-                exit 1
-              fi
+              # Check that all containers are in Up status (except one-time containers)
+              NOT_UP=$(docker compose ps --format "{{.Name}} {{.Status}}" | grep -v "Up" | grep -v "Exited" | grep -v "NAME" | grep -v "prisma-migrator" || true)
               
-              echo "Waiting for services... ($i/30)"
-              sleep 1
+              if [ ! -z "$NOT_UP" ]; then
+                echo "Waiting for services to start:"
+                echo "$NOT_UP"
+                
+                if [ $COUNT -eq $MAX_TRIES ]; then
+                  echo "Services failed to start"
+                  docker compose ps
+                  docker compose logs --tail=100
+                  exit 1
+                fi
+                
+                echo ""
+                sleep 5
+                continue
+              fi
+
+              # All OK
+              echo "All services are running!"
+              echo ""
+              docker compose ps
+              break
             done
               
             echo "*********** Cleaning up Docker resources ***********"
