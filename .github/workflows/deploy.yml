@@ -8,7 +8,7 @@ on:
 concurrency:
   group: production-deploy
   cancel-in-progress: false
-  
+
 env:
   DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
   DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -151,7 +151,7 @@ jobs:
               fi
               
               echo "Waiting for services... ($i/30)"
-              sleep 5
+              sleep 1
             done
               
             echo "*********** Cleaning up Docker resources ***********"
