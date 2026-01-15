@@ -20,5 +20,10 @@
     "moduleResolution": "node",
     "esModuleInterop": true
   },
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts",
+    "../pwa-shared/src/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist", "test", "**/app.spec.ts"]
 }
