@@ -14,7 +14,6 @@ datasource db {
 enum Status {
   active
   inactive
-  // Legacy status values (if any)
 }
 
 enum PwaStatus {
@@ -624,8 +623,7 @@ model PwaSession {
 
   queryStringRaw String? @map("query_string_raw")
 
-  // REMOVED: firstOpenEventLogId
-
+  viewContentLogId   String? @unique @map("view_content_log_id")
   leadEventLogId     String? @unique @map("lead_event_log_id")
   regEventLogId      String? @unique @map("reg_event_log_id")
   subEventLogId      String? @unique @map("sub_event_log_id")
@@ -642,7 +640,6 @@ model PwaSession {
   owner      User?      @relation(fields: [ownerUserId], references: [id])
 
   // Relations to Logs (Specific)
-  // REMOVED: firstOpenLog relation
   leadLog     EventLog? @relation("SessionLead", fields: [leadEventLogId], references: [id])
   regLog      EventLog? @relation("SessionReg", fields: [regEventLogId], references: [id])
   subLog      EventLog? @relation("SessionSub", fields: [subEventLogId], references: [id])

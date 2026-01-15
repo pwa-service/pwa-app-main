@@ -127,9 +127,9 @@ export class LoggerRepository {
                 await this.prisma.pwaSession.updateMany({
                     where: {
                         id: sessionId,
-                        firstOpenEventLogId: null
+                        viewContentLogId: null
                     },
-                    data: { firstOpenEventLogId: eventLogId }
+                    data: { viewContentLogId: eventLogId }
                 });
                 break;
         }
