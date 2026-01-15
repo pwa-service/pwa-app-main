@@ -2,7 +2,6 @@ FROM node:22-alpine AS base
 WORKDIR /workspace
 RUN apk add --no-cache python3 make g++ libc6-compat openssl postgresql-client
 
-# --- Етап встановлення залежностей ---
 FROM base AS deps
 WORKDIR /workspace
 
@@ -11,7 +10,6 @@ COPY ./pwa-prisma/package*.json      ./pwa-prisma/
 COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
 
-# Встановлюємо залежності
 WORKDIR /workspace/pwa-shared
 RUN npm ci
 
@@ -19,42 +17,33 @@ WORKDIR /workspace/pwa-prisma
 RUN npm ci
 
 WORKDIR /workspace/pwa-auth-service
-# Тут npm install, бо локально може не бути lock-файлу, або npm ci якщо впевнені
 RUN npm install
 
-# --- Етап збірки та тестів ---
 FROM base AS test-runner
 WORKDIR /workspace
 
-# 👇 КРОК 1 (ВАЖЛИВО): Копіюємо node_modules з етапу deps
 # Без цього кроку npx не бачить ваші встановлені пакети і качає Prisma 7!
 COPY --from=deps /workspace/pwa-auth-service/node_modules ./pwa-auth-service/node_modules
 COPY --from=deps /workspace/pwa-prisma/node_modules       ./pwa-prisma/node_modules
 COPY --from=deps /workspace/pwa-shared/node_modules       ./pwa-shared/node_modules
 
-# 2. Копіюємо вихідний код
 COPY ./pwa-auth-service ./pwa-auth-service
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
 
-# 3. Генеруємо Prisma Client (глобальний)
 WORKDIR /workspace/pwa-prisma
-# 👇 КРОК 2: Краще викликати локальний бінарник напряму, щоб точно не поліз в інтернет
+
 RUN ./node_modules/.bin/prisma generate --schema=./prisma/schema.prisma
 
-# 4. Налаштовуємо Auth Service
 WORKDIR /workspace/pwa-auth-service
 RUN mkdir -p ./prisma \
  && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma \
  && ./node_modules/.bin/prisma generate --schema=./prisma/schema.prisma
 
-# 5. Копіюємо Protos
 RUN mkdir -p ./protos \
  && cp -r ../pwa-protos/protos/* ./protos/
 
-# 6. Змінні
 ENV NODE_ENV=test
 
-# 7. Запуск
 CMD ["npm", "run", "test:ci"]
