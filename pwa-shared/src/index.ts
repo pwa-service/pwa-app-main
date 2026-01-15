@@ -4,7 +4,6 @@ export * from './types/auth/dto/refresh.dto';
 export * from './types/auth/dto/confirm-email.dto';
 export * from './types/auth/dto/request-restore-password.dto';
 export * from './types/auth/dto/restore-password.dto';
-export * from '../../pwa-prisma/src/global/repository/auth.repository';
 export * from './modules/auth/interceptors/grpc-auth.interceptor';
 
 export * from './types/event-handler/dto/view-content.dto';
