@@ -5,7 +5,7 @@ RUN apk add --no-cache python3 make g++ libc6-compat
 FROM base AS deps
 WORKDIR /workspace
 
-COPY ./pwa-manager/package*.json   ./pwa-generator/
+COPY ./pwa-manager/package*.json      ./pwa-manager/
 COPY ./pwa-prisma/package*.json      ./pwa-prisma/
 COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
