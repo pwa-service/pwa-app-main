@@ -15,8 +15,8 @@ export class PixelTokenService {
         });
     }
 
-    async findAll() {
-        return this.repository.findAll();
+    async findAll(userId: string) {
+        return this.repository.findAll(userId);
     }
 
     async findOne(id: string) {

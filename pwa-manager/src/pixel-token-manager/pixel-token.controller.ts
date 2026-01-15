@@ -18,8 +18,8 @@ export class PixelTokenController {
     }
 
     @GrpcMethod('PixelTokenService', 'FindAll')
-    async findAll() {
-        return this.service.findAll();
+    async findAll(@GrpcUser() user: UserRecord) {
+        return this.service.findAll(user.id);
     }
 
     @GrpcMethod('PixelTokenService', 'FindOne')

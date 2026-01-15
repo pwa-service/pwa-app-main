@@ -13,9 +13,12 @@ export class PixelTokenRepository {
         return this.prisma.pixelToken.create({ data });
     }
 
-    async findAll() {
+    async findAll(userId: string) {
         return this.prisma.pixelToken.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            where: {
+                ownerId: userId
+            }
         });
     }
 
