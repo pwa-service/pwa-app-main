@@ -151,7 +151,7 @@ services:
           cpus: "0.25"
           memory: "0.6g"
 
-  pwa-apps-manager:
+  pwa-manager:
     build:
       context: .
       dockerfile: pwa-manager/Dockerfile
