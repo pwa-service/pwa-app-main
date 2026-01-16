@@ -163,6 +163,8 @@ services:
       - PWA_MANAGER_GRPC_URL=pwa-manager:50055
       - QUEUE_NAME=BUILD_QUEUE
       - QUEUE_PREFIX=pwa
+      - AUTH_ISSUER=https://pwaservice.space/
+      - AUTH_AUDIENCE=api
     depends_on:
       postgres:
         condition: service_healthy
@@ -196,6 +198,7 @@ services:
       - REACT_APP_PATH=./pwa_vite
       - NGINX_CONF_PATH=./nginx/nginx.conf
       - REMOTE_BASE_DIR=/home/eliot/websites/apps
+      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
     depends_on:
       redis:
         condition: service_healthy

@@ -11,7 +11,7 @@ interface PixelTokenService {
     create(data: CreatePixelTokenDto, md?: Metadata): Observable<any>;
     findAll(data: {}, md?: Metadata): Observable<any>;
     findOne(data: { id: string }, md?: Metadata): Observable<any>;
-    update(data: UpdatePixelTokenDto & { id: string }, md?: Metadata): Observable<any>;
+    update(data: UpdatePixelTokenDto, md?: Metadata): Observable<any>;
     remove(data: { id: string }, md?: Metadata): Observable<any>;
 }
 
@@ -37,7 +37,8 @@ export class PixelTokenGrpcClient implements OnModuleInit {
         return await lastValueFrom(this.svc.findOne({ id }, metadata));
     }
 
-    async update(dto: UpdatePixelTokenDto, metadata?: Metadata) {
+    async update(id: string, dto: UpdatePixelTokenDto, metadata?: Metadata) {
+        dto.id = id
         return await lastValueFrom(this.svc.update({ ...dto }, metadata));
     }
 

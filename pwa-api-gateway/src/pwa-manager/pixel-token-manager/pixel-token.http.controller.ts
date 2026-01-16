@@ -21,7 +21,7 @@ export class PixelTokenHttpController {
     @Post()
     @HttpCode(201)
     @ApiOperation({ summary: 'Create a new pixel token' })
-    async create(@Body() dto: CreatePixelTokenDto, @Req() req: Request) {
+    async create(@Body() dto: any, @Req() req: Request) {
         return this.pixelTokenService.create(dto, buildGrpcMetadata(req));
     }
 
@@ -43,11 +43,11 @@ export class PixelTokenHttpController {
     @HttpCode(200)
     @ApiOperation({ summary: 'Update a pixel token' })
     async update(
-        @Param('id', ParseUUIDPipe) id: string,
+        @Param('id') id: string,
         @Body() dto: UpdatePixelTokenDto,
         @Req() req: Request
     ) {
-        return this.pixelTokenService.update(dto, buildGrpcMetadata(req));
+        return this.pixelTokenService.update(id, dto, buildGrpcMetadata(req));
     }
 
     @Delete(':id')

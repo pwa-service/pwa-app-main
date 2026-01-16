@@ -9,6 +9,7 @@ export class PixelTokenService {
     constructor(private readonly repository: PixelTokenRepository) {}
     async create(ownerId: string, dto: CreatePixelTokenDto) {
         return this.repository.create({
+            id: dto.id,
             token: dto.token,
             description: dto.description,
             ownerId
@@ -16,7 +17,10 @@ export class PixelTokenService {
     }
 
     async findAll(userId: string) {
-        return this.repository.findAll(userId);
+        const pixelTokens = await this.repository.findAll(userId);
+        return {
+            pixelTokens
+        }
     }
 
     async findOne(id: string) {
@@ -25,11 +29,11 @@ export class PixelTokenService {
         return token;
     }
 
-    async update(ownerId: string, dto: UpdatePixelTokenDto) {
-        return await this.repository.update(dto.id, {
+    async update(dto: UpdatePixelTokenDto) {
+        return await this.repository.update({
+            id: dto.id,
             token: dto.token,
             description: dto.description,
-            ownerId
         });
     }
 

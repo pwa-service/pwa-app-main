@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PixelToken } from '@prisma/client';
 import {PrismaService} from "../../../pwa-prisma/src";
 import {
     CreatePixelTokenDto, UpdatePixelTokenDto
@@ -27,8 +26,16 @@ export class PixelTokenRepository {
             where: { id }
         });
     }
+    async findOneByToken(token: string) {
+        return this.prisma.pixelToken.findUnique({
+            where: { token }
+        });
+    }
 
-    async update(id: string, data: Omit<UpdatePixelTokenDto, 'id'>) {
+
+    async update(data: UpdatePixelTokenDto) {
+        const id = data.id
+        delete data.id;
         return this.prisma.pixelToken.update({
             where: { id },
             data

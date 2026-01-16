@@ -6,6 +6,7 @@ import {
 } from "../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
 import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import {IsPixelTokenUnique} from "./pipes/is-pixel-token-unique.pipe";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -13,8 +14,8 @@ export class PixelTokenController {
     constructor(private readonly service: PixelTokenService) {}
 
     @GrpcMethod('PixelTokenService', 'Create')
-    async create(@Payload() data: CreatePixelTokenDto, @GrpcUser() user: UserRecord) {
-        return this.service.create(user.id, data);
+    async create(@Payload(IsPixelTokenUnique) dto: CreatePixelTokenDto, @GrpcUser() user: UserRecord) {
+        return this.service.create(user.id, dto);
     }
 
     @GrpcMethod('PixelTokenService', 'FindAll')
@@ -23,17 +24,17 @@ export class PixelTokenController {
     }
 
     @GrpcMethod('PixelTokenService', 'FindOne')
-    async findOne(@Payload() data: { id: string }) {
-        return this.service.findOne(data.id);
+    async findOne(@Payload() dto: { id: string }) {
+        return this.service.findOne(dto.id);
     }
 
     @GrpcMethod('PixelTokenService', 'Update')
-    async update(@Payload() data: UpdatePixelTokenDto, @GrpcUser() user: UserRecord) {
-        return this.service.update(user.id, data);
+    async update(@Payload(IsPixelTokenUnique) dto: UpdatePixelTokenDto, @GrpcUser() user: UserRecord) {
+        return this.service.update(dto);
     }
 
     @GrpcMethod('PixelTokenService', 'Remove')
-    async remove(@Payload() data: { id: string }) {
-        return this.service.remove(data.id);
+    async remove(@Payload(IsPixelTokenUnique) dto: { id: string }) {
+        return this.service.remove(dto.id);
     }
 }

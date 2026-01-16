@@ -28,10 +28,11 @@ message PixelToken {
 }
 
 message CreatePixelTokenRequest {
-    string token = 1;
-    string description = 2;
-    string owner_id = 3;
-    PixelTokenStatus status = 4;
+    string id = 1;
+    string token = 2;
+    string description = 3;
+    string owner_id = 4;
+    PixelTokenStatus status = 5;
 }
 
 message FindAllPixelTokensRequest {

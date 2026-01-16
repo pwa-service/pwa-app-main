@@ -79,7 +79,7 @@ export class GrpcAuthInterceptor implements NestInterceptor {
             switchMap(() => next.handle()),
             catchError((err) => {
                 if (err instanceof RpcException) return throwError(() => err);
-                return throwError(() => new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid/expired token' }));
+                return throwError(() => new RpcException({ code: status.INTERNAL, message: `An error occurred: ${err.message}` }));
             }),
         );
     }

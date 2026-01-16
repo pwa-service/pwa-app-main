@@ -3,7 +3,6 @@ import {GrpcMethod, Payload} from '@nestjs/microservices';
 import { EventHandlerCoreService } from './event-handler.core.service';
 import { ViewContentEnrichmentPipe } from '../pipes/view-content.enrichment.pipe';
 import {
-  PrepareInstallLinkDto,
   PwaFirstOpenDto,
   ViewContentDto,
   EventMeta

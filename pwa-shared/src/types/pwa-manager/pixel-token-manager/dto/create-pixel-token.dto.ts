@@ -1,7 +1,12 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import {ApiProperty, OmitType, PartialType} from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreatePixelTokenDto {
+    @ApiProperty({ example: 'Token id', required: false })
+    @IsOptional()
+    @IsUUID()
+    id: string;
+
     @ApiProperty({ example: 'EAA...' })
     @IsString()
     @IsNotEmpty()
@@ -12,12 +17,11 @@ export class CreatePixelTokenDto {
     @IsString()
     description?: string;
 
-    @ApiProperty({ example: 'uuid-user-id', required: false })
-    @IsOptional()
-    @IsUUID()
-    ownerId?: string;
+    ownerId: string;
 }
 
-export class UpdatePixelTokenDto extends PartialType(CreatePixelTokenDto) {
-    id: string;
+export class UpdatePixelTokenDto extends PartialType(
+    OmitType(CreatePixelTokenDto, ['ownerId'] as const),
+) {
+    id?: string;
 }
