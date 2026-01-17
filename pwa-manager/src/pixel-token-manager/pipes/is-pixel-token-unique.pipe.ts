@@ -4,7 +4,6 @@ import { status } from '@grpc/grpc-js';
 import {
     CreatePixelTokenDto, UpdatePixelTokenDto
 } from "../../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
-import { PixelIdDto } from "../types/pixel-id.dto";
 import {PixelTokenRepository} from "../pixel-token.repository";
 
 
@@ -29,7 +28,7 @@ export class IsPixelTokenUnique implements PipeTransform {
             }
 
             if (id) {
-                const entityById = await this.repo.findOne(id); // Використовуйте findOneBy або { where: { id } }
+                const entityById = await this.repo.findOne(id);
                 if (entityById) {
                     throw new RpcException({
                         code: status.ALREADY_EXISTS,
@@ -39,7 +38,7 @@ export class IsPixelTokenUnique implements PipeTransform {
             }
         }
 
-        if (metatype === UpdatePixelTokenDto || metatype === PixelIdDto) {
+        if (metatype === UpdatePixelTokenDto) {
             if (id) {
                 const entityById = await this.repo.findOne(id);
                 if (!entityById) {

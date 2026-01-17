@@ -63,10 +63,8 @@ export class GrpcAuthInterceptor implements NestInterceptor, OnModuleInit {
             }),
             switchMap(() => next.handle()),
             catchError((err) => {
-                if (err.code) {
-                    return throwError(() => new RpcException({ code: err.code, message: err.details || err.message }));
-                }
-                return throwError(() => new RpcException({ code: status.INTERNAL, message: `Auth Service Error: ${err.message}` }));
+                const { code, message } = err.error;
+                return throwError(() => new RpcException({ code: code, message: `${message}` }));
             }),
         );
     }

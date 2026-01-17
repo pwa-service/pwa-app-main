@@ -35,7 +35,7 @@ export class PixelTokenHttpController {
     @Get(':id')
     @HttpCode(200)
     @ApiOperation({ summary: 'Get a pixel token by ID' })
-    async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    async findOne(@Param('id') id: string, @Req() req: Request) {
         return this.pixelTokenService.findOne(id, buildGrpcMetadata(req));
     }
 
@@ -53,7 +53,7 @@ export class PixelTokenHttpController {
     @Delete(':id')
     @HttpCode(204)
     @ApiOperation({ summary: 'Delete a pixel token' })
-    async remove(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    async remove(@Param('id') id: string, @Req() req: Request) {
         return this.pixelTokenService.remove(id, buildGrpcMetadata(req));
     }
 }

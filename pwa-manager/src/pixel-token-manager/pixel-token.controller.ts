@@ -7,6 +7,7 @@ import {
 import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {IsPixelTokenUnique} from "./pipes/is-pixel-token-unique.pipe";
+import {IsPixelTokenExistsInterceptor} from "./interceptors/is-pxiel-token-exists.interceptor";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -23,18 +24,21 @@ export class PixelTokenController {
         return this.service.findAll(user.id);
     }
 
+    @UseInterceptors(IsPixelTokenExistsInterceptor)
     @GrpcMethod('PixelTokenService', 'FindOne')
     async findOne(@Payload() dto: { id: string }) {
         return this.service.findOne(dto.id);
     }
 
+    @UseInterceptors(IsPixelTokenExistsInterceptor)
     @GrpcMethod('PixelTokenService', 'Update')
     async update(@Payload(IsPixelTokenUnique) dto: UpdatePixelTokenDto, @GrpcUser() user: UserRecord) {
         return this.service.update(dto);
     }
 
+    @UseInterceptors(IsPixelTokenExistsInterceptor)
     @GrpcMethod('PixelTokenService', 'Remove')
-    async remove(@Payload(IsPixelTokenUnique) dto: { id: string }) {
+    async remove(@Payload() dto: { id: string }) {
         return this.service.remove(dto.id);
     }
 }

@@ -8,6 +8,7 @@ import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
 import {APP_INTERCEPTOR} from "@nestjs/core";
 import {ClientsModule, Transport} from "@nestjs/microservices";
 import {join} from "path";
+import {IsPixelTokenExistsInterceptor} from "./interceptors/is-pxiel-token-exists.interceptor";
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
@@ -36,6 +37,7 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
     ],
     controllers: [PixelTokenController],
     providers: [
+        IsPixelTokenExistsInterceptor,
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PixelTokenService,
         PixelTokenRepository,
