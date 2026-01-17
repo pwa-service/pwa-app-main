@@ -4,7 +4,6 @@ import { PixelTokenRepository } from './pixel-token.repository';
 import {PixelTokenService} from "./pixel-token.core.service";
 import {PrismaService} from "../../../pwa-prisma/src";
 import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
-import {AuthRepository} from "../../../pwa-auth-service/src/core/auth.repository";
 import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
 import {APP_INTERCEPTOR} from "@nestjs/core";
 import {ClientsModule, Transport} from "@nestjs/microservices";
@@ -37,7 +36,6 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
     ],
     controllers: [PixelTokenController],
     providers: [
-        AuthRepository,
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PixelTokenService,
         PixelTokenRepository,
