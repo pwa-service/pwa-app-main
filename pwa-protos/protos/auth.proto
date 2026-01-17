@@ -14,6 +14,11 @@ service AuthService {
   rpc RestorePassword       (RestorePasswordRequest)        returns (AuthResponse);
   rpc ConfirmEmail          (ConfirmEmailRequest)           returns (AuthResponse);
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
+  rpc ValidateToken         (ValidateTokenRequest)          returns (User);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
 }
 
 message SignUpRequest {

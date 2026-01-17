@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const JWKS = createRemoteJWKSet(new URL(process.env.AUTH_JWKS_URL ?? 'http://localhost:4000/.well-known/jwks.json'));
 const ISS = process.env.AUTH_ISSUER ?? 'https://auth.local/';

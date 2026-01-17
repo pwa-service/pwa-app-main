@@ -11,12 +11,13 @@ import {
   RequestRestorePasswordDto
 } from "../../../pwa-shared/src";
 import {AllowAnonymous} from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
-import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
+import {UserRecord} from "../../../pwa-shared/src";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import {LocalAuthInterceptor} from "../interceptors/auth.interceptor";
 
 @Controller()
-@UseInterceptors(GrpcAuthInterceptor)
+@UseInterceptors(LocalAuthInterceptor)
 export class AuthGrpcController {
   constructor(private readonly auth: AuthCoreService) {}
 
@@ -49,6 +50,12 @@ export class AuthGrpcController {
   @GrpcMethod('AuthService', 'ConfirmEmail')
   async confirmEmail(dto: ConfirmEmailDto) {
     return this.auth.confirmEmail(dto.token);
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'ValidateToken')
+  async validateToken(data: { token: string }) {
+    return this.auth.validateToken(data.token);
   }
 
   @AllowAnonymous()

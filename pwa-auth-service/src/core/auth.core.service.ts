@@ -11,13 +11,14 @@ import { status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import { AuthRepository } from '../../../pwa-prisma/src/global/repository/auth.repository';
+import { AuthRepository } from './auth.repository';
 import * as crypto from 'crypto';
 import {MailerService} from "@nestjs-modules/mailer";
 import {RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 import {Counter} from "prom-client";
 import {InjectMetric} from "@willsoto/nestjs-prometheus";
+import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
 
 type UserPayload = { id: string; email: string; username: string };
 
@@ -33,6 +34,7 @@ export class AuthCoreService {
         private readonly store: RefreshStore,
         private readonly repo: AuthRepository,
         private readonly mailerService: MailerService,
+        private readonly jwt: JwtVerifierService,
     ) {}
 
     async onModuleInit() {
@@ -325,6 +327,37 @@ export class AuthCoreService {
         };
 
         return this.issueTokens(userPayload);
+    }
+
+    async validateToken(token: string) {
+        if (!token) {
+            throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Missing token' });
+        }
+
+        try {
+            const payload = await this.jwt.verify(token);
+            const sub = String(payload.sub ?? '');
+
+            if (!sub) {
+                await this.store.revoke(String(sub));
+                throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid token: no subject' });
+            }
+
+            const user = await this.repo.findById(sub);
+
+            if (!user) {
+                throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
+            }
+            return {
+                id: user.id,
+                email: user.email || '',
+                username: user.username || ''
+            };
+
+        } catch (e) {
+            if (e instanceof RpcException) throw e;
+            throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Token validation failed' });
+        }
     }
 
     async telegramAuth(dto: TelegramAuthDto) {

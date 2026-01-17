@@ -1,19 +1,43 @@
 import { Module } from '@nestjs/common';
 import { PixelTokenController } from './pixel-token.controller';
 import { PixelTokenRepository } from './pixel-token.repository';
-import {PixelTokenService} from "./pwa-manager.core.service";
+import {PixelTokenService} from "./pixel-token.core.service";
 import {PrismaService} from "../../../pwa-prisma/src";
 import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
-import {AuthRepository} from "../../../pwa-prisma/src/global/repository/auth.repository";
-import {GrpcAuthInterceptor, USER_LOOKUP_PORT} from "../../../pwa-shared/src";
+import {AuthRepository} from "../../../pwa-auth-service/src/core/auth.repository";
+import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
 import {APP_INTERCEPTOR} from "@nestjs/core";
+import {ClientsModule, Transport} from "@nestjs/microservices";
+import {join} from "path";
 
+
+const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
 @Module({
-    imports: [GrpcAuthModule],
+    imports: [
+        GrpcAuthModule,
+        ClientsModule.register([
+            {
+                name: 'AUTH_PACKAGE',
+                transport: Transport.GRPC,
+                options: {
+                    package: 'auth.v1',
+                    protoPath: AUTH_PROTO_DIR,
+                    url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
+                    loader: {
+                        includeDirs: [AUTH_PROTO_DIR],
+                        keepCase: false,
+                        longs: String,
+                        enums: String,
+                        defaults: true,
+                        oneofs: true,
+                    },
+                },
+            },
+        ]),
+    ],
     controllers: [PixelTokenController],
     providers: [
         AuthRepository,
-        { provide: USER_LOOKUP_PORT, useExisting: AuthRepository },
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PixelTokenService,
         PixelTokenRepository,

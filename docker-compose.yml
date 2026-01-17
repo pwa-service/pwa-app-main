@@ -161,6 +161,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PWA_MANAGER_GRPC_URL=pwa-manager:50055
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - QUEUE_NAME=BUILD_QUEUE
       - QUEUE_PREFIX=pwa
       - AUTH_ISSUER=https://pwaservice.space/

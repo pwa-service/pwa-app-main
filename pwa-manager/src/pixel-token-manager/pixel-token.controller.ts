@@ -1,6 +1,6 @@
 import {Controller, UseInterceptors} from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
-import {PixelTokenService} from "./pwa-manager.core.service";
+import {PixelTokenService} from "./pixel-token.core.service";
 import {
     CreatePixelTokenDto, UpdatePixelTokenDto
 } from "../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";

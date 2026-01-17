@@ -1,46 +1,39 @@
-import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor, OnModuleInit } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { Metadata, status } from '@grpc/grpc-js';
-import { Observable, from, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { RpcException } from '@nestjs/microservices';
-import { JwtVerifierService } from '../jwt-verifier.service';
-import {RefreshStore} from "../common/refresh.store";
+import { Observable, throwError } from 'rxjs';
+import { catchError, switchMap, map } from 'rxjs/operators';
+
+interface AuthGrpcService {
+    validateToken(data: { token: string }): Observable<UserRecord>;
+}
 
 export interface UserRecord {
     id: string;
-    email?: string | null;
-    username?: string | null;
+    email?: string;
+    username?: string;
 }
-
-export interface UserLookupPort {
-    findById(id: string): Promise<UserRecord | null>;
-}
-
-export const USER_LOOKUP_PORT = 'USER_LOOKUP_PORT';
 
 @Injectable()
-export class GrpcAuthInterceptor implements NestInterceptor {
+export class GrpcAuthInterceptor implements NestInterceptor, OnModuleInit {
+    private authService: AuthGrpcService;
+
     constructor(
         private readonly reflector: Reflector,
-        private readonly jwt: JwtVerifierService,
-        private readonly store: RefreshStore,
-        @Inject(USER_LOOKUP_PORT) private readonly users: UserLookupPort,
+        @Inject('AUTH_PACKAGE') private readonly client: ClientGrpc,
     ) {}
+
+    onModuleInit() {
+        this.authService = this.client.getService<AuthGrpcService>('AuthService');
+    }
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const handler = context.getHandler();
         const handlerName = handler.name;
         const className = context.getClass().name;
 
-        const isSystemMethod = [
-            'check',
-            'watch',
-            'list',
-            'serverReflectionInfo',
-            'index'
-        ].includes(handlerName);
-
+        const isSystemMethod = ['check', 'watch', 'list', 'serverReflectionInfo', 'index'].includes(handlerName);
         const isSystemClass = className === 'PrometheusController';
 
         if (isSystemMethod || isSystemClass) {
@@ -58,28 +51,22 @@ export class GrpcAuthInterceptor implements NestInterceptor {
 
         const authHeader = (metadata?.get('authorization')?.[0] as string | undefined) ?? '';
         const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
         if (!token) {
             return throwError(() => new RpcException({ code: status.UNAUTHENTICATED, message: 'Missing access token' }));
         }
-        return from(this.jwt.verify(token)).pipe(
-            switchMap(async (payload) => {
-                const sub = String(payload.sub ?? '');
-                if (!sub) {
-                    await this.store.revoke(String(sub))
-                    throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid token: no subject' });
-                }
 
-                const user = await this.users.findById(sub);
-                if (!user && !allowAnon) {
-                    throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
-                }
-                data.user = user ?? { id: sub, email: payload['email'] as string | undefined, username: payload['username'] as string | undefined };
+        return this.authService.validateToken({ token }).pipe(
+            map((user) => {
+                data.user = user;
                 return null;
             }),
             switchMap(() => next.handle()),
             catchError((err) => {
-                if (err instanceof RpcException) return throwError(() => err);
-                return throwError(() => new RpcException({ code: status.INTERNAL, message: `An error occurred: ${err.message}` }));
+                if (err.code) {
+                    return throwError(() => new RpcException({ code: err.code, message: err.details || err.message }));
+                }
+                return throwError(() => new RpcException({ code: status.INTERNAL, message: `Auth Service Error: ${err.message}` }));
             }),
         );
     }

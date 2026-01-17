@@ -7,18 +7,36 @@ import {PwaManagerRepository} from "./pwa-manager.repository";
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import {
     GrpcAuthInterceptor,
-    USER_LOOKUP_PORT,
 } from "../../../pwa-shared/src";
-import {AuthRepository} from "../../../pwa-prisma/src/global/repository/auth.repository";
 import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
 import {PixelTokenModule} from "../pixel-token-manager/pixel-token.module";
+import {ClientsModule, Transport} from "@nestjs/microservices";
+import {join} from "path";
 
+
+const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
 @Module({
-    imports: [PrismaModule, GeneratorPubSubModule, GrpcAuthModule, PixelTokenModule],
+    imports: [PrismaModule, GeneratorPubSubModule, GrpcAuthModule, PixelTokenModule, ClientsModule.register([
+        {
+            name: 'AUTH_PACKAGE',
+            transport: Transport.GRPC,
+            options: {
+                package: 'auth.v1',
+                protoPath: AUTH_PROTO_DIR,
+                url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
+                loader: {
+                    includeDirs: [AUTH_PROTO_DIR],
+                    keepCase: false,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                },
+            },
+        },
+    ]),],
     controllers: [PwaManagerController],
     providers: [
-        AuthRepository,
-        { provide: USER_LOOKUP_PORT, useExisting: AuthRepository },
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PwaManagerCoreService,
         PwaManagerRepository

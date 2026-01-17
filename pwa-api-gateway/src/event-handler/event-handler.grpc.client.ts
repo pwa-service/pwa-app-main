@@ -3,7 +3,6 @@ import {ClientGrpc} from '@nestjs/microservices';
 import {Metadata} from '@grpc/grpc-js';
 import {lastValueFrom} from 'rxjs';
 import {
-    PrepareInstallLinkDto,
     PwaFirstOpenDto,
     ViewContentDto
 } from "../../../pwa-shared/src";

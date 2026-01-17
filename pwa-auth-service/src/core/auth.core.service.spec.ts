@@ -3,7 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { AuthCoreService } from './auth.core.service';
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import { AuthRepository } from '../../../pwa-prisma/src/global/repository/auth.repository';
+import { AuthRepository } from './auth.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { PrismaService } from '../../../pwa-prisma/src';
 import * as bcrypt from 'bcryptjs';
