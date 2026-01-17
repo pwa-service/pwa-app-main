@@ -17,7 +17,7 @@ export interface UserRecord {
 
 @Injectable()
 export class GrpcAuthInterceptor implements NestInterceptor, OnModuleInit {
-    private authService: AuthGrpcService;
+    private authService!: AuthGrpcService;
 
     constructor(
         private readonly reflector: Reflector,
