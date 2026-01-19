@@ -141,6 +141,12 @@ services:
       - "traefik.http.routers.api-gateway.rule=Host(`pwaservice.space`)"
       - "traefik.http.routers.api-gateway.entrypoints=web"
       - "traefik.http.services.api-gateway.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=*"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolmaxage=600"
+      - "traefik.http.middlewares.api-cors.headers.addvaryheader=true"
+      - "traefik.http.routers.api-gateway.middlewares=api-cors@docker"
     networks:
       - pwa-network
     deploy:
