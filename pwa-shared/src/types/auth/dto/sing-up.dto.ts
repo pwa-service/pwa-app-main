@@ -12,7 +12,6 @@ export class SignUpDto {
     password!: string;
 
     @ApiProperty({ example: 'John' })
-    @IsOptional()
     @IsString()
     username!: string;
 }
