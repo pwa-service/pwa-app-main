@@ -156,7 +156,7 @@ func updateDestinationURL(filePath string, newURL string) error {
 	return nil
 }
 
-func updateNginxConfig(filePath string, domain string) error {
+func updateTraeficConfig(filePath string, domain string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		return errors.Wrap(err, "failed to stat config file")
@@ -170,6 +170,9 @@ func updateNginxConfig(filePath string, domain string) error {
 	configString := string(content)
 	newConfigString := strings.Replace(configString, "%s", domain, 2)
 
+	domainLabels := strings.Replace(domain, ".", "-", 1)
+	newConfigString = strings.Replace(newConfigString, "%f", strings.Replace(domainLabels, ".", "-", 1), 1)
+
 	err = os.WriteFile(filePath, []byte(newConfigString), fileMode)
 	if err != nil {
 		return errors.Wrap(err, "failed to write updated config file")
@@ -179,7 +182,7 @@ func updateNginxConfig(filePath string, domain string) error {
 	return nil
 }
 
-func runBuild(reactAppPath string, nginxConfSrc string, domain string) (string, error) {
+func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string, error) {
 	localBuildDir := fmt.Sprintf("../builds/pwa_vite_%s", domain)
 	err := copyDir(reactAppPath, localBuildDir)
 	if err != nil {
@@ -220,23 +223,23 @@ func runBuild(reactAppPath string, nginxConfSrc string, domain string) (string, 
 		return "", errors.Wrapf(err, "failed to create build output dir: %s", absLocalBuildDir)
 	}
 
-	nginxConfDest := path.Join(absLocalBuildDir, "dist/nginx.conf")
-	log.Printf("Copying nginx config to %s", absLocalBuildDir)
+	traeficConfDest := path.Join(absLocalBuildDir, "dist/docker-compose.yaml")
+	log.Printf("Copying docker config to %s", absLocalBuildDir)
 
-	srcInfo, err := os.Stat(nginxConfSrc)
+	srcInfo, err := os.Stat(traeficConfSrc)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stat nginxConfSrc for permissions")
+		return "", errors.Wrap(err, "failed to stat traeficConfSrc for permissions")
 	}
 
-	if err := copyFile(nginxConfSrc, nginxConfDest, srcInfo.Mode()); err != nil {
-		return "", errors.Wrapf(err, "failed to copy nginx.conf")
+	if err := copyFile(traeficConfSrc, traeficConfDest, srcInfo.Mode()); err != nil {
+		return "", errors.Wrapf(err, "failed to copy docker-compose.yaml")
 	}
 
-	err = updateNginxConfig(nginxConfDest, domain)
+	err = updateTraeficConfig(traeficConfDest, domain)
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Nginx config copied successfully.")
+	log.Printf("Traefic config copied successfully.")
 
 	log.Printf("BUILD SUCCESS.Output dir: %s", absLocalBuildDir)
 	return absLocalBuildDir, nil

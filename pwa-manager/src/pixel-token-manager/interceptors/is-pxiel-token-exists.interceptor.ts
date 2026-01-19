@@ -15,7 +15,6 @@ export class IsPixelTokenExistsInterceptor implements NestInterceptor {
 
         if (id) {
             const entity = await this.repo.findOne(id);
-
             if (!entity) {
                 throw new RpcException({
                     code: status.NOT_FOUND,
