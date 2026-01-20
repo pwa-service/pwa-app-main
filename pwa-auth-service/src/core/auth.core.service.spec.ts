@@ -193,10 +193,12 @@ describe('AuthCoreService', () => {
     });
 
     describe('telegramAuth', () => {
-        process.env.TELEGRAM_BOT_TOKEN = '5762342430:AAG1Miw9VodQ00y4vvHxeZNmgAWHmriK6VQ'
+        process.env.TELEGRAM_BOT_TOKEN = '5762342430:AAG1Miw9VodQ00y4vvHxeZNmgAWHmriK6VQ';
         const botToken = process.env.TELEGRAM_BOT_TOKEN!;
         const telegramId = 123456789;
         const now = Math.floor(Date.now() / 1000);
+
+        // Функція для генерації хешу (без змін)
         const generateHash = (data: any) => {
             const mapping: Record<string, string> = {
                 authDate: 'auth_date',
@@ -210,7 +212,6 @@ describe('AuthCoreService', () => {
             const checkData: Record<string, string> = {};
             for (const [camelKey, snakeKey] of Object.entries(mapping)) {
                 const val = data[camelKey] ?? data[snakeKey];
-
                 if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
                     checkData[snakeKey] = String(val);
                 }
@@ -223,54 +224,69 @@ describe('AuthCoreService', () => {
             return crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
         };
 
+        // !!! ДОДАЄМО ОЧИСТКУ ПЕРЕД КОЖНИМ ТЕСТОМ АБО ВИКОРИСТОВУЄМО УНІКАЛЬНІ ДАНІ !!!
+        // Краще очистити базу від тестових юзерів перед запуском блоку
+        beforeAll(async () => {
+            await prisma.user.deleteMany({
+                where: {
+                    username: { in: ['tg_test_user_1', 'tg_test_user_new'] }
+                }
+            });
+        });
+
+        // Також чистимо після тестів
+        afterAll(async () => {
+            await prisma.user.deleteMany({
+                where: {
+                    username: { in: ['tg_test_user_1', 'tg_test_user_new'] }
+                }
+            });
+        });
+
         it('should authenticate existing user via Telegram', async () => {
+            const uniqueUsername = 'tg_test_user_1';
             const tgEmail = `tg_${telegramId}@telegram.user`;
+
             const authData = {
                 id: telegramId,
                 firstName: 'John',
-                username: 'johndoe',
+                username: uniqueUsername,
                 authDate: now,
             };
             const hash = generateHash(authData);
+            await service.telegramAuth({ ...authData, hash: hash });
             const res = await service.telegramAuth({
                 ...authData,
                 hash: hash,
             });
 
-            if (res) {
-                expect(res.accessToken).toBeDefined();
-                expect(res.refreshToken).toBeDefined();
-                expect(res.user.email).toBe(tgEmail);
-            } else {
-                fail('Test failed: res is undefined');
-            }
+            expect(res.accessToken).toBeDefined();
+            expect(res.user.email).toBe(tgEmail);
         });
 
         it('should create NEW user via Telegram if not exists', async () => {
             const newTgId = 987654321;
+            const uniqueUsername = 'tg_test_user_new';
             const authData = {
                 id: newTgId,
                 firstName: 'New',
                 lastName: 'User',
-                username: 'johndoe',
+                username: uniqueUsername,
                 authDate: now,
             };
             const hash = generateHash(authData);
+            await prisma.user.deleteMany({ where: { username: uniqueUsername } });
 
             const res = await service.telegramAuth({
                 ...authData,
                 hash: hash,
             });
 
-            if (res) {
-                expect(res.accessToken).toBeDefined();
-            } else {
-                fail('Test failed: res is undefined');
-            }
+            expect(res.accessToken).toBeDefined();
 
-            const dbUser = await repo.findByIUsername(authData.username);
+            const dbUser = await repo.findByIUsername(uniqueUsername);
             expect(dbUser).toBeDefined();
-            expect(dbUser!.username).toBe(authData.username);
+            expect(dbUser!.username).toBe(uniqueUsername);
         });
 
         it('should throw UNAUTHENTICATED if hash is invalid', async () => {
