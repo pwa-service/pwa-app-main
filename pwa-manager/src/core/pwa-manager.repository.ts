@@ -9,12 +9,12 @@ export class PwaManagerRepository {
     constructor(private readonly prisma: PrismaService) {}
 
     async createApp(data: CreateAppDto) {
-        return this.prisma.pwaApp.create({
-            data: {
-                ...data,
-                status: PwaStatus.published
-            }
-        });
+        // return this.prisma.pwaApp.create({
+        //     data: {
+        //         ...data,
+        //         status: PwaStatus.published
+        //     }
+        // });
     }
 
 

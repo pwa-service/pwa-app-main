@@ -9,9 +9,9 @@ export class CreateAppDto {
     name!: string;
 
     @ApiProperty()
+    @IsString()
     @IsNotEmpty()
-    @IsUUID()
-    domainId!: string;
+    domain!: string;
 
     @ApiProperty()
     @IsNotEmpty()

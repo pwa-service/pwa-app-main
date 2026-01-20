@@ -210,6 +210,12 @@ func processMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON 
 		return
 	}
 
+	if err := transporter.RunDockerCompose(transporter.remoteBaseDir); err != nil {
+		log.Printf("SFTP running docker compose failed for %s: %v", jobData.AppID, err)
+		publishStatus(ctx, rdb, jobData.AppID, "ERROR", fmt.Sprintf("SFTP running failed: %v", err))
+		return
+	}
+
 	log.Printf("Job %s for App %s completed successfully.", jobData.AppID, jobData.AppID)
 	publishStatus(ctx, rdb, jobData.AppID, "SUCCESS", "")
 }

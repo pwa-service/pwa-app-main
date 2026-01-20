@@ -23,14 +23,14 @@ export class PwaManagerCoreService {
         // });
 
         await this.builderPub.createApp({
-            domain: data.domainId,
+            domain: data.domain,
             appId: "test",
 
         });
         return {
             name: data.name,
             appId: "test",
-            buildUrl: `https://${data.domainId}?pixel_id=1234567890&fbclid=XYZ123&utm_source=facebook&sub1=aff1&offer_id=777`
+            buildUrl: `https://${data.domain}?pixel_id=1234567890&fbclid=XYZ123&utm_source=facebook&sub1=aff1&offer_id=777`
         }
     }
 

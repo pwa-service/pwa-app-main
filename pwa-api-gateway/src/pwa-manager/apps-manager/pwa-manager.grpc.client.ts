@@ -21,6 +21,7 @@ export class PwaManagerGrpcClient implements OnModuleInit {
     }
 
     async createApp(dto: CreateAppDto, metadata?: Metadata) {
+        console.log(this.svc)
         return await lastValueFrom(this.svc.createApp(dto, metadata));
     }
 

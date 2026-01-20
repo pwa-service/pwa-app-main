@@ -202,3 +202,28 @@ func (u *SftpUploader) Close() error {
 	log.Println("SFTP: Connection closed successfully.")
 	return nil
 }
+
+func (u *SftpUploader) RunDockerCompose(remoteDir string) error {
+	if u.sshConn == nil {
+		return errors.New("SSH connection is nil. Cannot run commands.")
+	}
+
+	session, err := u.sshConn.NewSession()
+	if err != nil {
+		return errors.Wrap(err, "failed to create SSH session")
+	}
+	defer session.Close()
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	cmd := fmt.Sprintf("cd %s && docker compose down -v --remove-orphans --rmi local && docker compose up -d --build --force-recreate", remoteDir)
+
+	log.Printf("SSH: Executing clean redeploy command: %s", cmd)
+
+	if err := session.Run(cmd); err != nil {
+		return errors.Wrapf(err, "failed to run docker compose cleanup and start in %s", remoteDir)
+	}
+
+	log.Println("SSH: Docker compose redeploy executed successfully.")
+	return nil
+}
