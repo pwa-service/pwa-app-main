@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Status, User } from '@prisma/client';
+import { Status } from '@prisma/client';
 import { PrismaService } from '../../../pwa-prisma/src/prisma.service';
+import {CreateUserDto} from "../types/dto/create-user.dto";
 
 
 @Injectable()
@@ -29,11 +30,7 @@ export class AuthRepository {
         });
     }
 
-    async createUser(data: {
-        username: string;
-        email?: string;
-        passwordHash: string;
-    }) {
+    async createUser(data: CreateUserDto) {
         const user = {...data, status: Status.inactive}
         return this.prisma.user.create({ data: user });
     }

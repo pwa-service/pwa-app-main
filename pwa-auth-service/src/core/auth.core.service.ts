@@ -420,11 +420,11 @@ export class AuthCoreService {
             if (!user) {
                 const randomPassword = crypto.randomBytes(16).toString('hex');
                 const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
                 user = await this.repo.createUser({
                     email: telegramEmail,
                     passwordHash: hashedPassword,
-                    username: dto.username || `tg_user_${dto.id}`,
+                    username: dto.username || `${dto.username}`,
+                    tgId: BigInt(dto.id)
                 });
             }
 
