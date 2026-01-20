@@ -129,6 +129,7 @@ model User {
   passwordHash String?  @map("password_hash")
   email        String?
   status       Status   @default(inactive)
+  tgId         BigInt?
   createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations - Org
