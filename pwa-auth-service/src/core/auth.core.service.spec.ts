@@ -252,6 +252,7 @@ describe('AuthCoreService', () => {
                 id: newTgId,
                 firstName: 'New',
                 lastName: 'User',
+                username: 'johndoe',
                 authDate: now,
             };
             const hash = generateHash(authData);
@@ -267,9 +268,9 @@ describe('AuthCoreService', () => {
                 fail('Test failed: res is undefined');
             }
 
-            const dbUser = await repo.findByEmail(`tg_${newTgId}@telegram.user`);
+            const dbUser = await repo.findByIUsername(authData.username);
             expect(dbUser).toBeDefined();
-            expect(dbUser!.username).toBe(`tg_user_${newTgId}`);
+            expect(dbUser!.username).toBe(authData.username);
         });
 
         it('should throw UNAUTHENTICATED if hash is invalid', async () => {
