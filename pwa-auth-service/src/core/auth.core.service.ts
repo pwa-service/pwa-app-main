@@ -437,7 +437,7 @@ export class AuthCoreService {
             if (e instanceof RpcException) throw e;
             throw new RpcException({
                 code: status.INTERNAL,
-                message: 'Internal server error during Telegram authentication',
+                message: `Internal server error during Telegram authentication: ${e}`,
             });
         }
     }
