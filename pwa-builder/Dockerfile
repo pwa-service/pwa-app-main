@@ -14,7 +14,7 @@ WORKDIR /app
 RUN apk add --no-cache openssh-client libc6-compat
 COPY --from=builder /app/worker .
 
-COPY pwa-builder/nginx  ./nginx
+COPY pwa-builder/docker  ./docker
 RUN mkdir -p ./builds
 
 COPY pwa_vite ./pwa_vite

@@ -203,7 +203,7 @@ services:
       - SFTP_USER=eliot
       - SFTP_PASSWORD=Eliot_Password
       - REACT_APP_PATH=./pwa_vite
-      - NGINX_CONF_PATH=./nginx/nginx.conf
+      - TRAEFIC_CONF_PATH=./docker/docker-compose.yaml
       - REMOTE_BASE_DIR=/home/eliot/websites/apps
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
     depends_on:
