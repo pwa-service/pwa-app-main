@@ -8,8 +8,8 @@ import { PixelTokenGrpcClient } from './pixel-token.grpc.client';
 import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
 import {JwtAuthGuard} from "../../common/jwt-auth.guard";
 import {
-    CreatePixelTokenDto, UpdatePixelTokenDto
-} from "../../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto"; // Якщо потрібно
+    UpdatePixelTokenDto
+} from "../../../../pwa-shared/src";
 
 @ApiTags('Pixel Tokens')
 @Controller('pixel-token')

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
-import { lastValueFrom } from 'rxjs';
+import {lastValueFrom, Observable} from 'rxjs';
 import {
     SignUpDto,
     RefreshDto,
@@ -13,15 +13,15 @@ import {
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 
 interface AuthService {
-    signUp(data: SignUpDto, md?: Metadata, opts?: Record<string, any>): any;
-    signIn(data: SignInDto, md?: Metadata, opts?: Record<string, any>): any;
-    telegramAuth(data: TelegramAuthDto, md?: Metadata, opts?: Record<string, any>): any;
-    refresh(data: RefreshDto, md?: Metadata, opts?: Record<string, any>): any;
-    signOut(data: any, md?: Metadata, opts?: Record<string, any>): any;
-    requestPasswordReset(data: RequestRestorePasswordDto, md?: Metadata, opts?: Record<string, any>): any;
-    restorePassword(data: RestorePasswordDto, md?: Metadata, opts?: Record<string, any>): any;
-    confirmEmail(data: ConfirmEmailDto, md?: Metadata, opts?: Record<string, any>): any;
-    me(data: any, md?: Metadata, opts?: Record<string, any>): any;
+    SignUp(data: SignUpDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    SignIn(data: SignInDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    TelegramAuth(data: TelegramAuthDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    Refresh(data: RefreshDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    SignOut(data: any, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    RequestPasswordReset(data: RequestRestorePasswordDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    RestorePassword(data: RestorePasswordDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    ConfirmEmail(data: ConfirmEmailDto, md?: Metadata, opts?: Record<string, any>): Observable<any>;
+    Me(data: any, md?: Metadata, opts?: Record<string, any>): Observable<any>;
 }
 
 @Injectable()
@@ -33,38 +33,38 @@ export class AuthGrpcClient {
     }
 
     async signUp(dto: SignUpDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.signUp(dto, metadata));
+        return await lastValueFrom(this.svc.SignUp(dto, metadata));
     }
 
     async signIn(dto: SignInDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.signIn(dto, metadata));
+        return await lastValueFrom(this.svc.SignIn(dto, metadata));
     }
 
     async refresh(dto: RefreshDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.refresh(dto, metadata));
+        return await lastValueFrom(this.svc.Refresh(dto, metadata));
     }
 
     async signOut(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.signOut({}, metadata));
+        return await lastValueFrom(this.svc.SignOut({}, metadata));
     }
 
     async requestPasswordReset(dto: RequestRestorePasswordDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.requestPasswordReset(dto, metadata));
+        return await lastValueFrom(this.svc.RequestPasswordReset(dto, metadata));
     }
 
     async restorePassword(dto: RestorePasswordDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.restorePassword(dto, metadata));
+        return await lastValueFrom(this.svc.RestorePassword(dto, metadata));
     }
 
     async confirmEmail(dto: ConfirmEmailDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.confirmEmail(dto, metadata));
+        return await lastValueFrom(this.svc.ConfirmEmail(dto, metadata));
     }
 
     async me(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.me({}, metadata));
+        return await lastValueFrom(this.svc.Me({}, metadata));
     }
 
     async telegramAuth(dto: TelegramAuthDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.telegramAuth(dto, metadata));
+        return await lastValueFrom(this.svc.TelegramAuth(dto, metadata));
     }
 }

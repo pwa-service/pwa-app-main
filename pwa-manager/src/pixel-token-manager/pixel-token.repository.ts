@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {PrismaService} from "../../../pwa-prisma/src";
+import {Prisma, PrismaService} from "../../../pwa-prisma/src";
 import {
-    CreatePixelTokenDto, UpdatePixelTokenDto
-} from "../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
+    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
+} from "../../../pwa-shared/src";
 
 @Injectable()
 export class PixelTokenRepository {
@@ -12,13 +12,50 @@ export class PixelTokenRepository {
         return this.prisma.pixelToken.create({ data });
     }
 
-    async findAll(userId: string) {
-        return this.prisma.pixelToken.findMany({
-            orderBy: { createdAt: 'desc' },
-            where: {
-                ownerId: userId
-            }
-        });
+    async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, userId?: string) {
+        const { limit = 10, offset = 0 } = pagination;
+        const take = Number(limit);
+        const skip = Number(offset);
+
+        const where: Prisma.PixelTokenWhereInput = {};
+        if (userId) {
+            where.ownerId = userId;
+        }
+
+        if (filters.ownerUsername) {
+            where.owner = {
+                username: { contains: filters.ownerUsername, mode: 'insensitive' }
+            };
+        }
+
+        if (filters.search) {
+            where.OR = [
+                { token: { contains: filters.search, mode: 'insensitive' } },
+                { description: { contains: filters.search, mode: 'insensitive' } },
+                {
+                    owner: {
+                        username: { contains: filters.search, mode: 'insensitive' }
+                    }
+                }
+            ];
+        }
+
+        const [items, total] = await this.prisma.$transaction([
+            this.prisma.pixelToken.findMany({
+                where,
+                take,
+                skip,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    owner: {
+                        select: { username: true, email: true }
+                    }
+                }
+            }),
+            this.prisma.pixelToken.count({ where }),
+        ]);
+
+        return { items, total };
     }
 
     async findOne(id: string) {

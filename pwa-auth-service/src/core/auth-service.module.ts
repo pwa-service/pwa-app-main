@@ -12,7 +12,11 @@ import {getMailConfig} from "../mail/mail.config";
 import {MailerModule} from "@nestjs-modules/mailer";
 import {MonitoringModule} from "../../../pwa-shared/src/modules/monitoring/monitoring.module";
 import {makeCounterProvider} from "@willsoto/nestjs-prometheus";
-import {LocalAuthInterceptor} from "../interceptors/auth.interceptor";
+import {LocalAuthInterceptor} from "../common/interceptors/auth.interceptor";
+import {ClientsModule, Transport} from "@nestjs/microservices";
+import {join} from "path";
+
+const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
 
 @Module({
     imports: [
@@ -24,7 +28,26 @@ import {LocalAuthInterceptor} from "../interceptors/auth.interceptor";
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: getMailConfig,
-        })
+        }),
+        ClientsModule.register([
+            {
+                name: 'CAMPAIGN_PACKAGE',
+                transport: Transport.GRPC,
+                options: {
+                    package: 'org.campaign',
+                    protoPath: join(PROTO_DIR, 'org/campaign.proto'),
+                    url: process.env.PWA_ORG_SERVICE_GRPC_URL || 'localhost:50056',
+                    loader: {
+                        includeDirs: [PROTO_DIR],
+                        keepCase: false,
+                        longs: String,
+                        enums: String,
+                        defaults: true,
+                        oneofs: true,
+                    },
+                },
+            },
+        ]),
     ],
     controllers: [AuthGrpcController, JwksController],
     providers: [

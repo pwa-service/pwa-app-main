@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package org.team;
+
+import "org/common.proto";
+import "org/member.proto";
+import "shared.proto";
+
+service TeamService {
+    rpc Create (CreateTeamRequest) returns (TeamResponse);
+    rpc FindOne (org.common.ById) returns (TeamResponse);
+    rpc Update (UpdateTeamRequest) returns (TeamResponse);
+    rpc Delete (org.common.ById) returns (org.common.Empty);
+    rpc FindAll (ListTeamsRequest) returns (TeamListResponse);
+    rpc AddMemberToTeam (AddTeamMemberRequest) returns (org.member.MemberResponse);
+    rpc RemoveMember (RemoveTeamMemberRequest) returns (org.common.Empty);
+    rpc AssignTeamLead (AssignTeamLeadRequest) returns (TeamResponse);
+}
+
+message TeamFilters {
+    optional string search = 1;
+    optional string campaign_id = 2;
+    optional string lead_id = 3;
+}
+
+message ListTeamsRequest {
+    shared.PaginationParams pagination = 1;
+    TeamFilters filters = 2;
+}
+
+message TeamResponse {
+    string id = 1;
+    string name = 2;
+    string campaign_id = 3;
+    string lead_id = 4;
+    string created_at = 5;
+    repeated org.member.MemberResponse members = 6;
+}
+
+message CreateTeamRequest {
+    string name = 1;
+    string campaign_id = 2;
+    optional string lead_id = 3;
+}
+
+message UpdateTeamRequest {
+    string id = 1;
+    optional string name = 2;
+    optional string lead_id = 3;
+}
+
+message TeamListResponse {
+    repeated TeamResponse teams = 1;
+    int32 total = 2;
+}
+
+message AddTeamMemberRequest {
+    string team_id = 1;
+    string user_id = 2;
+    optional int32 role_id = 3;
+}
+
+message RemoveTeamMemberRequest {
+    string team_id = 1;
+    string user_id = 2;
+}
+
+message AssignTeamLeadRequest {
+    string team_id = 1;
+    string user_id = 2;
+}

@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package org.role;
+
+import "org/common.proto";
+import "org/member.proto"; // Для MemberResponse, якщо потрібно повертати результат призначення
+import "shared.proto";
+
+service RoleService {
+    rpc Create (CreateRoleRequest) returns (RoleResponse);
+    rpc FindOne (org.common.ById) returns (RoleResponse);
+    rpc FindAll (ListRolesRequest) returns (RoleListResponse);
+    rpc Update (UpdateRoleRequest) returns (RoleResponse);
+    rpc Delete (org.common.ById) returns (org.common.Empty);
+    rpc Assign (AssignRoleRequest) returns (org.common.Empty);
+}
+
+message GlobalRules {
+    string stat_access = 1;
+    string fin_access = 2;
+    string log_access = 3;
+    string users_access = 4;
+    bool sharing_access = 5;
+}
+
+message RoleResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    GlobalRules global_rules = 4;
+    bool is_system = 5;
+    string scope = 6;
+}
+
+message CreateRoleRequest {
+    string name = 1;
+    string description = 2;
+    GlobalRules global_rules = 3;
+}
+
+message UpdateRoleRequest {
+    string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional GlobalRules global_rules = 4;
+}
+
+message RoleFilters {
+    optional string search = 1;
+    optional string scope = 2;
+    optional string campaign_id = 3;
+    optional string team_id = 4;
+}
+
+message ListRolesRequest {
+    shared.PaginationParams pagination = 1;
+    RoleFilters filters = 2;
+}
+
+message RoleListResponse {
+    repeated RoleResponse roles = 1;
+    int32 total = 2;
+}
+
+message AssignRoleRequest {
+    string user_id = 1;
+    int32 role_id = 2;
+}

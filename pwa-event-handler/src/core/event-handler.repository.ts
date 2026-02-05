@@ -3,38 +3,38 @@ import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { PrismaService } from '../../../pwa-prisma/src';
 import { EventType } from '.prisma/client';
-import { MarkFirstOpenInput, UpsertSessionInput } from '../types/repository.types';
+import { MarkFirstOpenInput, UpsertSessionInput } from '../common/types/repository.types';
 
 @Injectable()
 export class EventHandlerRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async upsertSession(input: UpsertSessionInput) {
+    async upsertSession(data: UpsertSessionInput) {
         const pixelToken = await this.prisma.pixelToken.findUnique({
-            where: { id: input.pixelId.toString() },
+            where: { id: data.pixelId.toString() },
         });
 
         if (!pixelToken) {
             throw new RpcException({
                 code: status.NOT_FOUND,
-                message: `Pixel token with ID ${input.pixelId} not found.`,
+                message: `Pixel token with ID ${data.pixelId} not found.`,
             });
         }
 
-        if (!input.sessionId) {
+        if (!data.sessionId) {
             return this.prisma.pwaSession.create({
                 data: {
                     pixelId: pixelToken.id,
-                    queryStringRaw: input.queryStringRaw ?? null,
+                    queryStringRaw: data.queryStringRaw ?? null,
                 },
             });
         }
 
         return this.prisma.pwaSession.update({
-            where: { id: input.sessionId },
+            where: { id: data.sessionId },
             data: {
                 pixelId: pixelToken.id,
-                queryStringRaw: input.queryStringRaw ?? undefined,
+                queryStringRaw: data.queryStringRaw ?? undefined,
             },
         });
     }

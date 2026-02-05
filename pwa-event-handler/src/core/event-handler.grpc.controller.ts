@@ -1,13 +1,13 @@
 import {Controller, UseInterceptors} from '@nestjs/common';
 import {GrpcMethod, Payload} from '@nestjs/microservices';
 import { EventHandlerCoreService } from './event-handler.core.service';
-import { ViewContentEnrichmentPipe } from '../pipes/view-content.enrichment.pipe';
+import { ViewContentEnrichmentPipe } from '../common/pipes/view-content.enrichment.pipe';
 import {
   PwaFirstOpenDto,
   ViewContentDto,
   EventMeta
 } from "../../../pwa-shared/src";
-import {SessionExistsPipe} from "../pipes/session.pipe";
+import {SessionExistsPipe} from "../common/pipes/session.pipe";
 import {GrpcClientMetaInterceptor} from "../common/interceptors/grpc-client-meta.interceptor";
 
 

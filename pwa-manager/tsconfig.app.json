@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist/apps/event-handler",
+    "outDir": "../../dist/apps/pwa-manager",
     "target": "ES2019",
     "module": "CommonJS",
     "types": ["jest", "node"]

@@ -2,19 +2,20 @@ import { Module } from '@nestjs/common';
 import { PixelTokenController } from './pixel-token.controller';
 import { PixelTokenRepository } from './pixel-token.repository';
 import {PixelTokenService} from "./pixel-token.core.service";
-import {PrismaService} from "../../../pwa-prisma/src";
+import {PrismaModule, PrismaService} from "../../../pwa-prisma/src";
 import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
 import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
 import {APP_INTERCEPTOR} from "@nestjs/core";
 import {ClientsModule, Transport} from "@nestjs/microservices";
 import {join} from "path";
-import {IsPixelTokenExistsInterceptor} from "./interceptors/is-pxiel-token-exists.interceptor";
+import {IsPixelTokenExistsInterceptor} from "../common/interceptors/is-pxiel-token-exists.interceptor";
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
 @Module({
     imports: [
         GrpcAuthModule,
+        PrismaModule,
         ClientsModule.register([
             {
                 name: 'AUTH_PACKAGE',
@@ -40,8 +41,7 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
         IsPixelTokenExistsInterceptor,
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PixelTokenService,
-        PixelTokenRepository,
-        PrismaService,
+        PixelTokenRepository
     ],
     exports: [PixelTokenService],
 })

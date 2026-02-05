@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package shared;
+
+message PaginationParams {
+    int32 limit = 1;
+    int32 offset = 2;
+}

@@ -11,10 +11,10 @@ import {
   RequestRestorePasswordDto
 } from "../../../pwa-shared/src";
 import {AllowAnonymous} from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
-import {UserRecord} from "../../../pwa-shared/src";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
-import {LocalAuthInterceptor} from "../interceptors/auth.interceptor";
+import {LocalAuthInterceptor} from "../common/interceptors/auth.interceptor";
+import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 @Controller()
 @UseInterceptors(LocalAuthInterceptor)
@@ -25,6 +25,12 @@ export class AuthGrpcController {
   @GrpcMethod('AuthService', 'SignUp')
   async signUp(dto: SignUpDto) {
     return this.auth.signUp(dto);
+  }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'OrgSignUp')
+  async orgSignUp(dto: SignUpDto) {
+    return this.auth.orgSignUp(dto);
   }
 
   @AllowAnonymous()
@@ -65,7 +71,7 @@ export class AuthGrpcController {
   }
 
   @GrpcMethod('AuthService', 'SignOut')
-  async signOut(_empty: {}, md: Metadata, @GrpcUser() user: UserRecord | null) {
+  async signOut(_empty: {}, md: Metadata, @GrpcUser() user: UserPayload | null) {
     return this.auth.singOut(user?.id);
   }
 
@@ -76,7 +82,7 @@ export class AuthGrpcController {
   }
 
   @GrpcMethod('AuthService', 'Me')
-  async me(_empty: {}, md: Metadata, @GrpcUser() user: UserRecord | null) {
+  async me(_empty: {}, md: Metadata, @GrpcUser() user: UserPayload | null) {
     return user;
   }
 }

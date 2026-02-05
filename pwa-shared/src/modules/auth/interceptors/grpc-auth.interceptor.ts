@@ -4,15 +4,10 @@ import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { Metadata, status } from '@grpc/grpc-js';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap, map } from 'rxjs/operators';
+import {UserPayload} from "../../../types/auth/dto/user-payload.dto";
 
 interface AuthGrpcService {
-    validateToken(data: { token: string }): Observable<UserRecord>;
-}
-
-export interface UserRecord {
-    id: string;
-    email?: string;
-    username?: string;
+    validateToken(data: { token: string }): Observable<UserPayload>;
 }
 
 @Injectable()

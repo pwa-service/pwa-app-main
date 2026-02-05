@@ -2,9 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pwa/prisma": ["../pwa-prisma/src"],
+      "@pwa/prisma/*": ["../pwa-prisma/src/*"]
+    }
   },
   "include": ["src"]
 }
-

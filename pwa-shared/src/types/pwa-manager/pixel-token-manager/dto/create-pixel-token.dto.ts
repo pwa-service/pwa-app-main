@@ -16,9 +16,3 @@ export class CreatePixelTokenDto {
 
     ownerId: string;
 }
-
-export class UpdatePixelTokenDto extends PartialType(
-    OmitType(CreatePixelTokenDto, ['ownerId'] as const),
-) {
-    id?: string;
-}

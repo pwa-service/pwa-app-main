@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PwaManagerRepository } from './pwa-manager.repository';
 import { CreateAppDto } from '../../../pwa-shared/src'
-import {GeneratorPublisher} from "../bullmq/generator.publisher";
+import {GeneratorPublisher} from "../generator/generator.publisher";
 
 
 @Injectable()

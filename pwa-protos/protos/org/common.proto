@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package org.common;
+
+message Empty {}
+
+message ById {
+    string id = 1;
+}
+
+message StatsResponse {
+    int64 clicks = 1;
+    int64 conversions = 2;
+    double spend = 3;
+    double profit = 4;
+}

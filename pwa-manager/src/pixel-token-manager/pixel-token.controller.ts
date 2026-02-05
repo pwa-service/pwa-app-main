@@ -2,12 +2,13 @@ import {Controller, UseInterceptors} from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
 import {PixelTokenService} from "./pixel-token.core.service";
 import {
-    CreatePixelTokenDto, UpdatePixelTokenDto
-} from "../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
-import {GrpcAuthInterceptor, UserRecord} from "../../../pwa-shared/src/modules/auth/interceptors/grpc-auth.interceptor";
+    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
+} from "../../../pwa-shared/src";
+import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
-import {IsPixelTokenUnique} from "./pipes/is-pixel-token-unique.pipe";
-import {IsPixelTokenExistsInterceptor} from "./interceptors/is-pxiel-token-exists.interceptor";
+import {IsPixelTokenUnique} from "../common/pipes/is-pixel-token-unique.pipe";
+import {IsPixelTokenExistsInterceptor} from "../common/interceptors/is-pxiel-token-exists.interceptor";
+import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -15,13 +16,13 @@ export class PixelTokenController {
     constructor(private readonly service: PixelTokenService) {}
 
     @GrpcMethod('PixelTokenService', 'Create')
-    async create(@Payload(IsPixelTokenUnique) dto: CreatePixelTokenDto, @GrpcUser() user: UserRecord) {
-        return this.service.create(user.id, dto);
+    async create(@Payload(IsPixelTokenUnique) dto: CreatePixelTokenDto) {
+        return this.service.create(dto);
     }
 
     @GrpcMethod('PixelTokenService', 'FindAll')
-    async findAll(@GrpcUser() user: UserRecord) {
-        return this.service.findAll(user.id);
+    async findAll({ pagination, filters }: { pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto }, @GrpcUser() user: UserPayload) {
+        return this.service.findAll(pagination, filters, user.id);
     }
 
     @UseInterceptors(IsPixelTokenExistsInterceptor)
@@ -32,7 +33,7 @@ export class PixelTokenController {
 
     @UseInterceptors(IsPixelTokenExistsInterceptor)
     @GrpcMethod('PixelTokenService', 'Update')
-    async update(@Payload(IsPixelTokenUnique) dto: UpdatePixelTokenDto, @GrpcUser() user: UserRecord) {
+    async update(@Payload(IsPixelTokenUnique) dto: UpdatePixelTokenDto) {
         return this.service.update(dto);
     }
 

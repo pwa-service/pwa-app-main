@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package org.campaign;
+
+import "org/common.proto";
+import "shared.proto";
+
+service CampaignService {
+    rpc Create (CreateCampaignRequest) returns (CampaignResponse);
+    rpc FindOne (org.common.ById) returns (CampaignResponse);
+    rpc FindAll (ListCampaignsRequest) returns (CampaignListResponse);
+    rpc Update (UpdateCampaignRequest) returns (CampaignResponse);
+    rpc Delete (org.common.ById) returns (org.common.Empty);
+}
+
+message CampaignResponse {
+    string id = 1;
+    string name = 2;
+    string owner_id = 3;
+    string status = 4;
+    string description = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+
+message CreateCampaignRequest {
+    string name = 1;
+    string description = 2;
+    optional string owner_id = 3;
+}
+
+message UpdateCampaignRequest {
+    string id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string status = 4;
+}
+
+message ListCampaignsRequest {
+    shared.PaginationParams pagination = 1;
+    CampaignFilters filters = 2;
+}
+
+message CampaignFilters {
+    optional string search = 1;
+    optional string owner_username = 2;
+}
+
+message CampaignListResponse {
+    repeated CampaignResponse campaigns = 1;
+    int32 total = 2;
+}

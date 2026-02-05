@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PwaManagerController } from './pwa-manager.controller';
 import { PwaManagerCoreService } from './pwa-manager.core.service';
-import {GeneratorPubSubModule} from "../bullmq/generator.queue.module";
+import {GeneratorPubSubModule} from "../generator/generator.queue.module";
 import {PrismaModule} from "../../../pwa-prisma/src";
 import {PwaManagerRepository} from "./pwa-manager.repository";
 import { APP_INTERCEPTOR } from '@nestjs/core';

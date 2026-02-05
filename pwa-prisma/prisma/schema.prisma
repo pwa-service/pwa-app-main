@@ -16,6 +16,12 @@ enum Status {
   inactive
 }
 
+enum ScopeType {
+  SYSTEM
+  CAMPAIGN
+  TEAM
+}
+
 enum PwaStatus {
   draft
   published
@@ -77,6 +83,8 @@ enum WorkingObjectType {
   PWA
   FLOW
   PIXEL_TOKEN
+  TEAM // Додано
+  CAMPAIGN // Додано
 }
 
 enum ObjectRelationType {
@@ -105,65 +113,157 @@ enum WorkingObjectUserRelation {
 }
 
 // =========================
-// IAM / USERS / ORG
+// AUTH & IDENTITY (Base Layer)
+// =========================
+
+model UserProfile {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String?   @map("password_hash")
+  email        String?
+  status       Status    @default(inactive)
+  scope        ScopeType
+  tgId         BigInt?
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Context Identities
+  systemUser   SystemUser?
+  campaignUser CampaignUser?
+  teamUser     TeamUser?
+
+  // Logs & Tasks
+  auditLogs AuditLog[]
+  errorLogs ErrorLog[]
+  tasks     Task[]
+
+  // Sharing Interactions (Global Sharing)
+  sharesReceived ShareUserProfile[] @relation("UserProfileShares")
+  sharesCreated  ShareUserProfile[] @relation("UserProfileShareCreator")
+
+  // Ownership & Links
+  campaignsOwned   Campaign[]         @relation("LegalCampaignOwner")
+  PixelToken       PixelToken[]
+  PwaVersion       PwaVersion[]
+  FlowVersion      FlowVersion[]
+  PwaSession       PwaSession[]
+  EventLog         EventLog[]
+  GlobalAccessUser GlobalAccessUser[]
+
+  @@map("user_profiles")
+}
+
+// =========================
+// UNIFIED ROLE MANAGEMENT
 // =========================
 
 model Role {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique
-  isGlobal    Boolean @default(false) @map("is_global")
-  description String? @db.Text
+  id          Int       @id @default(autoincrement())
+  name        String
+  priority    Int       @default(100)
+  description String?   @db.Text
+  scope       ScopeType // SYSTEM | CAMPAIGN | TEAM
 
-  // Relations
-  userCampaignMemberships UserCampaignMembership[]
-  userTeamMemberships     UserTeamMembership[]
-  globalAccessRoles       GlobalAccessRole[]
-  sharesRoles             ShareRole[]
+  // Context Links
+  campaignId String? @map("campaign_id")
+  teamId     String? @map("team_id")
 
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  team     Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  // Permissions & Shares
+  accessProfile RoleAccess?
+  shares        ShareRole[]
+
+  // Members
+  systemUsers   SystemUser[]
+  campaignUsers CampaignUser[]
+  teamUsers     TeamUser[]
+
+  @@unique([name, campaignId, teamId])
   @@map("roles")
 }
 
-model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String?  @map("password_hash")
-  email        String?
-  status       Status   @default(inactive)
-  tgId         BigInt?
-  createdAt    DateTime @default(now()) @map("created_at")
+model RoleAccess {
+  id              String   @id @default(uuid())
+  roleId          Int      @unique @map("role_id")
+  accessProfileId String   @map("access_profile_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  // Relations - Org
-  campaignsOwned      Campaign[]               @relation("CampaignOwner")
-  teamsLed            Team[]                   @relation("TeamLead")
-  campaignMemberships UserCampaignMembership[]
-  teamMemberships     UserTeamMembership[]
+  role          Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
 
-  // Relations - Assets Ownership
-  domainsOwned     Domain[]
-  pixelTokensOwned PixelToken[]
-  pwaAppsOwned     PwaApp[]     @relation("PwaOwner")
-  flowsOwned       Flow[]       @relation("FlowOwner")
-
-  // Relations - Access & Working Objects
-  globalAccess       GlobalAccessUser?
-  workingObjectLinks WorkingObjectUser[]
-  sharesCreatedRole  ShareRole[]         @relation("ShareRoleCreator")
-  sharesCreatedUser  ShareUser[]         @relation("ShareUserCreator")
-  sharesReceived     ShareUser[]         @relation("UserShares")
-
-  // Relations - Operations (Creator/Changer)
-  pwaVersionsChanged  PwaVersion[]
-  flowVersionsCreated FlowVersion[]
-
-  // Relations - Analytics & Ops
-  pwaSessionsOwned PwaSession[]
-  eventLogsOwned   EventLog[]
-  tasks            Task[]
-  auditLogs        AuditLog[]
-  errorLogs        ErrorLog[]
-
-  @@map("users")
+  @@map("role_access")
 }
+
+// =========================
+// CONTEXT USERS
+// =========================
+
+model SystemUser {
+  id            String   @id @default(uuid())
+  userProfileId String   @unique @map("user_profile_id")
+  roleId        Int      @map("role_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  profile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  role    Role        @relation(fields: [roleId], references: [id])
+
+  @@map("system_users")
+}
+
+model CampaignUser {
+  id            String   @id @default(uuid())
+  userProfileId String   @unique @map("user_profile_id")
+  campaignId    String   @map("campaign_id")
+  roleId        Int      @map("role_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  profile  UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  campaign Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  role     Role        @relation(fields: [roleId], references: [id])
+
+  // Asset Creation
+  pwaAppsCreated PwaApp[] @relation("PwaCreator")
+  flowsCreated   Flow[]   @relation("FlowCreator")
+  domainsOwned   Domain[]
+
+  // Sharing Creator Links
+  sharesCreatedRole ShareRole[] @relation("ShareRoleCreator")
+
+  @@map("campaign_users")
+}
+
+model TeamUser {
+  id            String   @id @default(uuid())
+  userProfileId String   @unique @map("user_profile_id")
+  teamId        String   @map("team_id")
+  roleId        Int      @map("role_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  profile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  team    Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  role    Role        @relation(fields: [roleId], references: [id])
+
+  // Asset Creation
+  pwaAppsCreated PwaApp[] @relation("TeamPwaCreator")
+  flowsCreated   Flow[]   @relation("TeamFlowCreator")
+
+  // Sharing Creator Links
+  sharesCreatedRole ShareRole[] @relation("ShareRoleCreatorTeam")
+
+  // Operational Links (Specific Access to Working Objects)
+  workingObjectLinks WorkingObjectTeamUser[]
+
+  // Leadership
+  TeamLeaderOf Team[] @relation("TeamLeader")
+
+  @@map("team_users")
+}
+
+// =========================
+// ORG STRUCTURE
+// =========================
 
 model Admin {
   id           String   @id @default(uuid())
@@ -175,27 +275,27 @@ model Admin {
 }
 
 model Campaign {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  ownerId   String?  @map("owner_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  name         String   @unique
+  legalOwnerId String?  @map("legal_owner_id")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  // Relations
-  owner       User?                    @relation("CampaignOwner", fields: [ownerId], references: [id])
-  teams       Team[]
-  userMembers UserCampaignMembership[]
+  owner UserProfile? @relation("LegalCampaignOwner", fields: [legalOwnerId], references: [id])
+
+  teams   Team[]
+  members CampaignUser[]
+  roles   Role[]
+
   pwaApps     PwaApp[]
   flows       Flow[]
-
-  // Analytics & Ops
   pwaSessions PwaSession[]
   eventLogs   EventLog[]
   financials  Financial[]
   alerts      Alert[]
   tasks       Task[]
 
-  // Working Object Polymorph
-  workingObjectLinks WorkingObjectCampaign[]
+  // Link to itself as a Working Object (1:1)
+  workingObjectLink WorkingObjectCampaign?
 
   @@map("campaigns")
 }
@@ -208,106 +308,26 @@ model Team {
   sharePwaWithinTeam Boolean  @default(false) @map("share_pwa_within_team")
   createdAt          DateTime @default(now()) @map("created_at")
 
-  // Relations
-  campaign    Campaign             @relation(fields: [campaignId], references: [id])
-  teamLead    User?                @relation("TeamLead", fields: [teamLeadId], references: [id])
-  userMembers UserTeamMembership[]
+  campaign Campaign  @relation(fields: [campaignId], references: [id])
+  teamLead TeamUser? @relation("TeamLeader", fields: [teamLeadId], references: [id])
+
+  members TeamUser[]
+  roles   Role[]
+
   pwaApps     PwaApp[]
   flows       Flow[]
-
-  // Analytics
   pwaSessions PwaSession[]
   eventLogs   EventLog[]
 
-  // Working Object Polymorph
-  workingObjectLinks WorkingObjectTeam[]
+  // Link to itself as a Working Object (1:1)
+  workingObjectLink WorkingObjectTeam?
 
   @@map("teams")
 }
 
-model UserCampaignMembership {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  campaignId String   @map("campaign_id")
-  roleId     Int      @map("role_id")
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  user     User     @relation(fields: [userId], references: [id])
-  campaign Campaign @relation(fields: [campaignId], references: [id])
-  role     Role     @relation(fields: [roleId], references: [id])
-
-  @@unique([userId, campaignId])
-  @@map("user_campaign_memberships")
-}
-
-model UserTeamMembership {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  teamId    String   @map("team_id")
-  roleId    Int      @map("role_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id])
-  team Team @relation(fields: [teamId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-
-  @@unique([userId, teamId])
-  @@map("user_team_memberships")
-}
-
 // =========================
-// ACCESS MODEL
+// ASSETS
 // =========================
-
-model AccessProfile {
-  id   String @id @default(uuid())
-  name String @unique
-
-  statAccess    AccessLevel @default(View) @map("stat_access")
-  finAccess     AccessLevel @default(None) @map("fin_access")
-  logAccess     AccessLevel @default(None) @map("log_access")
-  crudAccess    AccessLevel @default(None) @map("crud_access")
-  sharingAccess Boolean     @default(false) @map("sharing_access")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  globalRoles GlobalAccessRole[]
-  globalUsers GlobalAccessUser[]
-  sharesRoles ShareRole[]
-  sharesUsers ShareUser[]
-
-  @@map("access_profiles")
-}
-
-model GlobalAccessRole {
-  id              String   @id @default(uuid())
-  roleId          Int      @map("role_id")
-  accessProfileId String   @map("access_profile_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  role          Role          @relation(fields: [roleId], references: [id])
-  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
-
-  @@unique([roleId])
-  @@map("global_access_role")
-}
-
-model GlobalAccessUser {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  accessProfileId String   @map("access_profile_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  user          User          @relation(fields: [userId], references: [id])
-  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
-
-  @@unique([userId])
-  @@map("global_access_user")
-}
 
 model Domain {
   id        String   @id @default(uuid())
@@ -318,8 +338,9 @@ model Domain {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  pwaApp    PwaApp     @relation(fields: [pwaAppId], references: [id])
-  owner     User       @relation(fields: [ownerId], references: [id])
+  pwaApp PwaApp        @relation(fields: [pwaAppId], references: [id])
+  owner  CampaignUser? @relation(fields: [ownerId], references: [id])
+
   eventLogs EventLog[]
 
   @@map("domains")
@@ -334,35 +355,41 @@ model PixelToken {
   createdAt   DateTime? @default(now()) @map("created_at")
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
-  owner User? @relation(fields: [ownerId], references: [id])
+  owner UserProfile? @relation(fields: [ownerId], references: [id])
 
-  // Relations
   pwaApps   PwaApp[]
   sessions  PwaSession[]
   eventLogs EventLog[]
 
-  // Working Object Polymorph
   workingObjectLink WorkingObjectPixelToken?
 
   @@map("pixel-token-manager")
 }
 
 model PwaApp {
-  id           String            @id @default(uuid())
-  name         String            @unique
-  status       PwaStatus         @default(draft)
-  campaignId   String            @map("campaign_id")
-  teamId       String?           @map("team_id")
-  ownerUserId  String            @map("owner_user_id")
-  pixelTokenId String?           @map("pixel_token_id")
-  domainId     String            @map("domain_id")
-  isDeleted    Boolean           @default(false) @map("is_deleted")
-  createdAt    DateTime?         @default(now()) @map("created_at")
-  updatedAt    DateTime?         @updatedAt @map("updated_at")
-  campaign     Campaign          @relation(fields: [campaignId], references: [id])
-  team         Team?             @relation(fields: [teamId], references: [id])
-  owner        User              @relation("PwaOwner", fields: [ownerUserId], references: [id])
-  pixelToken   PixelToken?       @relation(fields: [pixelTokenId], references: [id])
+  id           String    @id @default(uuid())
+  name         String    @unique
+  status       PwaStatus @default(draft)
+  campaignId   String    @map("campaign_id")
+  teamId       String?   @map("team_id")
+  pixelTokenId String?   @map("pixel_token_id")
+  domainId     String    @map("domain_id")
+  isDeleted    Boolean   @default(false) @map("is_deleted")
+
+  createdByCampaignUserId String? @map("created_by_campaign_user_id")
+  createdByTeamUserId     String? @map("created_by_team_user_id")
+
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  team     Team?    @relation(fields: [teamId], references: [id])
+
+  creatorCampaign CampaignUser? @relation("PwaCreator", fields: [createdByCampaignUserId], references: [id])
+  creatorTeam     TeamUser?     @relation("TeamPwaCreator", fields: [createdByTeamUserId], references: [id])
+
+  pixelToken PixelToken? @relation(fields: [pixelTokenId], references: [id])
+
   domains      Domain[]
   details      PwaDetails?
   contents     PwaContent[]
@@ -372,7 +399,6 @@ model PwaApp {
   sessions     PwaSession[]
   eventLogs    EventLog[]
 
-  // Working Object Polymorph
   workingObjectLink WorkingObjectPwa?
 
   @@map("pwa_apps")
@@ -426,28 +452,36 @@ model PwaVersion {
   changedBy     String?   @map("changed_by")
   createdAt     DateTime? @default(now()) @map("created_at")
 
-  pwaApp  PwaApp @relation(fields: [pwaAppId], references: [id])
-  changer User?  @relation(fields: [changedBy], references: [id])
+  pwaApp  PwaApp       @relation(fields: [pwaAppId], references: [id])
+  changer UserProfile? @relation(fields: [changedBy], references: [id])
 
   @@map("pwa_versions")
 }
 
 model Flow {
-  id              String     @id @default(uuid())
-  name            String
-  status          FlowStatus @default(draft)
-  campaignId      String     @map("campaign_id")
-  teamId          String?    @map("team_id")
-  ownerUserId     String     @map("owner_user_id")
-  pwaAppId        String?    @map("pwa_app_id")
-  activeVersionId String?    @map("active_version_id")
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  id     String     @id @default(uuid())
+  name   String
+  status FlowStatus @default(draft)
+
+  campaignId String  @map("campaign_id")
+  teamId     String? @map("team_id")
+
+  createdByCampaignUserId String? @map("created_by_campaign_user_id")
+  createdByTeamUserId     String? @map("created_by_team_user_id")
+
+  pwaAppId        String? @map("pwa_app_id")
+  activeVersionId String? @map("active_version_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   campaign Campaign @relation(fields: [campaignId], references: [id])
   team     Team?    @relation(fields: [teamId], references: [id])
-  owner    User     @relation("FlowOwner", fields: [ownerUserId], references: [id])
-  pwaApp   PwaApp?  @relation(fields: [pwaAppId], references: [id])
+
+  creatorCampaign CampaignUser? @relation("FlowCreator", fields: [createdByCampaignUserId], references: [id])
+  creatorTeam     TeamUser?     @relation("TeamFlowCreator", fields: [createdByTeamUserId], references: [id])
+
+  pwaApp PwaApp? @relation(fields: [pwaAppId], references: [id])
 
   versions      FlowVersion[] @relation("FlowVersions")
   activeVersion FlowVersion?  @relation("ActiveFlowVersion", fields: [activeVersionId], references: [id])
@@ -468,146 +502,13 @@ model FlowVersion {
   createdBy     String     @map("created_by")
   createdAt     DateTime   @default(now()) @map("created_at")
 
-  flow    Flow @relation("FlowVersions", fields: [flowId], references: [id])
-  creator User @relation(fields: [createdBy], references: [id])
+  flow    Flow        @relation("FlowVersions", fields: [flowId], references: [id])
+  creator UserProfile @relation(fields: [createdBy], references: [id])
 
   activeForFlows Flow[] @relation("ActiveFlowVersion")
 
   @@unique([flowId, versionNumber])
   @@map("flow_versions")
-}
-
-// =========================
-// WORKING OBJECTS (Polymorphic Access)
-// =========================
-
-model WorkingObject {
-  id        String            @id @default(uuid())
-  type      WorkingObjectType
-  status    Status            @default(active)
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
-
-  // Polymorphic Links
-  pwaLink        WorkingObjectPwa?
-  flowLink       WorkingObjectFlow?
-  pixelTokenLink WorkingObjectPixelToken?
-
-  // Context Links
-  campaignLinks WorkingObjectCampaign[]
-  teamLinks     WorkingObjectTeam[]
-  userLinks     WorkingObjectUser[]
-
-  // Shares
-  sharesRole ShareRole[]
-  sharesUser ShareUser[]
-
-  @@index([type])
-  @@map("working_objects")
-}
-
-model WorkingObjectPwa {
-  workingObjectId String @id @map("working_object_id")
-  pwaAppId        String @unique @map("pwa_app_id")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  pwaApp        PwaApp        @relation(fields: [pwaAppId], references: [id])
-
-  @@map("working_object_pwa")
-}
-
-model WorkingObjectFlow {
-  workingObjectId String @id @map("working_object_id")
-  flowId          String @unique @map("flow_id")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  flow          Flow          @relation(fields: [flowId], references: [id])
-
-  @@map("working_object_flow")
-}
-
-model WorkingObjectPixelToken {
-  workingObjectId String @id @map("working_object_id")
-  pixelTokenId    String @unique @map("pixel_token_id")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  pixelToken    PixelToken    @relation(fields: [pixelTokenId], references: [id])
-
-  @@map("working_object_pixel_token")
-}
-
-model WorkingObjectCampaign {
-  workingObjectId String @id @map("working_object_id")
-  campaignId      String @map("campaign_id")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  campaign      Campaign      @relation(fields: [campaignId], references: [id])
-
-  @@index([campaignId])
-  @@map("working_object_campaign")
-}
-
-model WorkingObjectTeam {
-  workingObjectId String   @map("working_object_id")
-  teamId          String   @map("team_id")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  team          Team          @relation(fields: [teamId], references: [id])
-
-  @@unique([workingObjectId, teamId])
-  @@index([teamId])
-  @@map("working_object_team")
-}
-
-model WorkingObjectUser {
-  workingObjectId String                    @map("working_object_id")
-  userId          String                    @map("user_id")
-  relation        WorkingObjectUserRelation @default(Owner)
-  createdAt       DateTime                  @default(now()) @map("created_at")
-
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  user          User          @relation(fields: [userId], references: [id])
-
-  @@unique([workingObjectId, userId, relation])
-  @@index([userId])
-  @@map("working_object_user")
-}
-
-model ShareRole {
-  id              String    @id @default(uuid())
-  roleId          Int       @map("role_id")
-  workingObjectId String    @map("working_object_id")
-  accessProfileId String    @map("access_profile_id")
-  createdBy       String    @map("created_by")
-  expiresAt       DateTime? @map("expires_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-
-  role          Role          @relation(fields: [roleId], references: [id])
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
-  creator       User          @relation("ShareRoleCreator", fields: [createdBy], references: [id])
-
-  @@unique([roleId, workingObjectId, accessProfileId])
-  @@map("shares_role")
-}
-
-model ShareUser {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  workingObjectId String    @map("working_object_id")
-  accessProfileId String    @map("access_profile_id")
-  createdBy       String    @map("created_by")
-  expiresAt       DateTime? @map("expires_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-
-  user          User          @relation("UserShares", fields: [userId], references: [id])
-  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id])
-  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
-  creator       User          @relation("ShareUserCreator", fields: [createdBy], references: [id])
-
-  @@unique([userId, workingObjectId, accessProfileId])
-  @@map("shares_user")
 }
 
 // =========================
@@ -633,20 +534,17 @@ model PwaSession {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Relations
-  pixelToken PixelToken @relation(fields: [pixelId], references: [id])
-  pwaApp     PwaApp?    @relation(fields: [pwaAppId], references: [id])
-  campaign   Campaign?  @relation(fields: [campaignId], references: [id])
-  team       Team?      @relation(fields: [teamId], references: [id])
-  owner      User?      @relation(fields: [ownerUserId], references: [id])
+  pixelToken PixelToken   @relation(fields: [pixelId], references: [id])
+  pwaApp     PwaApp?      @relation(fields: [pwaAppId], references: [id])
+  campaign   Campaign?    @relation(fields: [campaignId], references: [id])
+  team       Team?        @relation(fields: [teamId], references: [id])
+  owner      UserProfile? @relation(fields: [ownerUserId], references: [id])
 
-  // Relations to Logs (Specific)
   leadLog     EventLog? @relation("SessionLead", fields: [leadEventLogId], references: [id])
   regLog      EventLog? @relation("SessionReg", fields: [regEventLogId], references: [id])
   subLog      EventLog? @relation("SessionSub", fields: [subEventLogId], references: [id])
   firstDepLog EventLog? @relation("SessionFirstDep", fields: [firstDepEventLogId], references: [id])
 
-  // Relation to ALL logs
   allLogs   EventLog[] @relation("SessionLogs")
   errorLogs ErrorLog[]
 
@@ -667,9 +565,64 @@ model SessionDeposit {
   @@map("session_deposits")
 }
 
-// =========================
-// GEO DICTIONARIES
-// =========================
+model EventLog {
+  id          String  @id @default(uuid())
+  sessionId   String? @map("session_id")
+  pixelId     String  @map("pixel_id")
+  campaignId  String? @map("campaign_id")
+  teamId      String? @map("team_id")
+  ownerUserId String? @map("owner_user_id")
+  pwaAppId    String? @map("pwa_app_id")
+  flowId      String? @map("flow_id")
+
+  eventType EventType @map("event_type")
+  eventId   String    @map("event_id")
+  status    LogStatus
+
+  installId String? @map("install_id")
+  fbclid    String?
+  rawQuery  String? @map("raw_query")
+  regionId  String? @map("region_id")
+  countryId String? @map("country_id")
+
+  os          DeviceOs?
+  deviceType  DeviceType? @map("device_type")
+  browser     String?
+  ipAddress   String?     @map("ip_address")
+  userAgent   String?     @map("user_agent")
+  language    String?
+  domainId    String?     @map("domain_id")
+  isWhitepage Boolean?    @default(false) @map("is_whitepage")
+
+  responseData String?  @map("response_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  session    PwaSession?  @relation("SessionLogs", fields: [sessionId], references: [id])
+  pixelToken PixelToken   @relation(fields: [pixelId], references: [id])
+  campaign   Campaign?    @relation(fields: [campaignId], references: [id])
+  team       Team?        @relation(fields: [teamId], references: [id])
+  owner      UserProfile? @relation(fields: [ownerUserId], references: [id])
+
+  pwaApp PwaApp? @relation(fields: [pwaAppId], references: [id])
+  flow   Flow?   @relation(fields: [flowId], references: [id])
+
+  domain  Domain?  @relation(fields: [domainId], references: [id])
+  region  Region?  @relation(fields: [regionId], references: [id])
+  country Country? @relation(fields: [countryId], references: [id])
+
+  sessionAsLead     PwaSession? @relation("SessionLead")
+  sessionAsReg      PwaSession? @relation("SessionReg")
+  sessionAsSub      PwaSession? @relation("SessionSub")
+  sessionAsFirstDep PwaSession? @relation("SessionFirstDep")
+
+  deposits SessionDeposit[]
+
+  @@unique([pixelId, eventId])
+  @@index([campaignId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([regionId, createdAt])
+  @@map("event_logs")
+}
 
 model Country {
   id        String     @id @default(uuid())
@@ -698,69 +651,266 @@ model Region {
   @@map("regions")
 }
 
-model EventLog {
-  id          String  @id @default(uuid())
-  sessionId   String? @map("session_id")
-  pixelId     String  @map("pixel_id")
-  campaignId  String? @map("campaign_id")
-  teamId      String? @map("team_id")
-  ownerUserId String? @map("owner_user_id")
-  pwaAppId    String? @map("pwa_app_id")
-  flowId      String? @map("flow_id")
+// =========================
+// WORKING OBJECTS
+// =========================
 
-  eventType EventType @map("event_type")
-  eventId   String    @map("event_id")
-  status    LogStatus
+model WorkingObject {
+  id        String            @id @default(uuid())
+  type      WorkingObjectType
+  status    Status            @default(active)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
 
-  installId String? @map("install_id")
-  fbclid    String?
-  rawQuery  String? @map("raw_query")
-  regionId  String? @map("region_id")
+  // Polymorphic Links
+  pwaLink        WorkingObjectPwa?
+  flowLink       WorkingObjectFlow?
+  pixelTokenLink WorkingObjectPixelToken?
+  teamLink       WorkingObjectTeam? // 1:1 Link
+  campaignLink   WorkingObjectCampaign? // 1:1 Link
 
-  os          DeviceOs?
-  deviceType  DeviceType? @map("device_type")
-  browser     String?
-  ipAddress   String?     @map("ip_address")
-  userAgent   String?     @map("user_agent")
-  language    String?
-  domainId    String?     @map("domain_id")
-  isWhitepage Boolean?    @default(false) @map("is_whitepage")
+  // Direct Permissions (Shares)
+  sharesRole        ShareRole[]
+  sharesUserProfile ShareUserProfile[]
 
-  responseData String?  @map("response_data")
-  createdAt    DateTime @default(now()) @map("created_at")
+  // Access Links for Specific Team Users
+  teamUserLinks WorkingObjectTeamUser[]
 
-  // Relations
-  session    PwaSession? @relation("SessionLogs", fields: [sessionId], references: [id])
-  pixelToken PixelToken  @relation(fields: [pixelId], references: [id])
-  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
-  team       Team?       @relation(fields: [teamId], references: [id])
-  owner      User?       @relation(fields: [ownerUserId], references: [id])
-  pwaApp     PwaApp?     @relation(fields: [pwaAppId], references: [id])
-  flow       Flow?       @relation(fields: [flowId], references: [id])
+  @@index([type])
+  @@map("working_objects")
+}
 
-  domain Domain? @relation(fields: [domainId], references: [id])
-  region Region? @relation(fields: [regionId], references: [id])
+model WorkingObjectPwa {
+  workingObjectId String @id @map("working_object_id")
+  pwaAppId        String @unique @map("pwa_app_id")
 
-  // REMOVED: sessionAsFirstOpen relation
-  sessionAsLead     PwaSession? @relation("SessionLead")
-  sessionAsReg      PwaSession? @relation("SessionReg")
-  sessionAsSub      PwaSession? @relation("SessionSub")
-  sessionAsFirstDep PwaSession? @relation("SessionFirstDep")
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  pwaApp        PwaApp        @relation(fields: [pwaAppId], references: [id], onDelete: Cascade)
 
-  deposits  SessionDeposit[]
-  Country   Country?         @relation(fields: [countryId], references: [id])
-  countryId String?
+  @@map("working_object_pwa")
+}
 
-  @@unique([pixelId, eventId])
-  @@index([campaignId, createdAt])
-  @@index([eventType, createdAt])
-  @@index([regionId, createdAt])
-  @@map("event_logs")
+model WorkingObjectFlow {
+  workingObjectId String @id @map("working_object_id")
+  flowId          String @unique @map("flow_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  flow          Flow          @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@map("working_object_flow")
+}
+
+model WorkingObjectPixelToken {
+  workingObjectId String @id @map("working_object_id")
+  pixelTokenId    String @unique @map("pixel_token_id")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  pixelToken    PixelToken    @relation(fields: [pixelTokenId], references: [id], onDelete: Cascade)
+
+  @@map("working_object_pixel_token")
+}
+
+model WorkingObjectCampaign {
+  workingObjectId String @id @map("working_object_id")
+  campaignId      String @unique @map("campaign_id") // 1:1
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  campaign      Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("working_object_campaign")
+}
+
+model WorkingObjectTeam {
+  workingObjectId String   @id @map("working_object_id")
+  teamId          String   @unique @map("team_id") // 1:1
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("working_object_team")
+}
+
+// Rename from WorkingObjectUser to WorkingObjectTeamUser
+// to explicitly show this links a TeamUser to a resource
+model WorkingObjectTeamUser {
+  workingObjectId String                    @map("working_object_id")
+  teamUserId      String                    @map("team_user_id") // FK to TeamUser
+  relation        WorkingObjectUserRelation @default(Owner)
+  createdAt       DateTime                  @default(now()) @map("created_at")
+
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  teamUser      TeamUser      @relation(fields: [teamUserId], references: [id], onDelete: Cascade)
+
+  @@unique([workingObjectId, teamUserId, relation])
+  @@index([teamUserId])
+  @@map("working_object_team_user")
 }
 
 // =========================
-// FINANCE / OPS
+// SHARES (Unified Role Sharing)
 // =========================
+
+model ShareRole {
+  id              String @id @default(uuid())
+  roleId          Int    @map("role_id")
+  workingObjectId String @map("working_object_id")
+  accessProfileId String @map("access_profile_id")
+
+  // Who created this share (Optional relations)
+  createdByCampaignUserId String? @map("created_by_campaign_user_id")
+  createdByTeamUserId     String? @map("created_by_team_user_id")
+
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  role          Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+
+  creatorCampaign CampaignUser? @relation("ShareRoleCreator", fields: [createdByCampaignUserId], references: [id])
+  creatorTeam     TeamUser?     @relation("ShareRoleCreatorTeam", fields: [createdByTeamUserId], references: [id])
+
+  @@unique([roleId, workingObjectId, accessProfileId])
+  @@map("shares_role")
+}
+
+model ShareUserProfile {
+  id              String    @id @default(uuid())
+  userProfileId   String    @map("user_profile_id")
+  workingObjectId String    @map("working_object_id")
+  accessProfileId String    @map("access_profile_id")
+  createdBy       String    @map("created_by")
+  expiresAt       DateTime? @map("expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  userProfile   UserProfile   @relation("UserProfileShares", fields: [userProfileId], references: [id], onDelete: Cascade)
+  workingObject WorkingObject @relation(fields: [workingObjectId], references: [id], onDelete: Cascade)
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+  creator       UserProfile   @relation("UserProfileShareCreator", fields: [createdBy], references: [id])
+
+  @@unique([userProfileId, workingObjectId, accessProfileId])
+  @@map("shares_user_profile")
+}
+
+// =========================
+// ACCESS PROFILE (Permissions)
+// =========================
+
+model GlobalAccessRules {
+  id String @id @default(uuid())
+
+  statAccess    AccessLevel @default(View) @map("stat_access")
+  finAccess     AccessLevel @default(None) @map("fin_access")
+  logAccess     AccessLevel @default(None) @map("log_access")
+  usersAccess   AccessLevel @default(None) @map("users_access")
+  sharingAccess Boolean     @default(false) @map("sharing_access")
+
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  accessProfiles AccessProfile[]
+
+  @@map("global_access_rules")
+}
+
+model CrudAccessRules {
+  id String @id @default(uuid())
+
+  read   Boolean @default(true)
+  update Boolean @default(false)
+  delete Boolean @default(false)
+  create Boolean @default(false)
+
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  accessProfiles AccessProfile[]
+
+  @@map("crud_access_rules")
+}
+
+model AccessProfile {
+  id   String @id @default(uuid())
+  name String @unique
+
+  globalRulesId String? @map("global_rules_id")
+  crudRulesId   String? @map("crud_rules_id")
+
+  globalRules GlobalAccessRules? @relation(fields: [globalRulesId], references: [id])
+  crudRules   CrudAccessRules?   @relation(fields: [crudRulesId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  roleAccess         RoleAccess[]
+  sharesRoles        ShareRole[]
+  sharesUserProfiles ShareUserProfile[]
+  GlobalAccessUser   GlobalAccessUser[]
+
+  @@map("access_profiles")
+}
+
+model GlobalAccessUser {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  accessProfileId String   @map("access_profile_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user          UserProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessProfile AccessProfile @relation(fields: [accessProfileId], references: [id])
+
+  @@unique([userId])
+  @@map("global_access_user")
+}
+
+// =========================
+// LOGS
+// =========================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user UserProfile? @relation(fields: [userId], references: [id])
+
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model Task {
+  id         String      @id @default(uuid())
+  campaignId String?     @map("campaign_id")
+  userId     String?     @map("user_id")
+  title      String?
+  status     TaskStatus?
+  priority   String?
+  dueDate    DateTime?   @map("due_date")
+  createdAt  DateTime?   @default(now()) @map("created_at")
+
+  campaign Campaign?    @relation(fields: [campaignId], references: [id])
+  user     UserProfile? @relation(fields: [userId], references: [id])
+
+  @@map("tasks")
+}
+
+model ErrorLog {
+  id        String     @id @default(uuid())
+  level     ErrorLevel @default(info)
+  message   String
+  stack     String?    @db.Text
+  service   String?
+  userId    String?    @map("user_id")
+  sessionId String?    @map("session_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  user    UserProfile? @relation(fields: [userId], references: [id])
+  session PwaSession?  @relation(fields: [sessionId], references: [id])
+
+  @@map("error_logs")
+}
 
 model Financial {
   id              String   @id @default(uuid())
@@ -769,8 +919,7 @@ model Financial {
   payouts         Decimal  @default(0.00) @db.Decimal(10, 2)
   profit          Decimal  @default(0.00) @db.Decimal(10, 2)
   transactionDate DateTime @map("transaction_date") @db.Date
-
-  campaign Campaign @relation(fields: [campaignId], references: [id])
+  campaign        Campaign @relation(fields: [campaignId], references: [id])
 
   @@index([campaignId, transactionDate])
   @@map("financials")
@@ -784,53 +933,7 @@ model Alert {
   severity   ErrorLevel?
   isResolved Boolean     @default(false) @map("is_resolved")
   createdAt  DateTime?   @default(now()) @map("created_at")
-
-  campaign Campaign? @relation(fields: [campaignId], references: [id])
+  campaign   Campaign?   @relation(fields: [campaignId], references: [id])
 
   @@map("alerts")
-}
-
-model Task {
-  id         String      @id @default(uuid())
-  campaignId String?     @map("campaign_id")
-  userId     String?     @map("user_id")
-  title      String?
-  status     TaskStatus?
-  priority   String?
-  dueDate    DateTime?   @map("due_date")
-  createdAt  DateTime?   @default(now()) @map("created_at")
-
-  campaign Campaign? @relation(fields: [campaignId], references: [id])
-  user     User?     @relation(fields: [userId], references: [id])
-
-  @@map("tasks")
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id")
-  action    String
-  metadata  Json?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User? @relation(fields: [userId], references: [id])
-
-  @@index([action, createdAt])
-  @@map("audit_logs")
-}
-
-model ErrorLog {
-  id        String     @id @default(uuid())
-  level     ErrorLevel @default(info)
-  message   String
-  stack     String?    @db.Text
-  service   String?
-  userId    String?    @map("user_id")
-  sessionId String?    @map("session_id")
-  createdAt DateTime   @default(now()) @map("created_at")
-
-  user    User?       @relation(fields: [userId], references: [id])
-  session PwaSession? @relation(fields: [sessionId], references: [id])
-
-  @@map("error_logs")
 }

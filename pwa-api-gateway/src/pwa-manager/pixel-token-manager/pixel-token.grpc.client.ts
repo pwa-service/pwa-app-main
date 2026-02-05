@@ -4,7 +4,7 @@ import { Metadata } from '@grpc/grpc-js';
 import { lastValueFrom, Observable } from 'rxjs';
 import {
     CreatePixelTokenDto, UpdatePixelTokenDto
-} from "../../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
+} from "../../../../pwa-shared/src";
 
 
 interface PixelTokenService {

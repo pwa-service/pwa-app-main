@@ -1,33 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
-    CreatePixelTokenDto, UpdatePixelTokenDto
-} from "../../../pwa-shared/src/types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto";
+    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
+} from "../../../pwa-shared/src";
 import {PixelTokenRepository} from "./pixel-token.repository";
 
 
 @Injectable()
 export class PixelTokenService {
     constructor(private readonly repository: PixelTokenRepository) {}
-    async create(ownerId: string, dto: CreatePixelTokenDto) {
-        return this.repository.create({
-            id: dto.id,
-            token: dto.token,
-            description: dto.description,
-            ownerId
-        });
+    async create(dto: CreatePixelTokenDto) {
+        return this.repository.create(dto);
     }
 
-    async findAll(userId: string) {
-        const pixelTokens = await this.repository.findAll(userId);
+    async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, userId: string) {
+        const pixelTokens = await this.repository.findAll(pagination, filters, userId);
         return {
             pixelTokens
         }
     }
 
     async findOne(id: string) {
-        const token = await this.repository.findOne(id);
-        if (!token) throw new NotFoundException(`Token ${id} not found`);
-        return token;
+        return await this.repository.findOne(id);
     }
 
     async update(dto: UpdatePixelTokenDto) {

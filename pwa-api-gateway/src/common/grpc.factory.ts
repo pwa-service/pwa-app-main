@@ -45,7 +45,7 @@ export const appsManager: ClientProviderOptions = {
     transport: Transport.GRPC,
     options: {
         package: 'pwa_apps_manager.v1',
-        protoPath: join(PROTOS_DIR, 'pwa_apps_manager.proto'),
+        protoPath: join(PROTOS_DIR, 'pwa-manager', 'pwa_apps_manager.proto'),
         url: process.env.PWA_MANAGER_GRPC_URL || 'localhost:50055',
         loader: {
             includeDirs: [PROTOS_DIR],
@@ -63,11 +63,44 @@ export const pixelTokenManager: ClientProviderOptions = {
     transport: Transport.GRPC,
     options: {
         package: 'pixel_token.v1',
-        protoPath: join(PROTOS_DIR, 'pixel_token_manager.proto'),
+        protoPath: join(PROTOS_DIR, 'pwa-manager', 'pixel_token_manager.proto'),
         url: process.env.PWA_MANAGER_GRPC_URL || 'localhost:50055',
         loader: {
             includeDirs: [PROTOS_DIR],
             keepCase: false,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true,
+        },
+    },
+};
+
+
+export const orgClient: ClientProviderOptions = {
+    name: 'ORG_SERVICE_GRPC',
+    transport: Transport.GRPC,
+    options: {
+        package: [
+            'org.campaign',
+            'org.team',
+            'org.member',
+            'org.role',
+            'org.common',
+            'org.sharing',
+        ],
+        protoPath: [
+            join(PROTOS_DIR, 'org/campaign.proto'),
+            join(PROTOS_DIR, 'org/team.proto'),
+            join(PROTOS_DIR, 'org/member.proto'),
+            join(PROTOS_DIR, 'org/role.proto'),
+            join(PROTOS_DIR, 'org/common.proto'),
+            join(PROTOS_DIR, 'org/sharing.proto'),
+        ],
+        url: process.env.PWA_ORG_SERVICE_GRPC_URL || '0.0.0.0:50056',
+        loader: {
+            includeDirs: [PROTOS_DIR],
+            keepCase: true,
             longs: String,
             enums: String,
             defaults: true,

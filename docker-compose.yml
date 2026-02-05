@@ -7,7 +7,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -33,6 +33,7 @@ services:
     environment:
       - PORT=4040
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - PWA_ORG_SERVICE_GRPC_URL=org-service:50056
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       - REDIS_HOST=redis
@@ -130,6 +131,7 @@ services:
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - PWA_MANAGER_GRPC_URL=pwa-manager:50055
+      - PWA_ORG_GRPC_URL=org-service:50056
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
@@ -188,6 +190,39 @@ services:
           cpus: "0.3"
           memory: "0.6g"
 
+  org-service:
+    build:
+      context: .
+      dockerfile: pwa-org-service/Dockerfile
+    container_name: org-service
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PWA_ORG_SERVICE_GRPC_URL=org-service:50056
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - QUEUE_NAME=BUILD_QUEUE
+      - QUEUE_PREFIX=pwa
+      - AUTH_ISSUER=https://pwaservice.space/
+      - AUTH_AUDIENCE=api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: "0.6g"
+
   pwa-builder:
     build:
       context: .
@@ -205,7 +240,6 @@ services:
       - REACT_APP_PATH=./pwa_vite
       - TRAEFIC_CONF_PATH=./docker/docker-compose.yaml
       - REMOTE_BASE_DIR=/home/eliot/websites/apps
-      - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
     depends_on:
       redis:
         condition: service_healthy

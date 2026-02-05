@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package org.sharing;
+
+import "org/common.proto";
+
+service SharingService {
+    rpc ShareWithRole (ShareWithRoleRequest) returns (ShareResponse);
+    rpc ShareWithUser (ShareWithUserRequest) returns (ShareResponse);
+    rpc GetObjectShares (GetObjectSharesRequest) returns (GetObjectSharesResponse);
+    rpc RevokeShare (RevokeShareRequest) returns (org.common.Empty);
+}
+
+message ShareWithRoleRequest {
+    string working_object_id = 1;
+    int32 role_id = 2;
+    string access_profile_id = 3;
+    optional string created_by_campaign_user_id = 4;
+    optional string created_by_team_user_id = 5;
+    optional string expires_at = 6;
+}
+
+message ShareWithUserRequest {
+    string working_object_id = 1;
+    string target_user_profile_id = 2;
+    string access_profile_id = 3;
+    string created_by_user_profile_id = 4;
+    optional string expires_at = 5;
+}
+
+message ShareResponse {
+    bool success = 1;
+    string share_id = 2;
+}
+
+message GetObjectSharesRequest {
+    string working_object_id = 1;
+}
+
+message ShareDTO {
+    string id = 1;
+    string type = 2;
+    string target_id = 3;
+    string target_name = 4;
+    string access_profile_name = 5;
+    optional string expires_at = 6;
+}
+
+message GetObjectSharesResponse {
+    repeated ShareDTO shares = 1;
+}
+
+message RevokeShareRequest {
+    string share_id = 1;
+    string type = 2;
+}

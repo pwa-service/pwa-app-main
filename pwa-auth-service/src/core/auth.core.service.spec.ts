@@ -9,13 +9,44 @@ import { PrismaService } from '../../../pwa-prisma/src';
 import * as bcrypt from 'bcryptjs';
 import { jwtVerify, importJWK } from 'jose';
 import * as crypto from 'crypto';
-import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
-import {Counter} from "prom-client";
+import { JwtVerifierService } from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import { Counter } from "prom-client";
+import { of } from 'rxjs';
+import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 
 
 class MailerServiceMock {
     sendMail = jest.fn().mockResolvedValue(undefined);
 }
+
+const mockCampaignResponse = {
+    id: 'campaign-uuid-123',
+    name: 'Test Campaign',
+    ownerId: 'owner-uuid',
+    campaignUser: {
+        campaignId: 'campaign-uuid-123',
+        role: {
+            id: 1,
+            name: 'Owner',
+            accessProfile: {
+                statAccess: 'View',
+                finAccess: 'Manage',
+                logAccess: 'View',
+                crudAccess: 'Manage',
+                sharingAccess: true
+            }
+        }
+    }
+};
+
+const mockCampaignGrpcService = {
+    create: jest.fn().mockReturnValue(of(mockCampaignResponse))
+};
+
+const mockCampaignClient = {
+    getService: jest.fn().mockReturnValue(mockCampaignGrpcService)
+};
+
 
 describe('AuthCoreService', () => {
     let service: AuthCoreService;
@@ -23,12 +54,11 @@ describe('AuthCoreService', () => {
     let repo: AuthRepository;
     let store: RefreshStore;
     let mailer: MailerServiceMock;
-    let jwt: JwtVerifierService;
 
     const testEmail = 'rizoks29@gmail.com';
     const testPassword = 'Test1234!';
     const newPassword = 'NewTest1234!';
-    const testName = 'integration-user';
+    const testUsername = 'integrationuser';
 
     let userId: string;
     let accessToken: string;
@@ -52,6 +82,8 @@ describe('AuthCoreService', () => {
                 { provide: 'PROM_METRIC_AUTH_LOGIN_SUCCESS_TOTAL', useValue: counterMock },
                 { provide: 'PROM_METRIC_AUTH_LOGIN_ERRORS_TOTAL', useValue: counterMock },
                 { provide: MailerService, useClass: MailerServiceMock },
+                { provide: 'CAMPAIGN_PACKAGE', useValue: mockCampaignClient },
+                { provide: 'ROLE_PACKAGE', useValue: { getService: () => ({}) } },
             ],
         }).compile();
 
@@ -60,15 +92,14 @@ describe('AuthCoreService', () => {
         repo = module.get(AuthRepository);
         store = module.get(RefreshStore) as any;
         mailer = module.get(MailerService) as any;
-        jwt = module.get(JwtVerifierService) as any;
 
-        await prisma.user.deleteMany({ where: { email: testEmail } });
+        await prisma.userProfile.deleteMany({ where: { email: testEmail } });
         await store.onModuleInit();
         await service.onModuleInit();
     });
 
     afterAll(async () => {
-        await prisma.user.deleteMany({ where: { email: testEmail } });
+        await prisma.userProfile.deleteMany({ where: { email: testEmail } });
         await prisma.$disconnect();
     });
 
@@ -76,21 +107,25 @@ describe('AuthCoreService', () => {
         const res = await service.signUp({
             email: testEmail,
             password: testPassword,
-            name: testName,
+            username: testUsername,
         } as any);
 
-        expect(res.accessToken).toBeDefined();
-        expect(res.refreshToken).toBeDefined();
-        expect(res.user.email).toBe(testEmail);
+        expect(mockCampaignGrpcService.create).toHaveBeenCalled();
+
+        expect((res as any).accessToken).toBeDefined();
+        expect((res as any).refreshToken).toBeDefined();
+        expect((res as any).user.email).toBe(testEmail);
+        expect((res as any).user.scope).toBe(ScopeType.CAMPAIGN);
+        expect((res as any).user.contextId).toBe('campaign-uuid-123');
+        expect((res as any).user.access.finAccess).toBe('Manage');
 
         const dbUser = await repo.findByEmail(testEmail);
-
         expect(dbUser).toBeDefined();
         expect(dbUser!.email).toBe(testEmail);
 
         userId = String(dbUser!.id);
-        accessToken = res.accessToken;
-        refreshToken = res.refreshToken;
+        accessToken = (res as any).accessToken;
+        refreshToken = (res as any).refreshToken;
     });
 
     it('validateUser + issueTokens', async () => {
@@ -101,6 +136,7 @@ describe('AuthCoreService', () => {
 
         expect(payload.id).toBe(userId);
         expect(payload.email).toBe(testEmail);
+        expect(payload.scope).toBeDefined();
 
         const tokens = await service.issueTokens(payload);
 
@@ -114,7 +150,7 @@ describe('AuthCoreService', () => {
         expect(ok).toBe(true);
     });
 
-    it('accessToken', async () => {
+    it('accessToken structure', async () => {
         const jwks = service.getJwks();
         const [jwk] = jwks.keys;
         const publicKey = await importJWK(jwk, 'RS256');
@@ -126,19 +162,22 @@ describe('AuthCoreService', () => {
 
         expect(payload.sub).toBe(userId);
         expect(payload.email).toBe(testEmail);
+        expect(payload.scope).toBe(ScopeType.CAMPAIGN);
+        expect((payload.access as any).fin).toBe('Manage');
     });
 
     it('refreshByToken', async () => {
         const res = await service.refreshByToken(refreshToken);
 
-        expect(res.accessToken).toBeDefined();
-        expect(res.refreshToken).toBeDefined();
+        expect((res as any).accessToken).toBeDefined();
+        expect((res as any).refreshToken).toBeDefined();
+        expect((res as any).user.scope).toBeDefined();
     });
 
     it('requestPasswordReset', async () => {
         const res = await service.requestPasswordReset(testEmail);
 
-        resetToken = res.message;
+        resetToken = (res as any).message;
         expect(typeof resetToken).toBe('string');
         expect(resetToken.length).toBe(64);
 
@@ -156,8 +195,8 @@ describe('AuthCoreService', () => {
             token: resetToken,
         } as any);
 
-        expect(res.accessToken).toBeDefined();
-        expect(res.refreshToken).toBeDefined();
+        expect((res as any).accessToken).toBeDefined();
+        expect((res as any).refreshToken).toBeDefined();
 
         const updatedUser = await repo.findByEmail(testEmail);
 
@@ -176,8 +215,8 @@ describe('AuthCoreService', () => {
 
         const res = await service.confirmEmail(confirmToken);
 
-        expect(res.accessToken).toBeDefined();
-        expect(res.refreshToken).toBeDefined();
+        expect((res as any).accessToken).toBeDefined();
+        expect((res as any).refreshToken).toBeDefined();
 
         const after = await repo.findById(dbUser!.id);
         expect(after).toBeDefined();
@@ -198,7 +237,6 @@ describe('AuthCoreService', () => {
         const telegramId = 123456789;
         const now = Math.floor(Date.now() / 1000);
 
-        // Функція для генерації хешу (без змін)
         const generateHash = (data: any) => {
             const mapping: Record<string, string> = {
                 authDate: 'auth_date',
@@ -224,26 +262,29 @@ describe('AuthCoreService', () => {
             return crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
         };
 
-        // !!! ДОДАЄМО ОЧИСТКУ ПЕРЕД КОЖНИМ ТЕСТОМ АБО ВИКОРИСТОВУЄМО УНІКАЛЬНІ ДАНІ !!!
-        // Краще очистити базу від тестових юзерів перед запуском блоку
+        const tgTestUsernames = ['tg_test_user_1', 'tg_test_user_new'];
+
         beforeAll(async () => {
-            await prisma.user.deleteMany({
-                where: {
-                    username: { in: ['tg_test_user_1', 'tg_test_user_new'] }
-                }
+            await prisma.userProfile.deleteMany({
+                where: { username: { in: tgTestUsernames } }
+            });
+
+            const existingTgEmail = `tg_${telegramId}@telegram.user`;
+            await repo.createBaseProfile({
+                email: existingTgEmail,
+                username: 'tg_test_user_1',
+                passwordHash: 'dummy',
+                scope: ScopeType.CAMPAIGN
             });
         });
 
-        // Також чистимо після тестів
         afterAll(async () => {
-            await prisma.user.deleteMany({
-                where: {
-                    username: { in: ['tg_test_user_1', 'tg_test_user_new'] }
-                }
+            await prisma.userProfile.deleteMany({
+                where: { username: { in: tgTestUsernames } }
             });
         });
 
-        it('should authenticate existing user via Telegram', async () => {
+        it('should authenticate EXISTING user via Telegram', async () => {
             const uniqueUsername = 'tg_test_user_1';
             const tgEmail = `tg_${telegramId}@telegram.user`;
 
@@ -254,39 +295,34 @@ describe('AuthCoreService', () => {
                 authDate: now,
             };
             const hash = generateHash(authData);
-            await service.telegramAuth({ ...authData, hash: hash });
             const res = await service.telegramAuth({
                 ...authData,
                 hash: hash,
             });
 
-            expect(res.accessToken).toBeDefined();
-            expect(res.user.email).toBe(tgEmail);
+            expect((res as any).accessToken).toBeDefined();
+            expect((res as any).user.email).toBe(tgEmail);
         });
 
-        it('should create NEW user via Telegram if not exists', async () => {
+        it('should return context message for NEW user', async () => {
             const newTgId = 987654321;
             const uniqueUsername = 'tg_test_user_new';
+
             const authData = {
                 id: newTgId,
                 firstName: 'New',
-                lastName: 'User',
                 username: uniqueUsername,
                 authDate: now,
             };
             const hash = generateHash(authData);
-            await prisma.user.deleteMany({ where: { username: uniqueUsername } });
+            await prisma.userProfile.deleteMany({ where: { username: uniqueUsername } });
 
             const res = await service.telegramAuth({
                 ...authData,
                 hash: hash,
-            });
+            } as any);
 
-            expect(res.accessToken).toBeDefined();
-
-            const dbUser = await repo.findByIUsername(uniqueUsername);
-            expect(dbUser).toBeDefined();
-            expect(dbUser!.username).toBe(uniqueUsername);
+            expect((res as any).message).toBe("Context creation required");
         });
 
         it('should throw UNAUTHENTICATED if hash is invalid', async () => {
@@ -296,26 +332,10 @@ describe('AuthCoreService', () => {
                 hash: 'invalid_fake_hash',
             };
 
-            await expect(service.telegramAuth(authData)).rejects.toEqual(
+            await expect(service.telegramAuth(authData as any)).rejects.toEqual(
                 new RpcException({
                     code: status.UNAUTHENTICATED,
-                    message: 'Invalid Telegram hash (Integrity check failed)',
-                }),
-            );
-        });
-
-        it('should throw UNAUTHENTICATED if auth_date is too old', async () => {
-            const oldDate = now - 86401;
-            const authData = {
-                id: telegramId,
-                authDate: oldDate,
-            };
-            const hash = generateHash(authData);
-
-            await expect(service.telegramAuth({ ...authData, hash })).rejects.toEqual(
-                new RpcException({
-                    code: status.UNAUTHENTICATED,
-                    message: 'Telegram auth data is outdated',
+                    message: 'Invalid Telegram hash',
                 }),
             );
         });

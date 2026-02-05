@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
     exportJWK,
     generateKeyPair,
@@ -7,26 +7,34 @@ import {
     jwtVerify,
     SignJWT,
 } from 'jose';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { RpcException } from '@nestjs/microservices';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import { MailerService } from "@nestjs-modules/mailer";
+import { Counter } from "prom-client";
+import { InjectMetric } from "@willsoto/nestjs-prometheus";
+import {firstValueFrom, Observable} from 'rxjs';
+
 import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
 import { AuthRepository } from './auth.repository';
-import * as crypto from 'crypto';
-import {MailerService} from "@nestjs-modules/mailer";
-import {RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
-import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
-import {Counter} from "prom-client";
-import {InjectMetric} from "@willsoto/nestjs-prometheus";
-import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import { RestorePasswordDto, SignInDto, SignUpDto } from "../../../pwa-shared/src";
+import { TelegramAuthDto } from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
+import { JwtVerifierService } from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
-type UserPayload = { id: string; email: string; username: string };
+
+interface CampaignGrpcService {
+    create(data: { name: string; ownerId: string; description?: string }): Observable<any>;
+}
 
 @Injectable()
-export class AuthCoreService {
+export class AuthCoreService implements OnModuleInit {
     private privateKey!: CryptoKey;
     private publicJwk!: any;
     private kid!: string;
+    private campaignService: CampaignGrpcService;
 
     constructor(
         @InjectMetric('auth_login_success_total') public loginSuccessCounter: Counter,
@@ -35,9 +43,12 @@ export class AuthCoreService {
         private readonly repo: AuthRepository,
         private readonly mailerService: MailerService,
         private readonly jwt: JwtVerifierService,
+        @Inject('CAMPAIGN_PACKAGE') private campaignClient: ClientGrpc,
     ) {}
 
     async onModuleInit() {
+        this.campaignService = this.campaignClient.getService<CampaignGrpcService>('CampaignService');
+
         try {
             const pem = process.env.AUTH_PRIVATE_KEY_PEM;
 
@@ -71,30 +82,23 @@ export class AuthCoreService {
         return { keys: [this.publicJwk] };
     }
 
+    async validateUser(input: SignInDto) {
+        const { email, password } = input;
+        const user = await this.repo.findByEmail(email);
 
-    async validateUser(input: SignInDto): Promise<UserPayload> {
-        const { email: emailOrUsername, password } = input;
-        const user = await this.repo.findByEmail(emailOrUsername);
-        if (!user) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'Invalid credentials',
-            });
+        if (!user || !(await bcrypt.compare(password, user.passwordHash as string))) {
+            this.loginErrorCounter.labels('email').inc();
+            throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid credentials' });
         }
 
-        const ok = await bcrypt.compare(password, user.passwordHash!).catch(() => false);
-        if (!ok) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'Invalid credentials',
-            });
-        }
         this.loginSuccessCounter.labels('email').inc();
-        return {
-            id: String(user.id),
-            email: user.email ?? '',
-            username: user.username ?? '',
-        };
+
+        let contextUser = null;
+        if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
+        else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
+        else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
+
+        return this.mapUserToPayload(user, contextUser);
     }
 
     async issueTokens(user: UserPayload) {
@@ -103,14 +107,16 @@ export class AuthCoreService {
             const ISS = process.env.AUTH_ISSUER ?? 'https://auth.local/';
             const AUD = process.env.AUTH_AUDIENCE ?? 'api';
 
-            const accessTtl = Number(process.env.AUTH_ACCESS_TTL ?? 900);      // 15m
-            const refreshTtl = Number(process.env.AUTH_REFRESH_TTL ?? 604800);  // 7d
+            const accessTtl = Number(process.env.AUTH_ACCESS_TTL ?? 900);
+            const refreshTtl = Number(process.env.AUTH_REFRESH_TTL ?? 604800);
 
             const accessToken = await new SignJWT({
                 sub: user.id,
                 email: user.email,
                 username: user.username,
-                roles: ['user'],
+                scope: user.scope,
+                contextId: user.contextId,
+                access: user.access
             })
                 .setProtectedHeader({ alg: 'RS256', kid: this.kid, typ: 'JWT' })
                 .setIssuedAt(now)
@@ -128,6 +134,7 @@ export class AuthCoreService {
                 .sign(this.privateKey);
 
             await this.store.save(user.id, refreshToken, now + refreshTtl);
+
             return {
                 accessToken,
                 refreshToken,
@@ -144,10 +151,7 @@ export class AuthCoreService {
 
     async refreshByToken(refreshToken: string) {
         if (!refreshToken) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'No refresh token provided',
-            });
+            throw new RpcException({ code: status.UNAUTHENTICATED, message: 'No refresh token provided' });
         }
         try {
             const pub = await importJWK(this.publicJwk, 'RS256');
@@ -158,88 +162,90 @@ export class AuthCoreService {
 
             const ok = await this.store.check(String(payload.sub), refreshToken);
             if (!ok) {
-                throw new RpcException({
-                    code: status.UNAUTHENTICATED,
-                    message: 'Refresh token invalid or expired',
-                });
+                throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Refresh token invalid or expired' });
             }
 
             const dbUser = await this.repo.findById(payload.sub!);
             if (!dbUser) {
-                throw new RpcException({
-                    code: status.PERMISSION_DENIED,
-                    message: 'User not found',
-                });
+                throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
             }
 
-            const user: UserPayload = {
-                id: String(dbUser.id),
-                email: dbUser.email ?? '',
-                username: dbUser.username ?? '',
-            };
-            return this.issueTokens(user);
+            let contextUser = null;
+            if (dbUser.scope === ScopeType.SYSTEM) contextUser = dbUser.systemUser;
+            else if (dbUser.scope === ScopeType.CAMPAIGN) contextUser = dbUser.campaignUser;
+            else if (dbUser.scope === ScopeType.TEAM) contextUser = dbUser.teamUser;
+
+            return this.issueTokens(this.mapUserToPayload(dbUser, contextUser));
+
         } catch (err: any) {
             if (err?.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED' || err?.code === 'ERR_JWT_EXPIRED') {
-                throw new RpcException({
-                    code: status.UNAUTHENTICATED,
-                    message: 'Invalid or expired refresh token',
-                });
+                throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid or expired refresh token' });
             }
-            if (typeof err?.code === 'number') throw err;
-            throw new RpcException({
-                code: status.UNKNOWN,
-                message: 'Token verification failed',
-            });
+            throw new RpcException({ code: status.UNKNOWN, message: 'Token verification failed' });
         }
     }
 
-    async signUp(input: SignUpDto) {
-        const { email, username, password } = input;
-        const [emailResult, usernameResult] = await Promise.all([
+    async orgSignUp(dto: SignUpDto) {
+        const { email, username, password } = dto;
+
+        const [emailRes, usernameRes] = await Promise.all([
             this.repo.findByEmail(email),
-            this.repo.findByIUsername(username)
+            this.repo.findByUsername(username)
         ]);
 
-        if (emailResult) {
-            throw new RpcException({
-                code: status.ALREADY_EXISTS,
-                message: 'User with this email already exists',
-            });
-        }
-
-        else if (usernameResult) {
-            throw new RpcException({
-                code: status.ALREADY_EXISTS,
-                message: 'This username already taken',
-            });
-        }
-
+        if (emailRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Email exists' });
+        if (usernameRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Username taken' });
 
         const hash = await bcrypt.hash(password, 10);
-        const created = await this.repo.createUser({
-            email,
-            passwordHash: hash,
-            username: username ?? email.split('@')[0],
-        });
 
+        try {
+            const profile = await this.repo.createBaseProfile({
+                email,
+                username: username ?? email.split('@')[0],
+                passwordHash: hash,
+                scope: ScopeType.TEAM
+            });
+            return {
+                id: profile.id,
+                email: profile.email,
+                username: profile.username
+            };
 
-        const token = crypto.randomBytes(32).toString('hex');
-        const exp = Math.floor(Date.now() / 1000) + 3600;
-        await this.store.saveOneTime(token, created.id, exp);
+        } catch (e) {
+            throw new RpcException({ code: status.INTERNAL, message: `Org Registration failed: ${(e as any).message}` });
+        }
+    }
 
-        const confirmEmail = `${process.env.FRONTEND_URL}/confirm-email?token=${token}`;
-        await this.mailerService.sendMail({
-            to: email,
-            subject: 'Email confirm',
-            text: `Use this link to confirm your email: ${confirmEmail}`,
-            html: `<p>Click <a href="${confirmEmail}">here</a>.The link expires in 1 hour.</p>`,
-        });
+    async signUp(dto: SignUpDto) {
+        const { email, username, password } = dto;
+        const [emailRes, usernameRes] = await Promise.all([
+            this.repo.findByEmail(email),
+            this.repo.findByUsername(username)
+        ]);
 
-        return this.issueTokens({
-            id: String(created.id),
-            email: created.email ?? '',
-            username: created.username ?? '',
-        });
+        if (emailRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Email exists' });
+        if (usernameRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Username taken' });
+        const hash = await bcrypt.hash(password, 10);
+
+        try {
+            const profile = await this.repo.createBaseProfile({
+                email,
+                username: username ?? email.split('@')[0],
+                passwordHash: hash,
+                scope: ScopeType.CAMPAIGN
+            });
+
+            const campaignResponse = await firstValueFrom(this.campaignService.create({
+                name: `${username}'s Campaign`,
+                ownerId: profile.id
+            }));
+
+            await this.sendConfirmationEmail(email, profile.id);
+            return this.issueTokens(this.mapUserToPayload(profile, campaignResponse.campaignUser));
+
+        } catch (e) {
+            throw new RpcException({ code: status.INTERNAL, message: `Registration failed: ${(e as any).message}` });
+        }
     }
 
     async singOut(id?: string) {
@@ -250,42 +256,26 @@ export class AuthCoreService {
     async restorePassword(input: RestorePasswordDto) {
         const { email, newPassword, token } = input;
         const user = await this.repo.findByEmail(email);
-        if (!user) {
-            throw new RpcException({
-                code: status.NOT_FOUND,
-                message: 'User not found',
-            });
-        }
+        if (!user) throw new RpcException({ code: status.NOT_FOUND, message: 'User not found' });
 
         const storedUserId = await this.store.checkAndGetOneTime(token);
-        if (storedUserId !== user.id) {
-            throw new RpcException({
-                code: status.UNAUTHENTICATED,
-                message: 'Invalid or expired password reset token',
-            });
-        }
+        if (storedUserId !== user.id) throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid token' });
 
         const hash = await bcrypt.hash(newPassword, 10);
-        const updated = await this.repo.updatePassword(user.id, hash);
+        await this.repo.updatePassword(user.id, hash);
         await this.store.revoke(user.id);
 
-        const userPayload: UserPayload = {
-            id: String(updated.id),
-            email: updated.email ?? '',
-            username: updated.username ?? '',
-        };
+        let contextUser = null;
+        if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
+        else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
+        else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
 
-        return this.issueTokens(userPayload);
+        return this.issueTokens(this.mapUserToPayload(user, contextUser));
     }
 
     async requestPasswordReset(email: string) {
         const user = await this.repo.findByEmail(email);
-        if (!user || !user.email) {
-            throw new RpcException({
-                code: status.NOT_FOUND,
-                message: 'User not found',
-            });
-        }
+        if (!user || !user.email) throw new RpcException({ code: status.NOT_FOUND, message: 'User not found' });
 
         const token = crypto.randomBytes(32).toString('hex');
         const exp = Math.floor(Date.now() / 1000) + 3600;
@@ -294,45 +284,37 @@ export class AuthCoreService {
         const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${user.email}`;
         await this.mailerService.sendMail({
             to: user.email,
-            subject: 'Password Reset Request',
-            text: `Use this link to reset your password: ${resetLink}`,
-            html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link expires in 1 hour.</p>`,
+            subject: 'Password Reset',
+            html: `<p>Click <a href="${resetLink}">here</a> to reset password.</p>`,
         });
         return { message: token };
     }
 
     async confirmEmail(token: string) {
         const userId = await this.store.checkAndGetOneTime(token);
-
-        if (!userId) {
-            throw new RpcException({
-                code: status.NOT_FOUND,
-                message: 'Invalid or expired email confirmation token',
-            });
-        }
+        if (!userId) throw new RpcException({ code: status.NOT_FOUND, message: 'Invalid token' });
 
         const user = await this.repo.findById(userId);
-        if (!user) {
-            throw new RpcException({
-                code: status.NOT_FOUND,
-                message: 'User not found',
-            });
-        }
+        if (!user) throw new RpcException({ code: status.NOT_FOUND, message: 'User not found' });
 
         const updated = await this.repo.markEmailConfirmed(user.id);
-        const userPayload: UserPayload = {
-            id: String(updated.id),
-            email: updated.email ?? '',
-            username: updated.username ?? '',
-        };
 
-        return this.issueTokens(userPayload);
+        const refreshedUser = await this.repo.findById(updated.id);
+
+        let contextUser = null;
+        if (refreshedUser) {
+            if (refreshedUser.scope === ScopeType.SYSTEM) contextUser = refreshedUser.systemUser;
+            else if (refreshedUser.scope === ScopeType.CAMPAIGN) contextUser = refreshedUser.campaignUser;
+            else if (refreshedUser.scope === ScopeType.TEAM) contextUser = refreshedUser.teamUser;
+        } else {
+            throw new RpcException({ code: status.NOT_FOUND, message: 'User not found' });
+        }
+
+        return this.issueTokens(this.mapUserToPayload(refreshedUser, contextUser));
     }
 
     async validateToken(token: string) {
-        if (!token) {
-            throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Missing token' });
-        }
+        if (!token) throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Missing token' });
 
         try {
             const payload = await this.jwt.verify(token);
@@ -340,19 +322,18 @@ export class AuthCoreService {
 
             if (!sub) {
                 await this.store.revoke(String(sub));
-                throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid token: no subject' });
+                throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid token' });
             }
 
             const user = await this.repo.findById(sub);
+            if (!user) throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
 
-            if (!user) {
-                throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
-            }
-            return {
-                id: user.id,
-                email: user.email || '',
-                username: user.username || ''
-            };
+            let contextUser = null;
+            if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
+            else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
+            else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
+
+            return this.mapUserToPayload(user, contextUser);
 
         } catch (e) {
             if (e instanceof RpcException) throw e;
@@ -363,12 +344,7 @@ export class AuthCoreService {
     async telegramAuth(dto: TelegramAuthDto) {
         try {
             const botToken = process.env.TELEGRAM_BOT_TOKEN;
-            if (!botToken) {
-                throw new RpcException({
-                    code: status.INTERNAL,
-                    message: 'TELEGRAM_BOT_TOKEN is not configured',
-                });
-            }
+            if (!botToken) throw new RpcException({ code: status.INTERNAL, message: 'Bot token not configured' });
 
             const checkData: Record<string, string> = {};
             const fieldMapping: Record<string, string> = {
@@ -393,52 +369,64 @@ export class AuthCoreService {
                 .join('\n');
 
             const secretKey = crypto.createHash('sha256').update(botToken).digest();
-            const hmac = crypto
-                .createHmac('sha256', secretKey)
-                .update(dataCheckString)
-                .digest('hex');
+            const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
-            if (hmac !== dto.hash) {
-                throw new RpcException({
-                    code: status.UNAUTHENTICATED,
-                    message: 'Invalid Telegram hash (Integrity check failed)',
-                });
-            }
+            if (hmac !== dto.hash) throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Invalid Telegram hash' });
 
             const now = Math.floor(Date.now() / 1000);
-            const authDate = Number(dto.authDate);
-            if (now - authDate > 86400) {
-                throw new RpcException({
-                    code: status.UNAUTHENTICATED,
-                    message: 'Telegram auth data is outdated',
-                });
-            }
+            if (now - Number(dto.authDate) > 86400) throw new RpcException({ code: status.UNAUTHENTICATED, message: 'Telegram auth expired' });
 
             const telegramEmail = `tg_${dto.id}@telegram.user`;
             let user = await this.repo.findByEmail(telegramEmail);
 
             if (!user) {
-                const randomPassword = crypto.randomBytes(16).toString('hex');
-                const hashedPassword = await bcrypt.hash(randomPassword, 10);
-                user = await this.repo.createUser({
-                    email: telegramEmail,
-                    passwordHash: hashedPassword,
-                    username: dto.username || `${dto.username}`,
-                    tgId: BigInt(dto.id)
-                });
+                return { message: "Context creation required" };
             }
 
-            return this.issueTokens({
-                id: String(user.id),
-                email: user.email || '',
-                username: user.username || '',
-            });
+            let contextUser = null;
+            if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
+            else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
+            else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
+
+            return this.issueTokens(this.mapUserToPayload(user, contextUser));
+
         } catch (e) {
             if (e instanceof RpcException) throw e;
-            throw new RpcException({
-                code: status.INTERNAL,
-                message: `Internal server error during Telegram authentication: ${e}`,
-            });
+            throw new RpcException({ code: status.INTERNAL, message: `Telegram auth error: ${e}` });
         }
+    }
+
+    private async sendConfirmationEmail(email: string, userId: string) {
+        const token = crypto.randomBytes(32).toString('hex');
+        const exp = Math.floor(Date.now() / 1000) + 3600;
+        await this.store.saveOneTime(token, userId, exp);
+
+        const confirmLink = `${process.env.FRONTEND_URL}/confirm-email?token=${token}`;
+        await this.mailerService.sendMail({
+            to: email,
+            subject: 'Email confirm',
+            html: `<p>Click <a href="${confirmLink}">here</a> to confirm email.</p>`,
+        });
+    }
+
+    private mapUserToPayload(profile: any, contextUser: any): UserPayload {
+        const rawAccess = contextUser?.role?.accessProfile?.accessProfile ||
+            contextUser?.role?.accessProfile ||
+            {};
+
+        return {
+            id: profile.id,
+            email: profile.email,
+            username: profile.username,
+            scope: profile.scope,
+            contextId: contextUser?.campaignId || contextUser?.teamId || null,
+            access: {
+                statAccess: rawAccess.statAccess || 'None',
+                finAccess: rawAccess.finAccess || 'None',
+                logAccess: rawAccess.logAccess || 'None',
+                usersAccess: rawAccess.usersAccess || 'None',
+                sharingAccess: rawAccess.sharingAccess || false,
+            }
+        };
     }
 }

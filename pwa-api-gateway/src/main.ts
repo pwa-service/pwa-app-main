@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {GrpcErrorInterceptor} from "./global/interceptors/grpc-error.interceptor";
+import {GrpcErrorInterceptor} from "./common/interceptors/grpc-error.interceptor";
 
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(

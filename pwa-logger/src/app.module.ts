@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { BullmqModule } from "./core/bullmq/bullmq.module";
+import { LoggerModule } from "./core/logger.module";
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-    imports: [ConfigModule.forRoot(), BullmqModule],
+    imports: [ConfigModule.forRoot(), LoggerModule],
 })
 export class AppModule {}

@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package pixel_token.v1;
+
+import "shared.proto";
+
+service PixelTokenService {
+    rpc Create (CreatePixelTokenRequest) returns (PixelToken);
+    rpc FindAll (FindAllPixelTokensRequest) returns (FindAllPixelTokensResponse);
+    rpc FindOne (FindOnePixelTokenRequest) returns (PixelToken);
+    rpc Update (UpdatePixelTokenRequest) returns (PixelToken);
+    rpc Remove (RemovePixelTokenRequest) returns (RemovePixelTokenResponse);
+}
+
+enum PixelTokenStatus {
+    PIXEL_TOKEN_STATUS_ACTIVE = 0;
+    PIXEL_TOKEN_STATUS_INACTIVE = 1;
+}
+
+message PixelTokenFilterParams {
+    string search = 1;
+    string owner_id = 2;
+}
+
+message PixelToken {
+    string id = 1;
+    string token = 2;
+    string description = 3;
+    string owner_id = 4;
+    PixelTokenStatus status = 5;
+    string created_at = 6;
+    string updated_at = 7;
+}
+
+message CreatePixelTokenRequest {
+    string id = 1;
+    string token = 2;
+    string description = 3;
+    string owner_id = 4;
+    PixelTokenStatus status = 5;
+}
+
+message FindAllPixelTokensRequest {
+    PixelTokenFilterParams filters = 1;
+    shared.PaginationParams pagination = 2;
+}
+
+message FindAllPixelTokensResponse {
+    repeated PixelToken pixel_tokens = 1;
+}
+
+message FindOnePixelTokenRequest {
+    string id = 1;
+}
+
+message UpdatePixelTokenRequest {
+    string id = 1;
+    string token = 2;
+    string description = 3;
+    string owner_id = 4;
+    PixelTokenStatus status = 5;
+}
+
+message RemovePixelTokenRequest {
+    string id = 1;
+}
+
+message RemovePixelTokenResponse {
+    bool success = 1;
+    string id = 2;
+}
