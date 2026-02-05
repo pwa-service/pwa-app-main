@@ -34,7 +34,7 @@ export class AuthCoreService implements OnModuleInit {
     private privateKey!: CryptoKey;
     private publicJwk!: any;
     private kid!: string;
-    private campaignService: CampaignGrpcService;
+    private campaignService!: CampaignGrpcService;
 
     constructor(
         @InjectMetric('auth_login_success_total') public loginSuccessCounter: Counter,
