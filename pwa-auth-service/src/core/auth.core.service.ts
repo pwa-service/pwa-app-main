@@ -410,9 +410,9 @@ export class AuthCoreService implements OnModuleInit {
     }
 
     private mapUserToPayload(profile: any, contextUser: any): UserPayload {
-        const rawAccess = contextUser?.role?.accessProfile?.accessProfile ||
-            contextUser?.role?.accessProfile ||
-            {};
+        const personalRules = profile.GlobalAccessUser?.[0]?.accessProfile?.globalRules;
+        const roleRules = contextUser?.role?.accessProfile?.accessProfile?.globalRules;
+        const effectiveRules = personalRules || roleRules;
 
         return {
             id: profile.id,
@@ -421,11 +421,11 @@ export class AuthCoreService implements OnModuleInit {
             scope: profile.scope,
             contextId: contextUser?.campaignId || contextUser?.teamId || null,
             access: {
-                statAccess: rawAccess.statAccess || 'None',
-                finAccess: rawAccess.finAccess || 'None',
-                logAccess: rawAccess.logAccess || 'None',
-                usersAccess: rawAccess.usersAccess || 'None',
-                sharingAccess: rawAccess.sharingAccess || false,
+                statAccess: effectiveRules?.statAccess || 'None',
+                finAccess: effectiveRules?.finAccess || 'None',
+                logAccess: effectiveRules?.logAccess || 'None',
+                usersAccess: effectiveRules?.usersAccess || 'None',
+                sharingAccess: effectiveRules?.sharingAccess || 'View',
             }
         };
     }

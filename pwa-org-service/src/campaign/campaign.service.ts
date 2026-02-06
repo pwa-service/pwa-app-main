@@ -37,7 +37,7 @@ export class CampaignService {
                     finAccess: AccessLevel.Manage,
                     logAccess: AccessLevel.Manage,
                     usersAccess: AccessLevel.Manage,
-                    sharingAccess: true
+                    sharingAccess: AccessLevel.Manage,
                 }
             },
             ScopeType.CAMPAIGN,
@@ -72,7 +72,7 @@ export class CampaignService {
                     finAccess: AccessLevel.None,
                     logAccess: AccessLevel.View,
                     usersAccess: AccessLevel.Manage,
-                    sharingAccess: true
+                    sharingAccess: AccessLevel.Manage,
                 }
             },
             ScopeType.CAMPAIGN,
@@ -88,7 +88,7 @@ export class CampaignService {
                     finAccess: AccessLevel.None,
                     logAccess: AccessLevel.None,
                     usersAccess: AccessLevel.None,
-                    sharingAccess: false
+                    sharingAccess: AccessLevel.None,
                 }
             },
             ScopeType.CAMPAIGN,

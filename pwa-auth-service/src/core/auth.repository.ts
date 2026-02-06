@@ -1,7 +1,64 @@
 import { Injectable } from '@nestjs/common';
-import { Status, ScopeType, Prisma } from '@prisma/client';
+import { Status } from '@prisma/client';
 import { PrismaService } from '../../../pwa-prisma/src/prisma.service';
 import {CreateUserDto} from "../common/types/dto/create-user.dto";
+
+const userIncludes = {
+    GlobalAccessUser: {
+        include: {
+            accessProfile: {
+                include: {
+                    globalRules: true
+                }
+            }
+        }
+    },
+    systemUser: {
+        include: {
+            role: {
+                include: {
+                    accessProfile: {
+                        include: {
+                            accessProfile: {
+                                include: { globalRules: true }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    campaignUser: {
+        include: {
+            role: {
+                include: {
+                    accessProfile: {
+                        include: {
+                            accessProfile: {
+                                include: { globalRules: true }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    teamUser: {
+        include: {
+            role: {
+                include: {
+                    accessProfile: {
+                        include: {
+                            accessProfile: {
+                                include: { globalRules: true }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
 
 @Injectable()
 export class AuthRepository {
@@ -10,35 +67,22 @@ export class AuthRepository {
     async findByEmail(email: string) {
         return this.prisma.userProfile.findFirst({
             where: { email },
-            include: {
-                systemUser: { include: { role: true } },
-                campaignUser: { include: { role: true } },
-                teamUser: { include: { role: true } }
-            }
+            include: userIncludes
         });
     }
 
     async findByUsername(username: string | undefined | null) {
         if (!username) return null;
-
         return this.prisma.userProfile.findUnique({
             where: { username },
-            include: {
-                systemUser: { include: { role: true } },
-                campaignUser: { include: { role: true } },
-                teamUser: { include: { role: true } }
-            }
+            include: userIncludes
         });
     }
 
     async findById(id: string) {
         return this.prisma.userProfile.findUnique({
             where: { id },
-            include: {
-                systemUser: { include: { role: true } },
-                campaignUser: { include: { role: true } },
-                teamUser: { include: { role: true } }
-            }
+            include: userIncludes
         });
     }
 

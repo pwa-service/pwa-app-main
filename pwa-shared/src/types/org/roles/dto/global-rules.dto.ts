@@ -20,5 +20,5 @@ export class GlobalRulesDto {
 
     @IsOptional()
     @IsBoolean()
-    sharingAccess?: boolean;
+    sharingAccess?: AccessLevel;
 }

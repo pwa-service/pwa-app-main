@@ -40,7 +40,7 @@ export class RoleService implements OnModuleInit {
                     finAccess: AccessLevel.Manage,
                     logAccess: AccessLevel.Manage,
                     usersAccess: AccessLevel.Manage,
-                    sharingAccess: true,
+                    sharingAccess: AccessLevel.Manage,
                 }
             );
         }
@@ -52,7 +52,7 @@ export class RoleService implements OnModuleInit {
             finAccess: dto.globalRules.finAccess ?? AccessLevel.None,
             logAccess: dto.globalRules.logAccess ?? AccessLevel.None,
             usersAccess: dto.globalRules.usersAccess ?? AccessLevel.None,
-            sharingAccess: dto.globalRules.sharingAccess ?? false,
+            sharingAccess: dto.globalRules.sharingAccess ?? AccessLevel.None,
         };
 
         const newPriority = RolePriority.MEMBER;
