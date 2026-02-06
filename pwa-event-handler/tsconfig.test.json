@@ -13,8 +13,9 @@
     "types": ["jest", "node"],
     "baseUrl": "./",
     "paths": {
-      "*": ["node_modules/*"]
-    }
+      "*": ["node_modules/*"],
+    },
+    "strictPropertyInitialization": false
   },
   "include": [
     "src/**/*.spec.ts",

@@ -18,7 +18,7 @@
       "*": ["node_modules/*"]
     },
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
   },
   "exclude": ["node_modules", "dist", "test", "**/app.spec.ts"]
 }

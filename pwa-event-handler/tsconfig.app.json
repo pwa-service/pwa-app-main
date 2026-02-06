@@ -5,7 +5,8 @@
     "outDir": "../../dist/apps/event-handler",
     "target": "ES2019",
     "module": "CommonJS",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "strictPropertyInitialization": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"],
