@@ -12,11 +12,38 @@ import {PixelTokenHttpController} from "./pwa-manager/pixel-token-manager/pixel-
 import {PixelTokenGrpcClient} from "./pwa-manager/pixel-token-manager/pixel-token.grpc.client";
 import {CampaignGrpcClient} from "./org/campaign/campaign.grpc.client";
 import {CampaignHttpController} from "./org/campaign/campaign.http.controller";
+import {MemberGrpcClient} from "./org/member/member.grpc.client";
+import {MemberHttpController} from "./org/member/member.http.controller";
+import {RoleGrpcClient} from "./org/roles/role.grpc.client";
+import {RoleHttpController} from "./org/roles/role.http.controller";
+import {TeamHttpController} from "./org/team/team.http.controller";
+import {SharingHttpController} from "./org/sharing/sharing.http.controller";
+import {TeamGrpcClient} from "./org/team/team.grpc.client";
 
 @Module({
     imports: [ClientsModule.register([authClient, eventHandlerClient, appsManager, pixelTokenManager, orgClient])],
-    controllers: [AuthHttpController, EventHandlerHttpController, PwaManagerHttpController, PwaManagerHttpController, PixelTokenHttpController, CampaignHttpController],
-    providers: [AuthGrpcClient, EventHandlerGrpcClient, PwaManagerGrpcClient, PixelTokenGrpcClient, CampaignGrpcClient],
+    controllers: [
+        AuthHttpController,
+        EventHandlerHttpController,
+        PwaManagerHttpController,
+        PixelTokenHttpController,
+        MemberHttpController,
+        CampaignHttpController,
+        RoleHttpController,
+        TeamHttpController,
+        SharingHttpController
+    ],
+    providers: [
+        AuthGrpcClient,
+        EventHandlerGrpcClient,
+        PwaManagerGrpcClient,
+        PixelTokenGrpcClient,
+        CampaignGrpcClient,
+        MemberGrpcClient,
+        RoleGrpcClient,
+        TeamGrpcClient,
+        SharingHttpController
+    ],
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
