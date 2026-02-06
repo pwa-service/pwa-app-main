@@ -2,13 +2,13 @@ import { IsString, IsUUID, IsInt, IsOptional, IsDateString } from 'class-validat
 
 export class ShareWithRoleDto {
     @IsUUID()
-    workingObjectId: string;
+    workingObjectId!: string;
 
     @IsInt()
-    roleId: number;
+    roleId!: number;
 
     @IsUUID()
-    accessProfileId: string;
+    accessProfileId!: string;
 
     @IsOptional()
     @IsUUID()

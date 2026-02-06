@@ -6,7 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates openssl python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
-# Копіюємо package.json файли
 COPY ./pwa-org-service/package*.json ./pwa-org-service/
 COPY ./pwa-prisma/package*.json       ./pwa-prisma/
 COPY ./pwa-shared/package*.json       ./pwa-shared/
