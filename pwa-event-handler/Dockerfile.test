@@ -6,22 +6,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates openssl python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
-COPY ./pwa-event-handler/package*.json ./pwa-event-handler/
+COPY ./pwa-org-service/package*.json ./pwa-org-service/
 COPY ./pwa-prisma/package*.json       ./pwa-prisma/
 COPY ./pwa-shared/package*.json       ./pwa-shared/
 COPY ./pwa-protos/package*.json       ./pwa-protos/
 
-WORKDIR /workspace/pwa-event-handler
-RUN npm ci
+WORKDIR /workspace/pwa-org-service
+RUN npm ci --legacy-peer-deps
 
 WORKDIR /workspace/pwa-prisma
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 WORKDIR /workspace/pwa-shared
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 WORKDIR /workspace
-COPY ./pwa-event-handler ./pwa-event-handler
+COPY ./pwa-org-service ./pwa-org-service
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
@@ -29,7 +29,7 @@ COPY ./pwa-protos       ./pwa-protos
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-WORKDIR /workspace/pwa-event-handler
+WORKDIR /workspace/pwa-org-service
 RUN mkdir -p ./prisma \
  && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
