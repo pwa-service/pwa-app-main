@@ -1,6 +1,10 @@
 import {Controller, UseInterceptors} from "@nestjs/common";
-import {GrpcMethod} from "@nestjs/microservices";
-import {CreateCampaignDto, PaginationQueryDto, PixelTokenFiltersQueryDto} from "../../../pwa-shared/src";
+import {GrpcMethod, Payload} from "@nestjs/microservices";
+import {
+    CreateCampaignDto,
+    GrpcAuthInterceptor,
+    PaginationQueryDto,
+} from "../../../pwa-shared/src";
 import {CampaignService} from "./campaign.service";
 import {CampaignFiltersQueryDto} from "../../../pwa-shared/src/types/org/campaign/dto/filters-query.dto";
 import {IsCampaignExistsInterceptor} from "../common/interceptors/is-campaign-exists.interceptor";
@@ -12,39 +16,37 @@ import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-use
 
 
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor, IsCampaignExistsInterceptor)
 export class CampaignGrpcController {
     constructor(private readonly service: CampaignService) {}
 
     @GrpcMethod('CampaignService', 'Create')
-    async create(dto: CreateCampaignDto, @GrpcUser() user: UserPayload) {
+    @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
+    async create(@Payload() dto: CreateCampaignDto, @GrpcUser() user: UserPayload) {
         return this.service.create(dto, user.id);
     }
 
-    @UseInterceptors(ScopeInterceptor, IsCampaignExistsInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('CampaignService', 'FindOne')
-    async findOne(dto: { id: string }) {
+    async findOne(@Payload() dto: { id: string }) {
         return this.service.findOne(dto.id);
     }
 
     @GrpcMethod('CampaignService', 'FindAll')
-    @UseInterceptors(ScopeInterceptor)
     @AllowedScopes(ScopeType.SYSTEM)
-    async findAll({ pagination, filters }: { pagination: PaginationQueryDto, filters: CampaignFiltersQueryDto }) {
+    async findAll(@Payload() { pagination, filters }: { pagination: PaginationQueryDto, filters: CampaignFiltersQueryDto }) {
         return this.service.findAll(pagination, filters);
     }
 
-    @UseInterceptors(ScopeInterceptor, IsCampaignExistsInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('CampaignService', 'Update')
-    async update(dto: any) {
+    async update(@Payload() dto: any) {
         return this.service.update(dto);
     }
 
-    @UseInterceptors(IsCampaignExistsInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('CampaignService', 'Delete')
-    async delete(data: { id: string }) {
+    async delete(@Payload() data: { id: string }) {
         return this.service.delete(data.id);
     }
 }

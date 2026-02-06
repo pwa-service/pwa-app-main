@@ -11,15 +11,12 @@ COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
 
 WORKDIR /workspace/pwa-org-service
-# Додано --legacy-peer-deps
 RUN npm ci --legacy-peer-deps && npm i -g @nestjs/cli
 
 WORKDIR /workspace/pwa-prisma
-# Додано --legacy-peer-deps про всяк випадок
 RUN npm ci --legacy-peer-deps
 
 WORKDIR /workspace/pwa-shared
-# Додано --legacy-peer-deps про всяк випадок
 RUN npm ci --legacy-peer-deps
 
 FROM deps AS build

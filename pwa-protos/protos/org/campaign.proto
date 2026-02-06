@@ -25,8 +25,7 @@ message CampaignResponse {
 
 message CreateCampaignRequest {
     string name = 1;
-    string description = 2;
-    optional string owner_id = 3;
+    optional string owner_id = 2;
 }
 
 message UpdateCampaignRequest {

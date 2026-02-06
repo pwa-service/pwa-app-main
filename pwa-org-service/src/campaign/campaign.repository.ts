@@ -10,7 +10,14 @@ export class CampaignRepository {
 
     async create(data: CreateCampaignDto) {
         return this.prisma.campaign.create({
-            data
+            data: {
+                name: data.name,
+                owner: {
+                    connect: {
+                        id: data.ownerId,
+                    }
+                }
+            },
         });
     }
 

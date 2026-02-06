@@ -6,3 +6,11 @@ message PaginationParams {
     int32 limit = 1;
     int32 offset = 2;
 }
+
+message GlobalRules {
+    string stat_access = 1;
+    string fin_access = 2;
+    string log_access = 3;
+    string users_access = 4;
+    string sharing_access = 5;
+}

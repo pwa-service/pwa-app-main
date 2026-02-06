@@ -3,71 +3,75 @@ import { Status } from '@prisma/client';
 import { PrismaService } from '../../../pwa-prisma/src/prisma.service';
 import {CreateUserDto} from "../common/types/dto/create-user.dto";
 
-const userIncludes = {
-    GlobalAccessUser: {
-        include: {
-            accessProfile: {
-                include: {
-                    globalRules: true
-                }
-            }
-        }
-    },
-    systemUser: {
-        include: {
-            role: {
-                include: {
-                    accessProfile: {
-                        include: {
-                            accessProfile: {
-                                include: { globalRules: true }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    campaignUser: {
-        include: {
-            role: {
-                include: {
-                    accessProfile: {
-                        include: {
-                            accessProfile: {
-                                include: { globalRules: true }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    teamUser: {
-        include: {
-            role: {
-                include: {
-                    accessProfile: {
-                        include: {
-                            accessProfile: {
-                                include: { globalRules: true }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-};
 
 @Injectable()
 export class AuthRepository {
     constructor(private readonly prisma: PrismaService) {}
 
+
+    private get userIncludes() {
+        return {
+            GlobalAccessUser: {
+                include: {
+                    accessProfile: {
+                        include: {
+                            globalRules: true
+                        }
+                    }
+                }
+            },
+            systemUser: {
+                include: {
+                    role: {
+                        include: {
+                            accessProfile: {
+                                include: {
+                                    accessProfile: {
+                                        include: { globalRules: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            campaignUser: {
+                include: {
+                    role: {
+                        include: {
+                            accessProfile: {
+                                include: {
+                                    accessProfile: {
+                                        include: { globalRules: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            teamUser: {
+                include: {
+                    role: {
+                        include: {
+                            accessProfile: {
+                                include: {
+                                    accessProfile: {
+                                        include: { globalRules: true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
     async findByEmail(email: string) {
         return this.prisma.userProfile.findFirst({
             where: { email },
-            include: userIncludes
+            include: this.userIncludes
         });
     }
 
@@ -75,14 +79,14 @@ export class AuthRepository {
         if (!username) return null;
         return this.prisma.userProfile.findUnique({
             where: { username },
-            include: userIncludes
+            include: this.userIncludes
         });
     }
 
     async findById(id: string) {
         return this.prisma.userProfile.findUnique({
             where: { id },
-            include: userIncludes
+            include: this.userIncludes
         });
     }
 

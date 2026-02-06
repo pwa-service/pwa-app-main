@@ -100,7 +100,7 @@ export const orgClient: ClientProviderOptions = {
         url: process.env.PWA_ORG_SERVICE_GRPC_URL || '0.0.0.0:50056',
         loader: {
             includeDirs: [PROTOS_DIR],
-            keepCase: true,
+            keepCase: false,
             longs: String,
             enums: String,
             defaults: true,

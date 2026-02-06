@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import {OrgModule} from "./core/org.module";
+import {StripUserPipe} from "../../pwa-shared/src/common/pipes/strip-user.pipe";
 
 async function bootstrap() {
     const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
@@ -29,7 +30,7 @@ async function bootstrap() {
                 url: process.env.PWA_ORG_SERVICE_GRPC_URL || '0.0.0.0:50056',
                 loader: {
                     includeDirs: [PROTO_DIR],
-                    keepCase: true,
+                    keepCase: false,
                     longs: String,
                     enums: String,
                     defaults: true,
@@ -39,7 +40,8 @@ async function bootstrap() {
         },
     );
 
+    app.useGlobalPipes(new StripUserPipe())
     await app.listen();
-    console.log('Org Microservice is listening on port 50055');
+    console.log('Org Microservice is listening on port 50056');
 }
 bootstrap();

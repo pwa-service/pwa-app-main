@@ -3,12 +3,13 @@ syntax = "proto3";
 package auth.v1;
 
 import "google/protobuf/empty.proto";
+import "shared.proto";
 
 service AuthService {
   rpc SignUp                (SignUpRequest)                 returns (AuthResponse);
   rpc SignIn                (SignInRequest)                 returns (AuthResponse);
   rpc Refresh               (RefreshRequest)                returns (AuthResponse);
-  rpc SignOut               (google.protobuf.Empty)         returns (google.protobuf.Empty);
+  rpc SignOut               (SignOutRequest)                returns (google.protobuf.Empty);
   rpc Me                    (google.protobuf.Empty)         returns (User);
   rpc RequestPasswordReset  (RequestRestorePasswordRequest) returns (RequestResetResponse);
   rpc RestorePassword       (RestorePasswordRequest)        returns (AuthResponse);
@@ -16,6 +17,16 @@ service AuthService {
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
   rpc ValidateToken         (ValidateTokenRequest)          returns (User);
 }
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string scope = 4;
+  string context_id = 5;
+  shared.GlobalRules access = 6;
+}
+
 
 message ValidateTokenRequest {
   string token = 1;
@@ -34,6 +45,11 @@ message SignInRequest {
 
 message RefreshRequest {
   string refresh_token = 1;
+}
+
+message SignOutRequest {
+  string refresh_token = 1;
+  string access_token = 2;
 }
 
 message RequestRestorePasswordRequest {
@@ -59,13 +75,6 @@ message AuthResponse {
 
 message RequestResetResponse {
   string message = 1;
-}
-
-message User {
-  string id = 1;
-  string email = 2;
-  string username = 3;
-  string role = 4;
 }
 
 message TelegramAuthRequest {

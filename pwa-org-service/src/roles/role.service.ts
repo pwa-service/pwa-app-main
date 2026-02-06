@@ -163,9 +163,9 @@ export class RoleService implements OnModuleInit {
 
         if (!targetRole) throw new NotFoundException('Role not found');
 
-        if (targetRole.scope !== operatorScope) {
-            throw new ForbiddenException("Cannot assign role from different scope");
-        }
+        // if (targetRole.scope !== operatorScope) {
+        //     throw new ForbiddenException("Cannot assign role from different scope");
+        // }
 
         let targetContextId: string | undefined;
         if (targetRole.scope === ScopeType.CAMPAIGN) targetContextId = targetRole.campaignId!;
@@ -202,7 +202,7 @@ export class RoleService implements OnModuleInit {
             finAccess: AccessLevel.None,
             logAccess: AccessLevel.None,
             usersAccess: AccessLevel.None,
-            sharingAccess: false
+            sharingAccess:  AccessLevel.None
         };
 
         return {

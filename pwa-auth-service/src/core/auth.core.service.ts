@@ -1,32 +1,28 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import {
-    exportJWK,
-    generateKeyPair,
-    importJWK,
-    importPKCS8,
-    jwtVerify,
-    SignJWT,
-} from 'jose';
-import { ClientGrpc, RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js';
+import {Inject, Injectable, OnModuleInit} from '@nestjs/common';
+import {exportJWK, generateKeyPair, importJWK, importPKCS8, jwtVerify, SignJWT,} from 'jose';
+import {ClientGrpc, RpcException} from '@nestjs/microservices';
+import {Metadata, status} from '@grpc/grpc-js';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { MailerService } from "@nestjs-modules/mailer";
-import { Counter } from "prom-client";
-import { InjectMetric } from "@willsoto/nestjs-prometheus";
+import {MailerService} from "@nestjs-modules/mailer";
+import {Counter} from "prom-client";
+import {InjectMetric} from "@willsoto/nestjs-prometheus";
 import {firstValueFrom, Observable} from 'rxjs';
 
-import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import { AuthRepository } from './auth.repository';
-import { RestorePasswordDto, SignInDto, SignUpDto } from "../../../pwa-shared/src";
-import { TelegramAuthDto } from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
-import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
-import { JwtVerifierService } from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import {RefreshStore} from '../../../pwa-shared/src/modules/auth/common/refresh.store';
+import {AuthRepository} from './auth.repository';
+import {AccessLevel, RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
+import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
+import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 
 interface CampaignGrpcService {
-    create(data: { name: string; ownerId: string; description?: string }): Observable<any>;
+    create(
+        data: { name: string; ownerId: string; description?: string },
+        metadata?: any
+    ): Observable<any>;
 }
 
 @Injectable()
@@ -225,6 +221,7 @@ export class AuthCoreService implements OnModuleInit {
 
         if (emailRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Email exists' });
         if (usernameRes) throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Username taken' });
+
         const hash = await bcrypt.hash(password, 10);
 
         try {
@@ -235,15 +232,34 @@ export class AuthCoreService implements OnModuleInit {
                 scope: ScopeType.CAMPAIGN
             });
 
+            const tempPayload: UserPayload = {
+                id: profile.id,
+                email,
+                username: profile.username,
+                scope: ScopeType.CAMPAIGN,
+                access: {
+                    statAccess: AccessLevel.None,
+                    finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None,
+                    usersAccess: AccessLevel.None,
+                    sharingAccess: AccessLevel.View
+                }
+            };
+
+            const { accessToken } = await this.issueTokens(tempPayload);
+            const metadata = new Metadata();
+            metadata.add('Authorization', `Bearer ${accessToken}`);
+
             const campaignResponse = await firstValueFrom(this.campaignService.create({
                 name: `${username}'s Campaign`,
                 ownerId: profile.id
-            }));
+            }, metadata));
 
             await this.sendConfirmationEmail(email, profile.id);
             return this.issueTokens(this.mapUserToPayload(profile, campaignResponse.campaignUser));
 
         } catch (e) {
+            console.error(e);
             throw new RpcException({ code: status.INTERNAL, message: `Registration failed: ${(e as any).message}` });
         }
     }

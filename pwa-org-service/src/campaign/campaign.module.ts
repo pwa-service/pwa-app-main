@@ -44,8 +44,6 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
     ],
     controllers: [CampaignGrpcController],
     providers: [
-        IsCampaignExistsInterceptor,
-        { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         CampaignService,
         CampaignRepository,
     ],
