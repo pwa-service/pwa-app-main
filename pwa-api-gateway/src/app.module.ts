@@ -19,6 +19,7 @@ import {RoleHttpController} from "./org/roles/role.http.controller";
 import {TeamHttpController} from "./org/team/team.http.controller";
 import {SharingHttpController} from "./org/sharing/sharing.http.controller";
 import {TeamGrpcClient} from "./org/team/team.grpc.client";
+import {SharingGrpcClient} from "./org/sharing/sharing.grpc.client";
 
 @Module({
     imports: [ClientsModule.register([authClient, eventHandlerClient, appsManager, pixelTokenManager, orgClient])],
@@ -42,7 +43,7 @@ import {TeamGrpcClient} from "./org/team/team.grpc.client";
         MemberGrpcClient,
         RoleGrpcClient,
         TeamGrpcClient,
-        SharingHttpController
+        SharingGrpcClient,
     ],
 })
 export class AppModule implements NestModule {
