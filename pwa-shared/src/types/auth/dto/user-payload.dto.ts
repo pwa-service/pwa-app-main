@@ -1,5 +1,5 @@
+import {AccessLevel} from "../../org/sharing/enums/access.enum";
 import {ScopeType} from "../../org/roles/enums/scope.enum";
-import {AccessLevel} from ".prisma/client";
 
 export type UserPayload = {
     id: string;
