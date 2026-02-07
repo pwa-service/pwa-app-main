@@ -66,6 +66,21 @@ services:
       redis-test:
         condition: service_healthy
 
+  org-service-tests:
+    build:
+      context: .
+      dockerfile: pwa-org-service/Dockerfile.test
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@postgres-test:5432/pwa_test?schema=public
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+    depends_on:
+      prisma-migrator-test:
+        condition: service_completed_successfully
+      redis-test:
+        condition: service_healthy
+
 volumes:
   postgres_test_data:
   redis_test_data:
