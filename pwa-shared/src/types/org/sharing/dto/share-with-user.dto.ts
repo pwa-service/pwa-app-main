@@ -2,16 +2,16 @@ import { IsUUID, IsDateString, IsOptional } from 'class-validator';
 
 export class ShareWithUserDto {
     @IsUUID()
-    workingObjectId: string;
+    workingObjectId!: string;
 
     @IsUUID()
-    targetUserProfileId: string;
+    targetUserProfileId!: string;
 
     @IsUUID()
-    accessProfileId: string;
+    accessProfileId!: string;
 
     @IsUUID()
-    createdByUserProfileId: string;
+    createdByUserProfileId!: string;
 
     @IsOptional()
     @IsDateString()
