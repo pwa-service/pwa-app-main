@@ -15,7 +15,6 @@ import { MemberRepository } from '../member/member.repository';
 import { SharingRepository } from '../sharing/sharing.repository';
 import { of } from 'rxjs';
 
-// Мок для gRPC клієнта Auth
 const mockAuthService = {
     OrgSignUp: jest.fn().mockReturnValue(of({ id: 'mock_auth_id', email: 'mock@test.com' })),
 };

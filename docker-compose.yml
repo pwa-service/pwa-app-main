@@ -131,7 +131,7 @@ services:
       - AUTH_SERVICE_GRPC_URL=auth-service:50051
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - PWA_MANAGER_GRPC_URL=pwa-manager:50055
-      - PWA_ORG_GRPC_URL=org-service:50056
+      - PWA_ORG_SERVICE_GRPC_URL=org-service:50056
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
