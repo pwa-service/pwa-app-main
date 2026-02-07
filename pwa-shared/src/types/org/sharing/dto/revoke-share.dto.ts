@@ -3,8 +3,8 @@ import {ShareType} from "../enums/access.enum";
 
 export class RevokeShareDto {
     @IsUUID()
-    shareId: string;
+    shareId!: string;
 
     @IsEnum(ShareType)
-    type: ShareType;
+    type!: ShareType;
 }
