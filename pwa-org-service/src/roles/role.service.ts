@@ -15,7 +15,7 @@ import { CreateRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/creat
 import { UpdateRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/update-role.dto";
 import { AssignRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/assign-role.dto";
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import { ScopeType } from '../../../pwa-shared/src/types/org/roles/enums/scope.enum';
+import { ScopeType, SCOPE_PRIORITY } from '../../../pwa-shared/src/types/org/roles/enums/scope.enum';
 
 @Injectable()
 export class RoleService implements OnModuleInit {
@@ -163,9 +163,14 @@ export class RoleService implements OnModuleInit {
 
         if (!targetRole) throw new NotFoundException('Role not found');
 
-        // if (targetRole.scope !== operatorScope) {
-        //     throw new ForbiddenException("Cannot assign role from different scope");
-        // }
+        const operatorLevel = SCOPE_PRIORITY[operatorScope] || 0;
+        const targetRoleLevel = SCOPE_PRIORITY[targetRole.scope] || 0;
+
+        if (targetRoleLevel > operatorLevel) {
+            throw new ForbiddenException(
+                `Insufficient privileges: ${operatorScope} scope cannot assign ${targetRole.scope} roles`
+            );
+        }
 
         let targetContextId: string | undefined;
         if (targetRole.scope === ScopeType.CAMPAIGN) targetContextId = targetRole.campaignId!;
