@@ -15,7 +15,7 @@ interface IMemberGrpcService {
 
 @Injectable()
 export class MemberGrpcClient implements OnModuleInit {
-    private svc: IMemberGrpcService;
+    private svc!: IMemberGrpcService;
 
     constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
 
@@ -23,23 +23,23 @@ export class MemberGrpcClient implements OnModuleInit {
         this.svc = this.client.getService<IMemberGrpcService>('MemberService');
     }
 
-    async getMyProfile(id: string) {
-        return lastValueFrom(this.svc.GetMyProfile({ id }));
+    async getMyProfile(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.GetMyProfile({ id }, metadata));
     }
 
-    async getMyStats(id: string) {
-        return lastValueFrom(this.svc.GetMyStats({ id }));
+    async getMyStats(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.GetMyStats({ id }, metadata));
     }
 
-    async createCampaignMember(dto: CreateCampaignMemberDto) {
-        return lastValueFrom(this.svc.CreateCampaignMember(dto));
+    async createCampaignMember(dto: CreateCampaignMemberDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.CreateCampaignMember(dto, metadata));
     }
 
-    async createTeamLead(dto: CreateMemberDto) {
-        return lastValueFrom(this.svc.CreateTeamLead(dto));
+    async createTeamLead(dto: CreateMemberDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.CreateTeamLead(dto, metadata));
     }
 
-    async createTeamMember(dto: CreateMemberDto) {
-        return lastValueFrom(this.svc.CreateTeamMember(dto));
+    async createTeamMember(dto: CreateMemberDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.CreateTeamMember(dto, metadata));
     }
 }

@@ -7,8 +7,8 @@ import { CreateCampaignMemberDto } from "../../../../pwa-shared/src/types/org/me
 
 @ApiTags('Members')
 @ApiBearerAuth()
-@Controller('members')
 @UseGuards(JwtAuthGuard)
+@Controller('members')
 export class MemberHttpController {
     constructor(private readonly client: MemberGrpcClient) {}
 

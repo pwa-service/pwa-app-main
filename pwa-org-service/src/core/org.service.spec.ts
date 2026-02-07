@@ -48,13 +48,11 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 TeamService,
                 MemberService,
                 SharingService,
-                // Репозиторії
                 CampaignRepository,
                 RoleRepository,
                 TeamRepository,
                 MemberRepository,
                 SharingRepository,
-                // Mock Auth Client (потрібен для MemberService)
                 { provide: 'AUTH_PACKAGE', useValue: mockAuthPackage },
             ],
         }).compile();
@@ -109,13 +107,12 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
     // ==========================================
     describe('Campaign Service', () => {
         it('should create a new Campaign', async () => {
-            // FIX: create приймає (dto, userId)
             const result = await campaignService.create(
                 {
                     name: 'E2E Test Campaign',
-                    description: 'Integration test'
+                    ownerId
                 },
-                ownerId // Передаємо ID власника другим аргументом
+                ownerId
             );
 
             expect(result).toBeDefined();
@@ -151,24 +148,17 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             expect(roleResponse).toBeDefined();
             expect(roleResponse.scope).toBe(ScopeType.CAMPAIGN);
             customRoleId = roleResponse.id;
-
-            // Перевірка прав
             expect(roleResponse.globalRules.finAccess).toBe(AccessLevel.Manage);
         });
     });
 
-    // ==========================================
-    // 3. MEMBER FLOW (Campaign)
-    // ==========================================
     describe('Member Flow (Campaign)', () => {
         it('should add an EXISTING user to the campaign via CampaignService', async () => {
-            // FIX: Використовуємо campaignService.addMember, бо він приймає userId
-            // MemberService.createCampaignMember у вашому коді робить SignUp через gRPC
 
             const result = await campaignService.addMember(
                 memberId,
                 campaignId,
-                parseInt(customRoleId) // addMember очікує number
+                parseInt(customRoleId)
             );
 
             expect(result).toBeDefined();
@@ -178,7 +168,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
 
         it('should update member role via RoleService', async () => {
-            // 1. Створюємо нову роль
             const viewerRole = await roleService.create(
                 {
                     name: 'Campaign Viewer',
@@ -195,7 +184,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 campaignId
             );
 
-            // 2. FIX: Використовуємо assignRoleToUser замість updateMemberRole
             await roleService.assignRoleToUser(
                 {
                     userId: memberId,

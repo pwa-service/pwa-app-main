@@ -10,7 +10,7 @@ import {
     AssignLeadDto,
     PaginationQueryDto
 } from "../../../../pwa-shared/src";
-import {TeamFilterQueryDto} from "../../../../pwa-shared/src/types/org/team/dto/filter-query.dto";
+import { TeamFilterQueryDto } from "../../../../pwa-shared/src/types/org/team/dto/filter-query.dto";
 
 interface ITeamGrpcService {
     Create(data: CreateTeamDto, md?: Metadata): Observable<any>;
@@ -25,7 +25,7 @@ interface ITeamGrpcService {
 
 @Injectable()
 export class TeamGrpcClient implements OnModuleInit {
-    private svc: ITeamGrpcService;
+    private svc!: ITeamGrpcService;
 
     constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
 
@@ -33,35 +33,35 @@ export class TeamGrpcClient implements OnModuleInit {
         this.svc = this.client.getService<ITeamGrpcService>('TeamService');
     }
 
-    async create(data: CreateTeamDto) {
-        return lastValueFrom(this.svc.Create(data));
+    async create(data: CreateTeamDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Create(data, metadata));
     }
 
-    async findOne(id: string) {
-        return lastValueFrom(this.svc.FindOne({ id }));
+    async findOne(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindOne({ id }, metadata));
     }
 
-    async findAll(pagination?: PaginationQueryDto, filters?: TeamFilterQueryDto) {
-        return lastValueFrom(this.svc.FindAll({ pagination, filters }));
+    async findAll(pagination?: PaginationQueryDto, filters?: TeamFilterQueryDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindAll({ pagination, filters }, metadata));
     }
 
-    async update(id: string, data: Partial<UpdateTeamDto>) {
-        return lastValueFrom(this.svc.Update({ id, ...data } as UpdateTeamDto));
+    async update(id: string, data: Partial<UpdateTeamDto>, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Update({ id, ...data } as UpdateTeamDto, metadata));
     }
 
-    async delete(id: string) {
-        return lastValueFrom(this.svc.Delete({ id }));
+    async delete(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Delete({ id }, metadata));
     }
 
-    async addMember(data: AddMemberDto) {
-        return lastValueFrom(this.svc.AddMemberToTeam(data));
+    async addMember(data: AddMemberDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.AddMemberToTeam(data, metadata));
     }
 
-    async removeMember(data: RemoveMemberDto) {
-        return lastValueFrom(this.svc.RemoveMember(data));
+    async removeMember(data: RemoveMemberDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.RemoveMember(data, metadata));
     }
 
-    async assignTeamLead(data: AssignLeadDto) {
-        return lastValueFrom(this.svc.AssignTeamLead(data));
+    async assignTeamLead(data: AssignLeadDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.AssignTeamLead(data, metadata));
     }
 }

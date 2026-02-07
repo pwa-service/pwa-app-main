@@ -22,8 +22,8 @@ import {
 
 @ApiTags('Campaigns')
 @ApiBearerAuth()
-@Controller('campaigns')
 @UseGuards(JwtAuthGuard)
+@Controller('campaigns')
 export class CampaignHttpController {
     constructor(private readonly client: CampaignGrpcClient) {}
 

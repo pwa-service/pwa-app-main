@@ -14,8 +14,8 @@ import {TeamFilterQueryDto} from "../../../../pwa-shared/src/types/org/team/dto/
 
 @ApiTags('Teams')
 @ApiBearerAuth()
-@Controller('teams')
 @UseGuards(JwtAuthGuard)
+@Controller('teams')
 export class TeamHttpController {
     constructor(private readonly client: TeamGrpcClient) {}
 

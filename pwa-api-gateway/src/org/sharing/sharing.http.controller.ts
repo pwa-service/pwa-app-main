@@ -10,8 +10,8 @@ import {
 
 @ApiTags('Sharing')
 @ApiBearerAuth()
-@Controller('sharing')
 @UseGuards(JwtAuthGuard)
+@Controller('sharing')
 export class SharingHttpController {
     constructor(private readonly client: SharingGrpcClient) {}
 

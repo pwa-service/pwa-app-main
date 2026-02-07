@@ -12,9 +12,9 @@ import {
 } from "../../../../pwa-shared/src";
 
 @ApiTags('Pixel Tokens')
-@Controller('pixel-token')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('pixel-token')
 export class PixelTokenHttpController {
     constructor(private readonly pixelTokenService: PixelTokenGrpcClient) {}
 

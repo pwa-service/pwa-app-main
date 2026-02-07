@@ -18,7 +18,7 @@ interface ISharingGrpcService {
 
 @Injectable()
 export class SharingGrpcClient implements OnModuleInit {
-    private svc: ISharingGrpcService;
+    private svc!: ISharingGrpcService;
 
     constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
 
@@ -26,19 +26,19 @@ export class SharingGrpcClient implements OnModuleInit {
         this.svc = this.client.getService<ISharingGrpcService>('SharingService');
     }
 
-    async shareWithRole(data: ShareWithRoleDto) {
-        return lastValueFrom(this.svc.ShareWithRole(data));
+    async shareWithRole(data: ShareWithRoleDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.ShareWithRole(data, metadata));
     }
 
-    async shareWithUser(data: ShareWithUserDto) {
-        return lastValueFrom(this.svc.ShareWithUser(data));
+    async shareWithUser(data: ShareWithUserDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.ShareWithUser(data, metadata));
     }
 
-    async getObjectShares(workingObjectId: string) {
-        return lastValueFrom(this.svc.GetObjectShares({ workingObjectId }));
+    async getObjectShares(workingObjectId: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.GetObjectShares({ workingObjectId }, metadata));
     }
 
-    async revokeShare(data: RevokeShareDto) {
-        return lastValueFrom(this.svc.RevokeShare(data));
+    async revokeShare(data: RevokeShareDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.RevokeShare(data, metadata));
     }
 }

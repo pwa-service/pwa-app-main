@@ -1,58 +1,55 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from "../../common/jwt-auth.guard";
-import { RoleGrpcClient } from './role.grpc.client';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { lastValueFrom, Observable } from 'rxjs';
+import { Metadata } from "@grpc/grpc-js";
 import {
     CreateRoleDto,
-    PaginationQueryDto,
-    UpdateRoleDto
+    UpdateRoleDto,
+    PaginationQueryDto
 } from "../../../../pwa-shared/src";
 import { RoleFilterQueryDto } from "../../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
 import { AssignRoleDto } from "../../../../pwa-shared/src/types/org/roles/dto/assign-role.dto";
 
-@ApiTags('Roles')
-@ApiBearerAuth()
-@Controller('roles')
-@UseGuards(JwtAuthGuard)
-export class RoleHttpController {
-    constructor(private readonly client: RoleGrpcClient) {}
+interface IRoleGrpcService {
+    Create(data: CreateRoleDto, md?: Metadata): Observable<any>;
+    FindOne(data: { id: string }, md?: Metadata): Observable<any>;
+    FindAll(data: { pagination?: PaginationQueryDto, filters?: RoleFilterQueryDto }, md?: Metadata): Observable<any>;
+    Update(data: UpdateRoleDto, md?: Metadata): Observable<any>;
+    Delete(data: { id: string }, md?: Metadata): Observable<any>;
+    Assign(data: AssignRoleDto, md?: Metadata): Observable<any>;
+}
 
-    @Post()
-    @ApiOperation({ summary: 'Create a new role' })
-    async create(@Body() dto: CreateRoleDto) {
-        return this.client.create(dto);
+@Injectable()
+export class RoleGrpcClient implements OnModuleInit {
+    private svc!: IRoleGrpcService;
+
+    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
+
+    onModuleInit() {
+        this.svc = this.client.getService<IRoleGrpcService>('RoleService');
     }
 
-    @Get()
-    @ApiOperation({ summary: 'List roles' })
-    async findAll(
-        @Query() pagination: PaginationQueryDto,
-        @Query() filters: RoleFilterQueryDto
-    ) {
-        return this.client.findAll(pagination, filters);
+    async create(data: CreateRoleDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Create(data, metadata));
     }
 
-    @Get(':id')
-    @ApiOperation({ summary: 'Get role details' })
-    async findOne(@Param('id') id: string) {
-        return this.client.findOne(id);
+    async findOne(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindOne({ id }, metadata));
     }
 
-    @Patch(':id')
-    @ApiOperation({ summary: 'Update role' })
-    async update(@Param('id') id: string, @Body() dto: UpdateRoleDto) {
-        return this.client.update(id, dto);
+    async findAll(pagination?: PaginationQueryDto, filters?: RoleFilterQueryDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindAll({ pagination, filters }, metadata));
     }
 
-    @Delete(':id')
-    @ApiOperation({ summary: 'Delete role' })
-    async delete(@Param('id') id: string) {
-        return this.client.delete(id);
+    async update(id: string, data: Partial<UpdateRoleDto>, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Update({ id, ...data }, metadata));
     }
 
-    @Post('assign')
-    @ApiOperation({ summary: 'Assign role to user' })
-    async assign(@Body() dto: AssignRoleDto) {
-        return this.client.assign(dto);
+    async delete(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Delete({ id }, metadata));
+    }
+
+    async assign(data: AssignRoleDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Assign(data, metadata));
     }
 }
