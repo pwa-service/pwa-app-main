@@ -11,7 +11,6 @@ import {CampaignRepository} from "./campaign.repository";
 import {PrismaModule} from "../../../pwa-prisma/src";
 import {RoleModule} from "../roles/role.module";
 import {SharingModule} from "../sharing/sharing.module";
-import {TeamRepository} from "../team/team.repository";
 
 
 

@@ -40,7 +40,7 @@ export class CampaignGrpcClient implements OnModuleInit {
     }
 
     async update(id: string, data: Partial<UpdateCampaignDto>, metadata?: Metadata) {
-        return lastValueFrom(this.svc.Update({ id, ...data }, metadata));
+        return lastValueFrom(this.svc.Update({ id, ...data } as UpdateCampaignDto, metadata));
     }
 
     async delete(id: string, metadata?: Metadata) {

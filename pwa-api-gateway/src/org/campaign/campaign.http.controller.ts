@@ -19,6 +19,7 @@ import {
     UpdateCampaignDto,
     CampaignFiltersQueryDto
 } from "../../../../pwa-shared/src";
+import { buildGrpcMetadata } from "../../common/jwt-to-metadata"; // Перевірте шлях
 
 @ApiTags('Campaigns')
 @ApiBearerAuth()
@@ -32,34 +33,39 @@ export class CampaignHttpController {
     async create(@Body() dto: CreateCampaignDto, @Req() req: any) {
         return this.client.create({
             ...dto,
-            ownerId: req.user.id
-        });
+            ownerId: req.user?.id
+        }, buildGrpcMetadata(req));
     }
 
     @Get()
     @ApiOperation({ summary: 'List campaigns' })
     async findAll(
         @Query() pagination: PaginationQueryDto,
-        @Query() filters: CampaignFiltersQueryDto
+        @Query() filters: CampaignFiltersQueryDto,
+        @Req() req: any
     ) {
-        return this.client.findAll(pagination, filters);
+        return this.client.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Get campaign details' })
-    async findOne(@Param('id') id: string) {
-        return this.client.findOne(id);
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        return this.client.findOne(id, buildGrpcMetadata(req));
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update campaign' })
-    async update(@Param('id') id: string, @Body() dto: UpdateCampaignDto) {
-        return this.client.update(id, dto);
+    async update(
+        @Param('id') id: string,
+        @Body() dto: UpdateCampaignDto,
+        @Req() req: any
+    ) {
+        return this.client.update(id, dto, buildGrpcMetadata(req));
     }
 
     @Delete(':id')
     @ApiOperation({ summary: 'Delete campaign' })
-    async delete(@Param('id') id: string) {
-        return this.client.delete(id);
+    async delete(@Param('id') id: string, @Req() req: any) {
+        return this.client.delete(id, buildGrpcMetadata(req));
     }
 }
