@@ -36,6 +36,7 @@ jobs:
           docker compose -f docker-compose.ci.yml up --abort-on-container-exit prisma-migrator-test
           docker compose -f docker-compose.ci.yml run --rm auth-tests
           docker compose -f docker-compose.ci.yml run --rm event-handler-tests
+          docker compose -f docker-compose.ci.yml run --rm org-service-tests
           docker compose -f docker-compose.ci.yml down -v
 
 
