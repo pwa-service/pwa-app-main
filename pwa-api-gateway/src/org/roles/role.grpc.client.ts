@@ -21,7 +21,7 @@ interface IRoleGrpcService {
 
 @Injectable()
 export class RoleGrpcClient implements OnModuleInit {
-    private svc: IRoleGrpcService;
+    private svc!: IRoleGrpcService;
 
     constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
 
@@ -29,27 +29,27 @@ export class RoleGrpcClient implements OnModuleInit {
         this.svc = this.client.getService<IRoleGrpcService>('RoleService');
     }
 
-    async create(data: CreateRoleDto) {
-        return lastValueFrom(this.svc.Create(data));
+    async create(data: CreateRoleDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Create(data, metadata));
     }
 
-    async findOne(id: string) {
-        return lastValueFrom(this.svc.FindOne({ id }));
+    async findOne(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindOne({ id }, metadata));
     }
 
-    async findAll(pagination?: PaginationQueryDto, filters?: RoleFilterQueryDto) {
-        return lastValueFrom(this.svc.FindAll({ pagination, filters }));
+    async findAll(pagination?: PaginationQueryDto, filters?: RoleFilterQueryDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindAll({ pagination, filters }, metadata));
     }
 
-    async update(id: string, data: Partial<UpdateRoleDto>) {
-        return lastValueFrom(this.svc.Update({ id, ...data }));
+    async update(id: string, data: Partial<UpdateRoleDto>, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Update({ id, ...data }, metadata));
     }
 
-    async delete(id: string) {
-        return lastValueFrom(this.svc.Delete({ id }));
+    async delete(id: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Delete({ id }, metadata));
     }
 
-    async assign(data: AssignRoleDto) {
-        return lastValueFrom(this.svc.Assign(data));
+    async assign(data: AssignRoleDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.Assign(data, metadata));
     }
 }
