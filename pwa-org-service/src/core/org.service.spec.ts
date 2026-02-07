@@ -27,16 +27,15 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
     let campaignService: CampaignService;
     let roleService: RoleService;
     let teamService: TeamService;
-    let memberService: MemberService; // Залишаємо, хоча можемо використовувати campaignService для додавання
+    let memberService: MemberService;
 
-    // Тестові змінні
     const ownerEmail = 'owner_e2e@test.com';
     const memberEmail = 'member_e2e@test.com';
     let ownerId: string;
     let memberId: string;
 
     let campaignId: string;
-    let customRoleId: string; // ID ролей у вас string у сервісі
+    let customRoleId: string;
     let teamId: string;
 
     beforeAll(async () => {
@@ -63,27 +62,24 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         teamService = module.get(TeamService);
         memberService = module.get(MemberService);
 
-        // --- ОЧИЩЕННЯ ---
         await prisma.workingObjectTeamUser.deleteMany();
         await prisma.teamUser.deleteMany();
         await prisma.team.deleteMany();
         await prisma.campaignUser.deleteMany();
-        // Спочатку видаляємо RoleAccess, потім Role
         await prisma.roleAccess.deleteMany();
         await prisma.role.deleteMany({
             where: {
-                name: { not: SystemRoleName.PRODUCT_OWNER } // Не видаляємо системну роль
+                name: { not: SystemRoleName.PRODUCT_OWNER }
             }
         });
         await prisma.accessProfile.deleteMany({
-            where: { name: { not: 'Root Admin Profile' } } // Якщо є дефолтні профілі
+            where: { name: { not: 'Root Admin Profile' } }
         });
         await prisma.campaign.deleteMany();
         await prisma.userProfile.deleteMany({
             where: { email: { in: [ownerEmail, memberEmail] } }
         });
 
-        // --- СТВОРЕННЯ ЮЗЕРІВ ---
         const owner = await prisma.userProfile.create({
             data: { username: 'owner_e2e', email: ownerEmail, scope: ScopeType.SYSTEM, passwordHash: 'hash' }
         });
@@ -94,7 +90,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
         memberId = member.id;
 
-        // Ініціалізація системних ролей (якщо треба)
         await roleService.onModuleInit();
     });
 
@@ -102,9 +97,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         await prisma.$disconnect();
     });
 
-    // ==========================================
-    // 1. CAMPAIGN SERVICE
-    // ==========================================
+
     describe('Campaign Service', () => {
         it('should create a new Campaign', async () => {
             const result = await campaignService.create(
@@ -123,12 +116,8 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
     });
 
-    // ==========================================
-    // 2. ROLE SERVICE
-    // ==========================================
     describe('Role Service', () => {
         it('should create a custom Role in Campaign', async () => {
-            // FIX: create приймає (dto, scope, contextId)
             const roleResponse = await roleService.create(
                 {
                     name: 'Marketing Manager',
@@ -136,13 +125,13 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                     globalRules: {
                         statAccess: AccessLevel.View,
                         finAccess: AccessLevel.Manage,
-                        usersAccess: AccessLevel.None, // Додаємо всі поля, бо DTO цього вимагає
+                        usersAccess: AccessLevel.None,
                         logAccess: AccessLevel.View,
                         sharingAccess: AccessLevel.None
                     }
                 },
-                ScopeType.CAMPAIGN, // Scope
-                campaignId          // Context ID
+                ScopeType.CAMPAIGN,
+                campaignId
             );
 
             expect(roleResponse).toBeDefined();
@@ -154,7 +143,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
     describe('Member Flow (Campaign)', () => {
         it('should add an EXISTING user to the campaign via CampaignService', async () => {
-
             const result = await campaignService.addMember(
                 memberId,
                 campaignId,
@@ -202,16 +190,12 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
     });
 
-    // ==========================================
-    // 4. TEAM SERVICE
-    // ==========================================
+
     describe('Team Service', () => {
         it('should create a Team', async () => {
-            // FIX: create приймає CreateTeamDto (1 аргумент)
             const team = await teamService.create({
                 name: 'Alpha Squad',
                 campaignId: campaignId,
-                // leadId: memberId // Можна передати ліда одразу
             });
 
             expect(team).toBeDefined();
@@ -239,12 +223,10 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
 
         it('should add user to Team', async () => {
-            // Знаходимо роль
             const teamRole = await prisma.role.findFirst({
                 where: { teamId: teamId, name: 'Team Lead' }
             });
 
-            // FIX: Використовуємо addMemberToTeam
             await teamService.addMemberToTeam({
                 teamId: teamId,
                 userId: memberId,
@@ -261,9 +243,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
     });
 
-    // ==========================================
-    // 5. CLEANUP CHECK
-    // ==========================================
     describe('System Integrity', () => {
         it('should cascade delete', async () => {
             await campaignService.delete(campaignId);

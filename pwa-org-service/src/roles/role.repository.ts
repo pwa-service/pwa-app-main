@@ -99,8 +99,7 @@ export class RoleRepository {
         globalRulesData: Prisma.GlobalAccessRulesCreateInput
     ) {
         return this.prisma.$transaction(async (tx) => {
-            const role = await tx.role.create({ data: roleData });
-
+            let role = await tx.role.create({ data: roleData });
             const profile = await tx.accessProfile.create({
                 data: {
                     name: accessProfileName,
@@ -114,7 +113,19 @@ export class RoleRepository {
                 data: { roleId: role.id, accessProfileId: profile.id }
             });
 
-            return role;
+            role = await tx.role.findUniqueOrThrow({
+                where: { id: role.id },
+                include: {
+                    accessProfile: {
+                        include: {
+                            accessProfile: {
+                                include: { globalRules: true }
+                            }
+                        }
+                    }
+                }
+            });
+            return role
         });
     }
 

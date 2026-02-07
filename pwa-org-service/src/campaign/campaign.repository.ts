@@ -90,8 +90,22 @@ export class CampaignRepository {
     }
 
     async delete(id: string) {
-        return this.prisma.campaign.delete({
-            where: { id },
+        return this.prisma.$transaction(async (tx) => {
+            await tx.team.deleteMany({
+                where: { campaignId: id }
+            });
+
+            await tx.campaignUser.deleteMany({
+                where: { campaignId: id }
+            });
+
+            await tx.role.deleteMany({
+                where: { campaignId: id }
+            });
+
+            return tx.campaign.delete({
+                where: { id }
+            });
         });
     }
 
