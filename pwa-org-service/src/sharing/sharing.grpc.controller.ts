@@ -1,5 +1,5 @@
 import {Controller, UseInterceptors} from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import {GrpcMethod, Payload} from '@nestjs/microservices';
 import { SharingService } from './sharing.service';
 import {
     ShareWithRoleDto,
@@ -20,25 +20,25 @@ export class SharingGrpcController {
 
     @GrpcMethod('SharingService', 'ShareWithRole')
     @RequireGlobalAccess(ResourceType.SHARING, AccessLevel.Manage)
-    async shareWithRole(data: ShareWithRoleDto) {
+    async shareWithRole(@Payload() data: ShareWithRoleDto) {
         return this.service.shareWithRole(data);
     }
 
     @GrpcMethod('SharingService', 'ShareWithUser')
     @RequireGlobalAccess(ResourceType.SHARING, AccessLevel.Manage)
-    async shareWithUser(data: ShareWithUserDto) {
+    async shareWithUser(@Payload() data: ShareWithUserDto) {
         return this.service.shareWithUser(data);
     }
 
     @GrpcMethod('SharingService', 'GetObjectShares')
     @RequireGlobalAccess(ResourceType.SHARING, AccessLevel.Manage)
-    async getObjectShares(data: GetObjectSharesDto) {
+    async getObjectShares(@Payload() data: GetObjectSharesDto) {
         return this.service.getObjectShares(data.workingObjectId);
     }
 
     @GrpcMethod('SharingService', 'RevokeShare')
     @RequireGlobalAccess(ResourceType.SHARING, AccessLevel.Manage)
-    async revokeShare(data: RevokeShareDto) {
+    async revokeShare(@Payload() data: RevokeShareDto) {
         return this.service.revokeShare(data.shareId, data.type);
     }
 }

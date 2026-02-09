@@ -6,10 +6,9 @@ import {
     PaginationQueryDto,
 } from "../../../pwa-shared/src";
 import {CampaignService} from "./campaign.service";
-import {CampaignFiltersQueryDto} from "../../../pwa-shared/src/types/org/campaign/dto/filters-query.dto";
 import {ScopeInterceptor} from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import {AllowedScopes} from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
-import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
+import {ScopeType, CampaignFiltersQueryDto} from "../../../pwa-shared/src";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 

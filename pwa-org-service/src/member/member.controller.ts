@@ -1,5 +1,5 @@
 import { Controller, UseInterceptors } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, Payload} from '@nestjs/microservices';
 import { ScopeInterceptor } from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import { MemberService } from './member.service';
 import {
@@ -15,6 +15,7 @@ import {CreateMemberDto, PaginationQueryDto, ScopeType} from "../../../pwa-share
 import { CreateCampaignMemberDto } from "../../../pwa-shared/src/types/org/member/dto/create-campaign.dto";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor)
@@ -25,7 +26,7 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanCreate(WorkingObjectType.CAMPAIGN, 'campaignId')
-    async createCampaignMember(dto: CreateCampaignMemberDto) {
+    async createCampaignMember(@Payload() dto: CreateCampaignMemberDto) {
         return this.service.createCampaignMember(dto);
     }
 
@@ -34,7 +35,7 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamLead(dto: CreateMemberDto) {
+    async createTeamLead(@Payload() dto: CreateMemberDto) {
         return this.service.createTeamLead(dto);
     }
 
@@ -43,13 +44,13 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN, ScopeType.TEAM)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamMember(dto: CreateMemberDto) {
+    async createTeamMember(@Payload() dto: CreateMemberDto) {
         return this.service.createTeamMember(dto);
     }
 
     @GrpcMethod('MemberService', 'FindAll')
     async findAll(
-        data: { pagination: PaginationQueryDto, filters: MemberFilterQueryDto },
+        @GrpcPagination() data: { pagination: PaginationQueryDto, filters: MemberFilterQueryDto },
         @GrpcUser() user: UserPayload
     ) {
         return this.service.findAll(data.pagination, data.filters, user);

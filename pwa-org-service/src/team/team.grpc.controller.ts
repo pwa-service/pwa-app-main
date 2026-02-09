@@ -1,5 +1,5 @@
 import {Controller, UseInterceptors} from '@nestjs/common';
-import {GrpcMethod} from '@nestjs/microservices';
+import {GrpcMethod, Payload} from '@nestjs/microservices';
 import {TeamService} from './team.service';
 import {
     AddMemberDto,
@@ -15,6 +15,7 @@ import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-use
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {ScopeInterceptor} from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import {AllowedScopes} from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
+import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
 
 
 @Controller()
@@ -25,41 +26,41 @@ export class TeamGrpcController {
     @UseInterceptors(ScopeInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'Create')
-    async create(data: CreateTeamDto) {
+    async create(@Payload() data: CreateTeamDto) {
         return this.service.create(data);
     }
 
     @GrpcMethod('TeamService', 'FindOne')
-    async findOne(data: { id: string }) {
+    async findOne(@Payload() data: { id: string }) {
         return this.service.findOne(data.id);
     }
 
     @GrpcMethod('TeamService', 'Update')
-    async update(data: UpdateTeamDto) {
+    async update(@Payload() data: UpdateTeamDto) {
         return this.service.update(data);
     }
 
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'Delete')
-    async delete(data: { id: string }) {
+    async delete(@Payload() data: { id: string }) {
         return this.service.delete(data.id);
     }
 
     @GrpcMethod('TeamService', 'FindAll')
     async findAll(
-        data: { pagination: PaginationQueryDto, filters: TeamFilterQueryDto },
+        @GrpcPagination() data: { pagination: PaginationQueryDto, filters: TeamFilterQueryDto },
         @GrpcUser() user: UserPayload
     ) {
         return this.service.findAll(data.pagination, data.filters, user);
     }
 
     @GrpcMethod('TeamService', 'AddMemberToTeam')
-    async addMember(data: AddMemberDto) {
+    async addMember(@Payload() data: AddMemberDto) {
         return this.service.addMemberToTeam(data);
     }
 
     @GrpcMethod('TeamService', 'RemoveMember')
-    async removeMember(data: RemoveMemberDto) {
+    async removeMember(@Payload() data: RemoveMemberDto) {
         return this.service.removeMember(data);
     }
 
