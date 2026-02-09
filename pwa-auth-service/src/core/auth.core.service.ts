@@ -254,9 +254,9 @@ export class AuthCoreService implements OnModuleInit {
                 name: `${username}'s Campaign`,
                 ownerId: profile.id
             }, metadata));
-
+            campaignResponse.campaignId = campaignResponse.id
             await this.sendConfirmationEmail(email, profile.id);
-            return this.issueTokens(this.mapUserToPayload(profile, campaignResponse.campaignUser));
+            return this.issueTokens(this.mapUserToPayload(profile, campaignResponse));
 
         } catch (e) {
             console.error(e);
