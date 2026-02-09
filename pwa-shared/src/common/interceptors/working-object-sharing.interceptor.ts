@@ -4,10 +4,10 @@ import { switchMap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
-import { PrismaService, WorkingObjectType } from '../../../../pwa-prisma/src';
+import { PrismaService } from '../../../../pwa-prisma/src';
 import { WO_ACCESS_KEY } from '../decorators/access.decorators';
 import { UserPayload } from "../../types/auth/dto/user-payload.dto";
-import { ScopeType } from "../../types/org/roles/enums/scope.enum";
+import { ScopeType, WorkingObjectType } from "../../../../pwa-shared/src";
 
 @Injectable()
 export class WorkingObjectSharingInterceptor implements NestInterceptor {

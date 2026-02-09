@@ -7,8 +7,7 @@ import { RoleService } from '../roles/role.service';
 import { TeamService } from '../team/team.service';
 import { CampaignService } from '../campaign/campaign.service';
 import {CreateCampaignMemberDto} from "../../../pwa-shared/src/types/org/member/dto/create-campaign.dto";
-import {MemberFilterQueryDto} from "../../../pwa-shared/src/types/org/member/dto/filter-query.dto";
-import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
+import {ScopeType, MemberFilterQueryDto} from "../../../pwa-shared/src";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {MemberRepository} from "./member.repository";
 

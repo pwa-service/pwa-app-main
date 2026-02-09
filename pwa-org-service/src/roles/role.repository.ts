@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../pwa-prisma/src';
 import { PaginationQueryDto } from "../../../pwa-shared/src";
-import { RoleFilterQueryDto } from "../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
 import { PrismaService } from "../../../pwa-prisma/src";
-import { ScopeType } from '../../../pwa-shared/src/types/org/roles/enums/scope.enum'
+import { ScopeType, RoleFilterQueryDto } from '../../../pwa-shared/src'
 
 @Injectable()
 export class RoleRepository {

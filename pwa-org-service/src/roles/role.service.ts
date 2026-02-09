@@ -6,16 +6,11 @@ import {
     ForbiddenException,
     Logger
 } from '@nestjs/common';
-import { AccessLevel } from '../../../pwa-shared/src/types/org/sharing/enums/access.enum';
 import { RoleRepository } from './role.repository';
 import { RolePriority, SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { PaginationQueryDto } from "../../../pwa-shared/src";
-import { RoleFilterQueryDto } from "../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
-import { CreateRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/create-role.dto";
-import { UpdateRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/update-role.dto";
-import { AssignRoleDto } from "../../../pwa-shared/src/types/org/roles/dto/assign-role.dto";
+import { AccessLevel, CreateRoleDto, UpdateRoleDto, RoleFilterQueryDto, AssignRoleDto, ScopeType, SCOPE_PRIORITY } from "../../../pwa-shared/src";
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import { ScopeType, SCOPE_PRIORITY } from '../../../pwa-shared/src/types/org/roles/enums/scope.enum';
 
 @Injectable()
 export class RoleService implements OnModuleInit {

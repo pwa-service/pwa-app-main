@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Team, PrismaService, TeamUser } from '../../../pwa-prisma/src';
+import { Prisma, PrismaService, TeamUser } from '../../../pwa-prisma/src';
 import {PaginationQueryDto} from "../../../pwa-shared/src";
 
 @Injectable()

@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
-import {Prisma, WorkingObjectType} from '../../../pwa-prisma/src';
+import {Prisma} from '../../../pwa-prisma/src';
 import {
     CreateTeamDto,
     UpdateTeamDto,
     AddMemberDto,
     RemoveMemberDto,
-    AssignLeadDto, TeamFilterQueryDto, PaginationQueryDto
+    AssignLeadDto,
+    TeamFilterQueryDto,
+    PaginationQueryDto,
+    WorkingObjectType,
+    ScopeType,
 } from '../../../pwa-shared/src';
-import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 

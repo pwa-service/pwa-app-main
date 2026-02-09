@@ -7,8 +7,7 @@ import {
     PaginationQueryDto,
     UpdateRoleDto
 } from "../../../../pwa-shared/src";
-import { RoleFilterQueryDto } from "../../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
-import { AssignRoleDto } from "../../../../pwa-shared/src/types/org/roles/dto/assign-role.dto";
+import { AssignRoleDto, RoleFilterQueryDto } from "../../../../pwa-shared/src";
 import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
 
 @ApiTags('Roles')
@@ -20,7 +19,7 @@ export class RoleHttpController {
 
     @Post()
     @ApiOperation({ summary: 'Create a new role' })
-    async create(@Body() dto: CreateRoleDto, @Req() req: any) {
+    async create(@Body() dto: any, @Req() req: any) {
         return this.client.create(dto, buildGrpcMetadata(req));
     }
 

@@ -4,19 +4,21 @@ import {TeamService} from './team.service';
 import {
     AddMemberDto,
     AssignLeadDto,
-    CreateTeamDto, PaginationQueryDto,
+    CreateTeamDto,
+    PaginationQueryDto,
     RemoveMemberDto,
     TeamFilterQueryDto,
     UpdateTeamDto,
+    ScopeType, GrpcAuthInterceptor
 } from '../../../pwa-shared/src';
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {ScopeInterceptor} from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import {AllowedScopes} from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
-import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 
 
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor)
 export class TeamGrpcController {
     constructor(private readonly service: TeamService) {}
 

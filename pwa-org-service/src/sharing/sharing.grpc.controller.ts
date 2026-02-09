@@ -1,19 +1,20 @@
-import {Controller, UseInterceptors, UsePipes, ValidationPipe} from '@nestjs/common';
+import {Controller, UseInterceptors} from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { SharingService } from './sharing.service';
 import {
     ShareWithRoleDto,
     ShareWithUserDto,
     RevokeShareDto,
-    GetObjectSharesDto, ResourceType,
+    GetObjectSharesDto,
+    ResourceType,
+    AccessLevel, GrpcAuthInterceptor
 } from '../../../pwa-shared/src';
 import {GlobalSharingInterceptor} from "../../../pwa-shared/src/common/interceptors/global-sharing.interceptor";
 import {RequireGlobalAccess} from "../../../pwa-shared/src/common/decorators/access.decorators";
-import {AccessLevel} from "@prisma/client";
 
 
 @Controller()
-@UseInterceptors(GlobalSharingInterceptor)
+@UseInterceptors(GrpcAuthInterceptor, GlobalSharingInterceptor)
 export class SharingGrpcController {
     constructor(private readonly service: SharingService) {}
 

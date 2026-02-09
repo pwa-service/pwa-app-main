@@ -13,7 +13,7 @@ import { JwtVerifierService } from "../../../pwa-shared/src/modules/auth/jwt-ver
 import { Counter } from "prom-client";
 import { of } from 'rxjs';
 import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
-import { AccessLevel } from "../../../pwa-shared/src/types/org/sharing/enums/access.enum";
+import { AccessLevel } from "../../../pwa-shared/src";
 
 class MailerServiceMock {
     sendMail = jest.fn().mockResolvedValue(undefined);

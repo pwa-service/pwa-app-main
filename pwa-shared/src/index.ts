@@ -31,6 +31,7 @@ export * from './types/org/campaign/dto/filters-query.dto';
 export * from './types/pagination-query.dto';
 
 export * from './types/org/sharing/enums/access.enum';
+export * from './types/org/sharing/enums/workin-object.enum';
 export * from './types/org/sharing/dto/share-with-role.dto';
 export * from './types/org/sharing/dto/share-with-user.dto';
 export * from './types/org/sharing/dto/revoke-share.dto';
@@ -52,6 +53,8 @@ export * from './types/org/member/dto/update-member.dto';
 export * from './types/org/member/dto/get-member.dto';
 export * from './types/org/member/dto/filter-query.dto';
 
+export * from './types/org/roles/enums/scope.enum';
+export * from './types/org/roles/dto/assign-role.dto';
 export * from './types/org/roles/dto/filters-query.dto';
 export * from './types/org/roles/dto/update-role.dto';
 export * from './types/org/roles/dto/create-role.dto';

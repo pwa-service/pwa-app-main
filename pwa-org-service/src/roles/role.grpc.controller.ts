@@ -1,18 +1,25 @@
-import { Controller } from '@nestjs/common';
+import {Controller, UseInterceptors} from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { RoleService } from './role.service';
-import {CreateRoleDto} from "../../../pwa-shared/src/types/org/roles/dto/create-role.dto";
-import {UpdateRoleDto} from "../../../pwa-shared/src/types/org/roles/dto/update-role.dto";
+import {
+    CreateRoleDto,
+    UpdateRoleDto,
+    RoleFilterQueryDto,
+    AssignRoleDto,
+    GrpcAuthInterceptor, WorkingObjectType
+} from "../../../pwa-shared/src";
 import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
 import {PaginationQueryDto} from "../../../pwa-shared/src";
 import {GrpcFilters} from "../../../pwa-shared/src/common/decorators/filters.decorator";
-import {RoleFilterQueryDto} from "../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
-import {AssignRoleDto} from "../../../pwa-shared/src/types/org/roles/dto/assign-role.dto";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import {
+    WorkingObjectSharingInterceptor
+} from "../../../pwa-shared/src/common/interceptors/working-object-sharing.interceptor";
 
 
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor)
 export class RoleGrpcController {
     constructor(private readonly roleService: RoleService) {}
 
