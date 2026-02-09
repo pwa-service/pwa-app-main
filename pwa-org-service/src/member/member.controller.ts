@@ -1,6 +1,6 @@
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AccessLevel, WorkingObjectType } from '@prisma/client';
+import { AccessLevel, WorkingObjectType } from '../../../pwa-prisma/src';
 import { ScopeInterceptor } from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import { GlobalSharingInterceptor } from "../../../pwa-shared/src/common/interceptors/global-sharing.interceptor";
 import { WorkingObjectSharingInterceptor } from "../../../pwa-shared/src/common/interceptors/working-object-sharing.interceptor";
