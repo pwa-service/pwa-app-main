@@ -20,17 +20,18 @@ export class RoleHttpController {
 
     @Post()
     @ApiOperation({ summary: 'Create a new role' })
-    async create(@Body() dto: CreateRoleDto) {
-        return this.client.create(dto);
+    async create(@Body() dto: CreateRoleDto, @Req() req: any) {
+        return this.client.create(dto, buildGrpcMetadata(req));
     }
 
     @Get()
     @ApiOperation({ summary: 'List roles' })
     async findAll(
         @Query() pagination: PaginationQueryDto,
-        @Query() filters: RoleFilterQueryDto
+        @Query() filters: RoleFilterQueryDto,
+        @Req() req: any
     ) {
-        return this.client.findAll(pagination, filters);
+        return this.client.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Get(':id')
