@@ -4,8 +4,7 @@ import { CampaignService } from '../campaign/campaign.service';
 import { RoleService } from '../roles/role.service';
 import { TeamService } from '../team/team.service';
 import { MemberService } from '../member/member.service';
-import { ScopeType } from '../../../pwa-shared/src/types/org/roles/enums/scope.enum';
-import { AccessLevel } from '../../../pwa-shared/src/types/org/sharing/enums/access.enum';
+import { AccessLevel, ScopeType } from '../../../pwa-shared/src';
 import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { SharingService } from '../sharing/sharing.service';
 import { CampaignRepository } from '../campaign/campaign.repository';
@@ -180,7 +179,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 ScopeType.CAMPAIGN
             );
 
-            // 3. Перевіряємо в базі
             const updatedMember = await prisma.campaignUser.findFirst({
                 where: { userProfileId: memberId, campaignId: campaignId },
                 include: { role: true }

@@ -237,11 +237,11 @@ export class AuthCoreService implements OnModuleInit {
                 username: profile.username,
                 scope: ScopeType.CAMPAIGN,
                 access: {
-                    statAccess: AccessLevel.None,
-                    finAccess: AccessLevel.None,
-                    logAccess: AccessLevel.None,
-                    usersAccess: AccessLevel.None,
-                    sharingAccess: AccessLevel.View
+                    statAccess: AccessLevel.Manage,
+                    finAccess: AccessLevel.Manage,
+                    logAccess: AccessLevel.Manage,
+                    usersAccess: AccessLevel.Manage,
+                    sharingAccess: AccessLevel.Manage
                 }
             };
 
@@ -254,8 +254,16 @@ export class AuthCoreService implements OnModuleInit {
                 ownerId: profile.id
             }, metadata));
             campaignResponse.campaignId = campaignResponse.id
+            campaignResponse.campaignUser = tempPayload
+            campaignResponse.campaignUser.role = {
+                accessProfile: {
+                    accessProfile: {
+                        globalRules: tempPayload.access
+                    }
+                }
+            }
             await this.sendConfirmationEmail(email, profile.id);
-            return this.issueTokens(this.mapUserToPayload(profile, campaignResponse));
+            return this.issueTokens(this.mapUserToPayload(profile, campaignResponse.campaignUser));
 
         } catch (e) {
             console.error(e);
