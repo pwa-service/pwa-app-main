@@ -2,16 +2,15 @@ syntax = "proto3";
 
 package org.member;
 
-import "org/common.proto";
+import "google/protobuf/empty.proto";
 import "shared.proto";
 
 service MemberService {
-    rpc GetMyProfile (org.common.ById) returns (MemberResponse);
-    rpc GetMyStats (org.common.ById) returns (org.common.StatsResponse);
+    rpc GetMyProfile (google.protobuf.Empty) returns (MemberResponse);
     rpc FindAll (ListMembersRequest) returns (MemberListResponse);
     rpc CreateCampaignMember (CreateCampaignMemberRequest) returns (MemberResponse);
-    rpc CreateTeamLead (CreateMemberRequest) returns (MemberResponse);
-    rpc CreateTeamMember (CreateMemberRequest) returns (MemberResponse);
+    rpc CreateTeamLead (CreateCampaignMemberRequest) returns (MemberResponse);
+    rpc CreateTeamMember (CreateCampaignMemberRequest) returns (MemberResponse);
 }
 
 message MemberResponse {
@@ -19,9 +18,10 @@ message MemberResponse {
     string user_id = 2;
     string email = 3;
     string role = 4;
-    optional string team_id = 5;
-    optional string campaign_id = 6;
-    string username = 7;
+    string scope = 5;
+    optional string team_id = 6;
+    optional string campaign_id = 7;
+    string username = 8;
 }
 
 
@@ -42,18 +42,12 @@ message MemberListResponse {
     int32 total = 2;
 }
 
-message CreateMemberRequest {
-    string email = 1;
-    string password = 2;
-    string username = 3;
-    string team_id = 4;
-    optional int32 role_id = 5;
-}
-
 message CreateCampaignMemberRequest {
     string email = 1;
     string password = 2;
     string username = 3;
-    string campaign_id = 4;
-    optional int32 role_id = 5;
+    string scope = 4;
+    string team_id = 5;
+    string campaign_id = 6;
+    optional int32 role_id = 7;
 }

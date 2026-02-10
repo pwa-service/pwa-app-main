@@ -15,6 +15,7 @@ import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-use
 import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
 import {LocalAuthInterceptor} from "../common/interceptors/auth.interceptor";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 @Controller()
 @UseInterceptors(LocalAuthInterceptor)
@@ -29,7 +30,7 @@ export class AuthGrpcController {
 
   @AllowAnonymous()
   @GrpcMethod('AuthService', 'OrgSignUp')
-  async orgSignUp(dto: SignUpDto) {
+  async orgSignUp(dto: SignUpOrgDto) {
     return this.auth.orgSignUp(dto);
   }
 

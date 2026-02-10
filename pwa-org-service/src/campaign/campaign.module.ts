@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
-import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
-import {APP_INTERCEPTOR} from "@nestjs/core";
 import {ClientsModule, Transport} from "@nestjs/microservices";
 import {join} from "path";
-import {IsCampaignExistsInterceptor} from "../common/interceptors/is-campaign-exists.interceptor";
 import {CampaignGrpcController} from "./campaign.grpc.controller";
 import {CampaignService} from "./campaign.service";
 import {CampaignRepository} from "./campaign.repository";

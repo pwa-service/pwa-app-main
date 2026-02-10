@@ -2,8 +2,8 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { status } from '@grpc/grpc-js';
 
 export function mapGrpcError(e: any): HttpException {
-    const code = e?.code;
-    const msg = e?.details || e?.message || 'Upstream error';
+    const code = e?.code || e?.status;
+    const msg = e?.details || e?.response || e?.message ||'Upstream error';
 
     switch (code) {
         case status.UNAUTHENTICATED:
@@ -20,6 +20,8 @@ export function mapGrpcError(e: any): HttpException {
             return new HttpException('Upstream timeout', HttpStatus.GATEWAY_TIMEOUT);
         case status.UNAVAILABLE:
             return new HttpException('Upstream unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+        case 400:
+            return new HttpException(msg, HttpStatus.BAD_REQUEST);
         default:
             return new HttpException(msg || 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }

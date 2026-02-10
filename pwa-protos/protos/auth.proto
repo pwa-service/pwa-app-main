@@ -7,6 +7,7 @@ import "shared.proto";
 
 service AuthService {
   rpc SignUp                (SignUpRequest)                 returns (AuthResponse);
+  rpc OrgSignUp             (SignUpRequest)                 returns (AuthResponse);
   rpc SignIn                (SignInRequest)                 returns (AuthResponse);
   rpc Refresh               (RefreshRequest)                returns (AuthResponse);
   rpc SignOut               (SignOutRequest)                returns (google.protobuf.Empty);
@@ -36,6 +37,7 @@ message SignUpRequest {
   string email = 1;
   string password = 2;
   string username = 3;
+  string scope = 4;
 }
 
 message SignInRequest {

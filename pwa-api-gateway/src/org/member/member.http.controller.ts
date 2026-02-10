@@ -1,9 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../../common/jwt-auth.guard";
 import { MemberGrpcClient } from './member.grpc.client';
-import { CreateCampaignMemberDto } from "../../../../pwa-shared/src";
-import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
+import {
+    CreateCampaignMemberDto,
+    PaginationQueryDto,
+    MemberFilterQueryDto
+} from "../../../../pwa-shared/src";
+import { buildGrpcMetadata } from "../../common/jwt-to-metadata";
 
 @ApiTags('Members')
 @ApiBearerAuth()
@@ -18,10 +22,14 @@ export class MemberHttpController {
         return this.client.getMyProfile(req.user.id);
     }
 
-    @Get('me/stats')
-    @ApiOperation({ summary: 'Get current user statistics' })
-    async getMyStats(@Req() req: any) {
-        return this.client.getMyStats(req.user.id, buildGrpcMetadata(req));
+    @Get()
+    @ApiOperation({ summary: 'Get list of members with pagination and filters' })
+    async findAll(
+        @Query() pagination: PaginationQueryDto,
+        @Query() filters: MemberFilterQueryDto,
+        @Req() req: any
+    ) {
+        return this.client.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Post('campaign')

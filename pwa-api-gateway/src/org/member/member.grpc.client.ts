@@ -2,11 +2,15 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { lastValueFrom, Observable } from 'rxjs';
 import { Metadata } from "@grpc/grpc-js";
-import { CreateCampaignMemberDto } from "../../../../pwa-shared/src";
+import {
+    CreateCampaignMemberDto,
+    PaginationQueryDto,
+    MemberFilterQueryDto
+} from "../../../../pwa-shared/src";
 
 interface IMemberGrpcService {
     GetMyProfile(data: { id: string }, md?: Metadata): Observable<any>;
-    GetMyStats(data: { id: string }, md?: Metadata): Observable<any>;
+    FindAll(data: { pagination: PaginationQueryDto, filters: MemberFilterQueryDto }, md?: Metadata): Observable<any>;
     CreateCampaignMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
     CreateTeamLead(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
     CreateTeamMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
@@ -26,8 +30,8 @@ export class MemberGrpcClient implements OnModuleInit {
         return lastValueFrom(this.svc.GetMyProfile({ id }, metadata));
     }
 
-    async getMyStats(id: string, metadata?: Metadata) {
-        return lastValueFrom(this.svc.GetMyStats({ id }, metadata));
+    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto, metadata?: Metadata) {
+        return lastValueFrom(this.svc.FindAll({ pagination, filters }, metadata));
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, metadata?: Metadata) {

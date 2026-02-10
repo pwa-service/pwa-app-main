@@ -16,6 +16,7 @@ import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-a
 import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 
 interface CampaignGrpcService {
@@ -181,8 +182,8 @@ export class AuthCoreService implements OnModuleInit {
         }
     }
 
-    async orgSignUp(dto: SignUpDto) {
-        const { email, username, password } = dto;
+    async orgSignUp(dto: SignUpOrgDto) {
+        const { email, username, password, scope } = dto;
 
         const [emailRes, usernameRes] = await Promise.all([
             this.repo.findByEmail(email),
@@ -199,12 +200,10 @@ export class AuthCoreService implements OnModuleInit {
                 email,
                 username: username ?? email.split('@')[0],
                 passwordHash: hash,
-                scope: ScopeType.TEAM
+                scope
             });
             return {
-                id: profile.id,
-                email: profile.email,
-                username: profile.username
+                user: profile
             };
 
         } catch (e) {

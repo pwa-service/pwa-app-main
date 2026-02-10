@@ -9,10 +9,11 @@ import { CampaignService } from '../campaign/campaign.service';
 import {ScopeType, MemberFilterQueryDto} from "../../../pwa-shared/src";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {MemberRepository} from "./member.repository";
+import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 
 interface AuthServiceGrpc {
-    OrgSignUp(data: SignUpDto): Observable<{ id: string, email: string }>;
+    OrgSignUp(data: SignUpOrgDto): Observable<{ id: string, email: string, user: UserPayload }>;
 }
 
 @Injectable()
@@ -60,7 +61,7 @@ export class MemberService implements OnModuleInit {
         const role = await this.roleService.findByName(SystemRoleName.TEAM_LEAD);
         if (!role) throw new BadRequestException('Role Team Lead not found');
 
-        const authUser = await this.callAuthService(dto);
+        const { user: authUser } = await this.callAuthService(dto);
         const member = await this.teamService.addMemberToTeam({
             ...dto,
             userId: authUser.id,
@@ -84,7 +85,7 @@ export class MemberService implements OnModuleInit {
 
         if (!roleId) throw new BadRequestException('Role not found');
 
-        const authUser = await this.callAuthService(dto);
+        const { user: authUser } = await this.callAuthService(dto);
         const member = await this.teamService.addMemberToTeam({
             userId:authUser.id,
             teamId: dto.teamId!,
@@ -101,7 +102,7 @@ export class MemberService implements OnModuleInit {
 
         if (!roleId) throw new BadRequestException('Role not found');
 
-        const authUser = await this.callAuthService(dto);
+        const { user: authUser } = await this.callAuthService(dto);
         const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, roleId);
 
         return {
@@ -115,11 +116,7 @@ export class MemberService implements OnModuleInit {
 
     private async callAuthService(dto: any) {
         try {
-            return await firstValueFrom(this.authService.OrgSignUp({
-                email: dto.email,
-                password: dto.password,
-                username: dto.username
-            }));
+            return await firstValueFrom(this.authService.OrgSignUp(dto));
         } catch (e) {
             throw new BadRequestException(`Auth failed: ${e}`);
         }
