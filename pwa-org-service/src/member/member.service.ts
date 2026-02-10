@@ -69,7 +69,6 @@ export class MemberService implements OnModuleInit {
             teamId: dto.teamId!
         });
         await this.teamService.assignTeamLead({
-            ...dto,
             userId: authUser.id,
             teamId: dto.teamId!
         });
