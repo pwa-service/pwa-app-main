@@ -1,24 +1,8 @@
-import {IsString, IsEmail, IsInt, IsUUID, IsOptional, MinLength, IsEnum} from 'class-validator';
-import { ScopeType } from '../../roles/enums/scope.enum'
+import { PartialType, OmitType } from '@nestjs/swagger';
+import {CreateCampaignMemberDto} from "./create-member.dto";
 
-export class UpdateMemberDto {
-    @IsUUID()
+export class UpdateMemberDto extends PartialType(
+    OmitType(CreateCampaignMemberDto, ['campaignId', 'teamId', 'username'] as const),
+) {
     id: string;
-
-    @IsOptional()
-    @IsEmail()
-    email?: string;
-
-    @IsOptional()
-    @IsString()
-    @MinLength(6)
-    password?: string;
-
-    @IsOptional()
-    @IsEnum(ScopeType)
-    scope: ScopeType;
-
-    @IsOptional()
-    @IsInt()
-    roleId?: number;
 }

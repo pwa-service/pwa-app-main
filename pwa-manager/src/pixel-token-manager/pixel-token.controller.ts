@@ -9,6 +9,8 @@ import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-use
 import {IsPixelTokenUnique} from "../common/pipes/is-pixel-token-unique.pipe";
 import {IsPixelTokenExistsInterceptor} from "../common/interceptors/is-pxiel-token-exists.interceptor";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
+import {GrpcFilters} from "../../../pwa-shared/src/common/decorators/filters.decorator";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -21,7 +23,11 @@ export class PixelTokenController {
     }
 
     @GrpcMethod('PixelTokenService', 'FindAll')
-    async findAll({ pagination, filters }: { pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto }, @GrpcUser() user: UserPayload) {
+    async findAll(
+        @GrpcPagination() pagination: PaginationQueryDto,
+        @GrpcFilters() filters: PixelTokenFiltersQueryDto,
+        @GrpcUser() user: UserPayload
+    ) {
         return this.service.findAll(pagination, filters, user.id);
     }
 

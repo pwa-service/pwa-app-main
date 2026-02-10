@@ -19,7 +19,7 @@ export class RoleHttpController {
 
     @Post()
     @ApiOperation({ summary: 'Create a new role' })
-    async create(@Body() dto: any, @Req() req: any) {
+    async create(@Body() dto: CreateRoleDto, @Req() req: any) {
         return this.client.create(dto, buildGrpcMetadata(req));
     }
 

@@ -1,9 +1,9 @@
 import { IsUUID } from 'class-validator';
 
 export class RemoveMemberDto {
-    @IsUUID()
+    @IsUUID('4')
     teamId: string;
 
-    @IsUUID()
+    @IsUUID('4')
     userId: string;
 }

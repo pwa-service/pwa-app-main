@@ -1,22 +1,6 @@
-import {IsString, IsNotEmpty, IsOptional, ValidateNested} from 'class-validator';
-import {Type} from "class-transformer";
-import {GlobalRulesDto} from "./global-rules.dto";
+import { PartialType } from '@nestjs/swagger';
+import { CreateRoleDto } from './create-role.dto';
 
-export class UpdateRoleDto {
-    @IsNotEmpty()
-    @IsString()
+export class UpdateRoleDto extends PartialType(CreateRoleDto) {
     id: string;
-
-    @IsOptional()
-    @IsString()
-    name?: string;
-
-    @IsOptional()
-    @IsString()
-    description?: string;
-
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => GlobalRulesDto)
-    globalRules?: GlobalRulesDto;
 }

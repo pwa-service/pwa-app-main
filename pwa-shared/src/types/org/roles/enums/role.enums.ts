@@ -21,22 +21,17 @@ export enum RolePriority {
 }
 
 export enum Permission {
-    // statAccess
     STAT_VIEW = 'STAT_VIEW',
     STAT_MANAGE = 'STAT_MANAGE',
 
-    // finAccess
     FIN_VIEW = 'FIN_VIEW',
     FIN_MANAGE = 'FIN_MANAGE',
 
-    // logAccess
     LOG_VIEW = 'LOG_VIEW',
     LOG_MANAGE = 'LOG_MANAGE',
 
-    // usersAccess
     USERS_VIEW = 'USERS_VIEW',
     USERS_MANAGE = 'USERS_MANAGE',
 
-    // sharingAccess
     SHARE_ACCESS = 'SHARE_ACCESS',
 }

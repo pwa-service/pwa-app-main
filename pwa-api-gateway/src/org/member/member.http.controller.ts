@@ -2,8 +2,7 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../../common/jwt-auth.guard";
 import { MemberGrpcClient } from './member.grpc.client';
-import { CreateMemberDto } from "../../../../pwa-shared/src";
-import { CreateCampaignMemberDto } from "../../../../pwa-shared/src/types/org/member/dto/create-campaign.dto";
+import { CreateCampaignMemberDto } from "../../../../pwa-shared/src";
 import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
 
 @ApiTags('Members')
@@ -33,13 +32,13 @@ export class MemberHttpController {
 
     @Post('team/lead')
     @ApiOperation({ summary: 'Create a Team Lead (requires Campaign Owner rights)' })
-    async createTeamLead(@Body() dto: CreateMemberDto, @Req() req: any) {
+    async createTeamLead(@Body() dto: CreateCampaignMemberDto, @Req() req: any) {
         return this.client.createTeamLead(dto, buildGrpcMetadata(req));
     }
 
     @Post('team/member')
     @ApiOperation({ summary: 'Create a standard Team Member' })
-    async createTeamMember(@Body() dto: CreateMemberDto, @Req() req: any) {
+    async createTeamMember(@Body() dto: CreateCampaignMemberDto, @Req() req: any) {
         return this.client.createTeamMember(dto, buildGrpcMetadata(req));
     }
 }

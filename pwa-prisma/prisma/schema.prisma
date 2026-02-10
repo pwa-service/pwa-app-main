@@ -319,7 +319,6 @@ model Team {
   pwaSessions PwaSession[]
   eventLogs   EventLog[]
 
-  // Link to itself as a Working Object (1:1)
   workingObjectLink WorkingObjectTeam?
 
   @@map("teams")

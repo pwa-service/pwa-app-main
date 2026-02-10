@@ -31,7 +31,11 @@ export class RoleGrpcController {
     }
 
     @GrpcMethod('RoleService', 'FindAll')
-    async findAll(@GrpcPagination() pagination: PaginationQueryDto, @GrpcFilters() filters: RoleFilterQueryDto, @GrpcUser() user: UserPayload) {
+    async findAll(
+        @GrpcPagination() pagination: PaginationQueryDto,
+        @GrpcFilters() filters: RoleFilterQueryDto,
+        @GrpcUser() user: UserPayload
+    ) {
         return this.roleService.findAll(pagination, filters, user);
     }
 

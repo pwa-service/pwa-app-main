@@ -16,6 +16,7 @@ import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.d
 import {ScopeInterceptor} from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
 import {AllowedScopes} from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
 import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
+import {GrpcFilters} from "../../../pwa-shared/src/common/decorators/filters.decorator";
 
 
 @Controller()
@@ -48,10 +49,11 @@ export class TeamGrpcController {
 
     @GrpcMethod('TeamService', 'FindAll')
     async findAll(
-        @GrpcPagination() data: { pagination: PaginationQueryDto, filters: TeamFilterQueryDto },
+        @GrpcPagination() pagination: PaginationQueryDto,
+        @GrpcFilters() filters: TeamFilterQueryDto,
         @GrpcUser() user: UserPayload
     ) {
-        return this.service.findAll(data.pagination, data.filters, user);
+        return this.service.findAll(pagination, filters, user);
     }
 
     @GrpcMethod('TeamService', 'AddMemberToTeam')

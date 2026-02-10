@@ -1,15 +1,9 @@
-import { IsString, IsUUID, IsOptional, Length } from 'class-validator';
+import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { CreateTeamDto } from './create-team.dto';
 
-export class UpdateTeamDto {
-    @IsUUID()
+
+export class UpdateTeamDto extends PartialType(
+    OmitType(CreateTeamDto, ['campaignId'] as const),
+) {
     id: string;
-
-    @IsOptional()
-    @IsString()
-    @Length(3, 50)
-    name?: string;
-
-    @IsOptional()
-    @IsUUID()
-    leadId?: string;
 }

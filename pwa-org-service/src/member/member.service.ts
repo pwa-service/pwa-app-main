@@ -2,11 +2,10 @@ import { Inject, Injectable, OnModuleInit, BadRequestException } from '@nestjs/c
 import { ClientGrpc } from '@nestjs/microservices';
 import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
-import {CreateMemberDto, PaginationQueryDto, SignUpDto} from '../../../pwa-shared/src';
+import {CreateCampaignMemberDto, PaginationQueryDto, SignUpDto} from '../../../pwa-shared/src';
 import { RoleService } from '../roles/role.service';
 import { TeamService } from '../team/team.service';
 import { CampaignService } from '../campaign/campaign.service';
-import {CreateCampaignMemberDto} from "../../../pwa-shared/src/types/org/member/dto/create-campaign.dto";
 import {ScopeType, MemberFilterQueryDto} from "../../../pwa-shared/src";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {MemberRepository} from "./member.repository";
@@ -57,7 +56,7 @@ export class MemberService implements OnModuleInit {
         return { members, total };
     }
 
-    async createTeamLead(dto: CreateMemberDto) {
+    async createTeamLead(dto: CreateCampaignMemberDto) {
         const role = await this.roleService.findByName(SystemRoleName.TEAM_LEAD);
         if (!role) throw new BadRequestException('Role Team Lead not found');
 
@@ -76,8 +75,8 @@ export class MemberService implements OnModuleInit {
         return this.formatResponse(member, dto.email);
     }
 
-    async createTeamMember(dto: CreateMemberDto) {
-        const roleName = SystemRoleName.MEDIA_BUYER; // Або інша дефолтна роль
+    async createTeamMember(dto: CreateCampaignMemberDto) {
+        const roleName = SystemRoleName.MEDIA_BUYER;
 
         const roleId = dto.roleId
             ? dto.roleId
@@ -103,7 +102,7 @@ export class MemberService implements OnModuleInit {
         if (!roleId) throw new BadRequestException('Role not found');
 
         const authUser = await this.callAuthService(dto);
-        const member = await this.campaignService.addMember(authUser.id, dto.campaignId, roleId);
+        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, roleId);
 
         return {
             status: 'success',
