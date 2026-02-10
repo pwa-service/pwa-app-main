@@ -43,9 +43,8 @@ export class LocalAuthInterceptor implements NestInterceptor {
         try {
             const payload = await this.jwtService.verify(token);
             data.user = {
-                id: payload.sub,
-                email: payload['email'],
-                username: payload['username']
+                ...payload,
+                id: payload.sub
             };
 
         } catch (e) {
