@@ -69,7 +69,6 @@ export class PixelTokenRepository {
         });
     }
 
-
     async update(data: UpdatePixelTokenDto) {
         const id = data.id
         delete data.id;

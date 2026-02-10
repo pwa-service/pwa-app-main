@@ -8,15 +8,13 @@ import {PixelTokenRepository} from "./pixel-token.repository";
 @Injectable()
 export class PixelTokenService {
     constructor(private readonly repository: PixelTokenRepository) {}
+
     async create(dto: CreatePixelTokenDto) {
         return this.repository.create(dto);
     }
 
     async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, userId: string) {
-        const pixelTokens = await this.repository.findAll(pagination, filters, userId);
-        return {
-            pixelTokens
-        }
+        return await this.repository.findAll(pagination, filters, userId);
     }
 
     async findOne(id: string) {

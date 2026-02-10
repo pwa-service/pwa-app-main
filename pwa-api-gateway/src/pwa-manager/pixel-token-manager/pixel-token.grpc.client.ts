@@ -3,16 +3,16 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { lastValueFrom, Observable } from 'rxjs';
 import {
-    CreatePixelTokenDto, UpdatePixelTokenDto
+    CreatePixelTokenDto, PixelTokenFiltersQueryDto, PaginationQueryDto, UpdatePixelTokenDto
 } from "../../../../pwa-shared/src";
 
 
 interface PixelTokenService {
-    create(data: CreatePixelTokenDto, md?: Metadata): Observable<any>;
-    findAll(data: {}, md?: Metadata): Observable<any>;
-    findOne(data: { id: string }, md?: Metadata): Observable<any>;
-    update(data: UpdatePixelTokenDto, md?: Metadata): Observable<any>;
-    remove(data: { id: string }, md?: Metadata): Observable<any>;
+    Create(data: CreatePixelTokenDto, md?: Metadata): Observable<any>;
+    FindAll(data: {pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto}, md?: Metadata): Observable<any>;
+    FindOne(data: { id: string }, md?: Metadata): Observable<any>;
+    Update(data: UpdatePixelTokenDto, md?: Metadata): Observable<any>;
+    Remove(data: { id: string }, md?: Metadata): Observable<any>;
 }
 
 @Injectable()
@@ -26,23 +26,23 @@ export class PixelTokenGrpcClient implements OnModuleInit {
     }
 
     async create(dto: CreatePixelTokenDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.create(dto, metadata));
+        return await lastValueFrom(this.svc.Create(dto, metadata));
     }
 
-    async findAll(metadata?: Metadata) {
-        return await lastValueFrom(this.svc.findAll({}, metadata));
+    async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.FindAll({pagination, filters}, metadata));
     }
 
     async findOne(id: string, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.findOne({ id }, metadata));
+        return await lastValueFrom(this.svc.FindOne({ id }, metadata));
     }
 
     async update(id: string, dto: UpdatePixelTokenDto, metadata?: Metadata) {
         dto.id = id
-        return await lastValueFrom(this.svc.update({ ...dto }, metadata));
+        return await lastValueFrom(this.svc.Update({ ...dto }, metadata));
     }
 
     async remove(id: string, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.remove({ id }, metadata));
+        return await lastValueFrom(this.svc.Remove({ id }, metadata));
     }
 }

@@ -1,6 +1,6 @@
 import {
     Body, Controller, Delete, Get, HttpCode,
-    Param, Patch, Post, Req, UseGuards, ParseUUIDPipe
+    Param, Patch, Post, Req, UseGuards, Query
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -8,7 +8,9 @@ import { PixelTokenGrpcClient } from './pixel-token.grpc.client';
 import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
 import {JwtAuthGuard} from "../../common/jwt-auth.guard";
 import {
-    UpdatePixelTokenDto
+    PixelTokenFiltersQueryDto,
+    UpdatePixelTokenDto,
+    PaginationQueryDto
 } from "../../../../pwa-shared/src";
 
 @ApiTags('Pixel Tokens')
@@ -28,8 +30,12 @@ export class PixelTokenHttpController {
     @Get()
     @HttpCode(200)
     @ApiOperation({ summary: 'Get all pixel tokens' })
-    async findAll(@Req() req: Request) {
-        return this.pixelTokenService.findAll(buildGrpcMetadata(req));
+    async findAll(
+        @Query() pagination: PaginationQueryDto,
+        @Query() filters: PixelTokenFiltersQueryDto,
+        @Req() req: Request
+    ) {
+        return this.pixelTokenService.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Get(':id')
