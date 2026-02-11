@@ -16,10 +16,5 @@ export class AddMemberDto {
     @IsUUID('4', { message: 'Invalid Team ID' })
     userId!: string;
 
-    @ApiProperty({
-        description: 'ID роли (целое число), назначаемой пользователю в этой команде',
-        example: 2
-    })
-    @IsInt()
     roleId!: number;
 }

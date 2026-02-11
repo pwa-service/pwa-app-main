@@ -29,12 +29,6 @@ export class RoleRepository {
         });
     }
 
-    async findByName(name: string) {
-        return this.prisma.role.findFirst({
-            where: { name },
-            include: this.roleInclude
-        });
-    }
 
     async findByNameAndContext(name: string, scope: ScopeType, contextId?: string) {
         const where: Prisma.RoleWhereInput = { name, scope };
@@ -79,17 +73,6 @@ export class RoleRepository {
         ]);
 
         return { items, total };
-    }
-
-    async findNearestHigherRole(priority: number, scope: ScopeType, contextId?: string) {
-        const where: Prisma.RoleWhereInput = {
-            scope,
-            priority: { lt: priority }
-        };
-        if (scope === ScopeType.CAMPAIGN && contextId) where.campaignId = contextId;
-        if (scope === ScopeType.TEAM && contextId) where.teamId = contextId;
-
-        return this.prisma.role.findFirst({ where, orderBy: { priority: 'desc' } });
     }
 
     async create(

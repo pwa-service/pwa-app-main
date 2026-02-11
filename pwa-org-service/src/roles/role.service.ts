@@ -1,16 +1,24 @@
 import {
-    Injectable,
-    OnModuleInit,
     BadRequestException,
-    NotFoundException,
     ForbiddenException,
-    Logger
+    Injectable,
+    Logger,
+    NotFoundException,
+    OnModuleInit
 } from '@nestjs/common';
-import { RoleRepository } from './role.repository';
-import { RolePriority, SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
-import { PaginationQueryDto } from "../../../pwa-shared/src";
-import { AccessLevel, CreateRoleDto, UpdateRoleDto, RoleFilterQueryDto, AssignRoleDto, ScopeType, SCOPE_PRIORITY } from "../../../pwa-shared/src";
-import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import {RoleRepository} from './role.repository';
+import {RolePriority, SystemRoleName} from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import {
+    AccessLevel,
+    AssignRoleDto,
+    CreateRoleDto,
+    PaginationQueryDto,
+    RoleFilterQueryDto,
+    SCOPE_PRIORITY,
+    ScopeType,
+    UpdateRoleDto
+} from "../../../pwa-shared/src";
+import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 @Injectable()
 export class RoleService implements OnModuleInit {
@@ -129,8 +137,8 @@ export class RoleService implements OnModuleInit {
         return this.toRoleResponse(role);
     }
 
-    async findByName(name: string) {
-        return this.repo.findByName(name);
+    async findByNameAndContext(name: string, scope: ScopeType, contextId: string) {
+        return this.repo.findByNameAndContext(name, scope, contextId);
     }
 
     async findAll(pagination: PaginationQueryDto, filters: RoleFilterQueryDto, user: UserPayload) {
@@ -143,7 +151,6 @@ export class RoleService implements OnModuleInit {
         }
 
         const result = await this.repo.findAll(pagination, effectiveFilters);
-
         const mappedRoles = result.items.map((role: any) => this.toRoleResponse(role));
 
         return {

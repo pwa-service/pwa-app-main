@@ -32,14 +32,14 @@ export class MemberService implements OnModuleInit {
         this.authService = this.authClient.getService<AuthServiceGrpc>('AuthService');
     }
 
-    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto, actor: UserPayload) {
+    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto, user: UserPayload) {
         const where = { ...filters };
 
-        if (actor.scope === ScopeType.CAMPAIGN) {
-            where.campaignId = actor.contextId;
+        if (user.scope === ScopeType.CAMPAIGN) {
+            where.campaignId = user.contextId;
         }
-        else if (actor.scope === ScopeType.TEAM) {
-            where.teamId = actor.contextId;
+        else if (user.scope === ScopeType.TEAM) {
+            where.teamId = user.contextId;
             where.campaignId = undefined;
         }
 
@@ -57,16 +57,19 @@ export class MemberService implements OnModuleInit {
         return { members, total };
     }
 
-    async createTeamLead(dto: CreateCampaignMemberDto) {
-        const role = await this.roleService.findByName(SystemRoleName.TEAM_LEAD);
+    async createTeamLead(dto: CreateCampaignMemberDto, user: UserPayload) {
+        const role = await this.roleService.findByNameAndContext(SystemRoleName.TEAM_LEAD, user.scope, user.contextId!);
         if (!role) throw new BadRequestException('Role Team Lead not found');
 
-        const { user: authUser } = await this.callAuthService(dto);
+        const { user: authUser } = await this.callAuthService({
+            ...dto,
+            scope: ScopeType.TEAM,
+        });
         const member = await this.teamService.addMemberToTeam({
             ...dto,
             userId: authUser.id,
             roleId: role.id,
-            teamId: dto.teamId!
+            teamId: dto.teamId!,
         });
         await this.teamService.assignTeamLead({
             userId: authUser.id,
@@ -75,34 +78,30 @@ export class MemberService implements OnModuleInit {
         return this.formatResponse(member, dto.email);
     }
 
-    async createTeamMember(dto: CreateCampaignMemberDto) {
+    async createTeamMember(dto: CreateCampaignMemberDto, user: UserPayload) {
         const roleName = SystemRoleName.MEDIA_BUYER;
+        const role = await this.roleService.findByNameAndContext(roleName, user.scope, user.contextId!);
+        if (!role) throw new BadRequestException('Role not found');
 
-        const roleId = dto.roleId
-            ? dto.roleId
-            : (await this.roleService.findByName(roleName))?.id;
-
-        if (!roleId) throw new BadRequestException('Role not found');
-
-        const { user: authUser } = await this.callAuthService(dto);
+        const { user: authUser } = await this.callAuthService({
+            ...dto,
+            scope: ScopeType.TEAM,
+        });
         const member = await this.teamService.addMemberToTeam({
-            userId:authUser.id,
+            userId: authUser.id,
             teamId: dto.teamId!,
-            roleId
+            roleId: role.id
         });
 
         return this.formatResponse(member, dto.email);
     }
 
-    async createCampaignMember(dto: CreateCampaignMemberDto) {
-        const roleId = dto.roleId
-            ? dto.roleId
-            : (await this.roleService.findByName(SystemRoleName.MEDIA_BUYER))?.id;
-
-        if (!roleId) throw new BadRequestException('Role not found');
+    async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
+        const role = await this.roleService.findByNameAndContext(SystemRoleName.CAMPAIGN_MEMBER, user.scope, user.contextId!);
+        if (!role) throw new BadRequestException('Role not found');
 
         const { user: authUser } = await this.callAuthService(dto);
-        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, roleId);
+        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, role.id);
 
         return {
             status: 'success',

@@ -17,13 +17,8 @@ export class CreateCampaignMemberDto {
     @IsEmail()
     email: string;
 
-    @ApiProperty({ enum: ScopeType, description: 'Scope level for the member' })
-    @IsEnum(ScopeType)
     scope: ScopeType;
 
-    @ApiProperty({ example: 5, description: 'ID of the role to assign' })
-    @IsInt()
-    roleId: number;
 
     @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Campaign ID (if applicable)' })
     @IsOptional()

@@ -44,6 +44,22 @@ export class CampaignService {
             campaign.id
         );
 
+        await this.roleService.create(
+            {
+                name: SystemRoleName.CAMPAIGN_MEMBER,
+                description: 'Campaign member',
+                globalRules: {
+                    statAccess: AccessLevel.None,
+                    finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None,
+                    usersAccess: AccessLevel.None,
+                    sharingAccess: AccessLevel.None,
+                }
+            },
+            ScopeType.CAMPAIGN,
+            campaign.id
+        );
+
         await this.roleService.assignRoleToUser(
             {
                 userId: userId,
@@ -75,7 +91,7 @@ export class CampaignService {
                     sharingAccess: AccessLevel.Manage,
                 }
             },
-            ScopeType.CAMPAIGN,
+            ScopeType.TEAM,
             campaign.id
         );
 
@@ -91,9 +107,10 @@ export class CampaignService {
                     sharingAccess: AccessLevel.None,
                 }
             },
-            ScopeType.CAMPAIGN,
+            ScopeType.TEAM,
             campaign.id
         );
+
 
         return campaign;
     }

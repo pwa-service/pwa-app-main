@@ -27,8 +27,8 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanCreate(WorkingObjectType.CAMPAIGN, 'campaignId')
-    async createCampaignMember(@Payload() dto: CreateCampaignMemberDto) {
-        return this.service.createCampaignMember(dto);
+    async createCampaignMember(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
+        return this.service.createCampaignMember(dto, user);
     }
 
 
@@ -36,8 +36,8 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamLead(@Payload() dto: CreateCampaignMemberDto) {
-        return this.service.createTeamLead(dto);
+    async createTeamLead(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
+        return this.service.createTeamLead(dto, user);
     }
 
 
@@ -45,8 +45,8 @@ export class MemberGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN, ScopeType.TEAM)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
     @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamMember(@Payload() dto: CreateCampaignMemberDto) {
-        return this.service.createTeamMember(dto);
+    async createTeamMember(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
+        return this.service.createTeamMember(dto, user);
     }
 
     @GrpcMethod('MemberService', 'FindAll')

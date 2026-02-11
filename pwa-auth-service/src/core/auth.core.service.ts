@@ -253,9 +253,9 @@ export class AuthCoreService implements OnModuleInit {
                 name: `${username}'s Campaign`,
                 ownerId: profile.id
             }, metadata));
-            campaignResponse.campaignId = campaignResponse.id
+            tempPayload.contextId = campaignResponse.id
             campaignResponse.campaignUser = tempPayload
-            campaignResponse.campaignUser.role = {
+                campaignResponse.campaignUser.role = {
                 accessProfile: {
                     accessProfile: {
                         globalRules: tempPayload.access
@@ -264,7 +264,6 @@ export class AuthCoreService implements OnModuleInit {
             }
             await this.sendConfirmationEmail(email, profile.id);
             return this.issueTokens(this.mapUserToPayload(profile, campaignResponse.campaignUser));
-
         } catch (e) {
             console.error(e);
             throw new RpcException({ code: status.INTERNAL, message: `Registration failed: ${(e as any).message}` });
@@ -442,7 +441,7 @@ export class AuthCoreService implements OnModuleInit {
             email: profile.email,
             username: profile.username,
             scope: profile.scope,
-            contextId: contextUser?.campaignId || contextUser?.teamId || null,
+            contextId: contextUser?.campaignId || contextUser?.teamId || contextUser?.contextId || null,
             access: {
                 statAccess: effectiveRules?.statAccess || 'None',
                 finAccess: effectiveRules?.finAccess || 'None',

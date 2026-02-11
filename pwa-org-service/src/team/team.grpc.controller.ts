@@ -48,6 +48,7 @@ export class TeamGrpcController {
     }
 
     @GrpcMethod('TeamService', 'FindAll')
+    @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     async findAll(
         @GrpcPagination() pagination: PaginationQueryDto,
         @GrpcFilters() filters: TeamFilterQueryDto,

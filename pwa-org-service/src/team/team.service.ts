@@ -129,10 +129,10 @@ export class TeamService {
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
         const member = await this.repo.findMember(dto.teamId, dto.userId);
-        if (!member) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' }); // 9 = FAILED_PRECONDITION
+        if (!member) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
 
         const updated = await this.repo.update(dto.teamId, {
-            teamLeadId: dto.userId
+            teamLeadId: member.id
         });
 
         return this.mapToResponse(updated);
@@ -142,8 +142,8 @@ export class TeamService {
         return {
             id: team.id,
             name: team.name,
-            campaign_id: team.campaignId,
-            lead_id: team.teamLeadId || '',
+            campaignId: team.campaignId,
+            leadId: team.teamLeadId || '',
             createdAt: team.createdAt?.toISOString(),
             members: team.members ? team.members.map((m: any) => ({
                 id: m.profile.id,

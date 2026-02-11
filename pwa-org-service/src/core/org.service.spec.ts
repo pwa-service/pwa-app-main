@@ -197,7 +197,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             });
 
             expect(team).toBeDefined();
-            expect(team.campaign_id).toBe(campaignId);
+            expect(team.campaignId).toBe(campaignId);
             teamId = team.id;
         });
 
