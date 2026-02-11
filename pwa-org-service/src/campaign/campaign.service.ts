@@ -91,7 +91,7 @@ export class CampaignService {
                     sharingAccess: AccessLevel.Manage,
                 }
             },
-            ScopeType.TEAM,
+            ScopeType.CAMPAIGN,
             campaign.id
         );
 
@@ -107,7 +107,7 @@ export class CampaignService {
                     sharingAccess: AccessLevel.None,
                 }
             },
-            ScopeType.TEAM,
+            ScopeType.CAMPAIGN,
             campaign.id
         );
 
