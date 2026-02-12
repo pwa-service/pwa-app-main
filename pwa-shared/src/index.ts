@@ -58,3 +58,7 @@ export * from './types/org/roles/dto/assign-role.dto';
 export * from './types/org/roles/dto/filters-query.dto';
 export * from './types/org/roles/dto/update-role.dto';
 export * from './types/org/roles/dto/create-role.dto';
+
+export * from './types/domain-manager/types/dto/create-domain.dto';
+export * from './types/domain-manager/types/dto/filters-query.dto';
+export * from './types/domain-manager/types/dto/update-domain.dto';

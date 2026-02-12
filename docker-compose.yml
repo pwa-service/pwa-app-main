@@ -223,6 +223,40 @@ services:
           cpus: "0.3"
           memory: "0.6g"
 
+
+  domain-manager:
+    build:
+      context: .
+      dockerfile: pwa-domain-manager/Dockerfile
+    container_name: domain-manager
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PWA_DOMAIN_MANAGER_GRPC_URL=domain-manager:50057
+      - AUTH_SERVICE_GRPC_URL=auth-service:50051
+      - QUEUE_NAME=BUILD_QUEUE
+      - QUEUE_PREFIX=pwa
+      - AUTH_ISSUER=https://pwaservice.space/
+      - AUTH_AUDIENCE=api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prisma-migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pwa-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: "0.6g"
+
   pwa-builder:
     build:
       context: .

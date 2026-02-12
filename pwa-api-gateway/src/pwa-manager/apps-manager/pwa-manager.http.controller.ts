@@ -6,7 +6,7 @@ import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
 import { CreateAppDto } from '../../../../pwa-shared/src';
 
 @Controller('pwa-apps-manager')
-@ApiTags('Generator')
+@ApiTags('Apps Manager')
 export class PwaManagerHttpController {
     constructor(private readonly generator: PwaManagerGrpcClient) {}
 

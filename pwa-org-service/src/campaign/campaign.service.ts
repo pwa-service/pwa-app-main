@@ -1,12 +1,10 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CampaignRepository } from './campaign.repository';
 import { CreateCampaignDto, PaginationQueryDto, UpdateCampaignDto } from "../../../pwa-shared/src";
-import { RoleFilterQueryDto } from "../../../pwa-shared/src/types/org/roles/dto/filters-query.dto";
 import { RoleService } from "../roles/role.service";
 import { SharingService } from "../sharing/sharing.service";
-import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 import { SystemRoleName } from "../../../pwa-shared/src/types/org/roles/enums/role.enums";
-import { AccessLevel } from '../../../pwa-shared/src/types/org/sharing/enums/access.enum';
+import { AccessLevel, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
 
 @Injectable()
 export class CampaignService {

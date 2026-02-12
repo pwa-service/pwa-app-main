@@ -1,6 +1,13 @@
 import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
 import { ClientsModule } from '@nestjs/microservices';
-import {appsManager, authClient, orgClient, eventHandlerClient, pixelTokenManager} from './common/grpc.factory';
+import {
+    appsManager,
+    authClient,
+    orgClient,
+    eventHandlerClient,
+    pixelTokenManager,
+    domainManager
+} from './common/grpc.factory';
 import { AuthHttpController } from './auth/auth.http.controller';
 import { AuthGrpcClient } from './auth/auth.grpc.client';
 import { ClientIpMiddleware } from "./common/middlewares/client-ip.middleware";
@@ -20,9 +27,11 @@ import {TeamHttpController} from "./org/team/team.http.controller";
 import {SharingHttpController} from "./org/sharing/sharing.http.controller";
 import {TeamGrpcClient} from "./org/team/team.grpc.client";
 import {SharingGrpcClient} from "./org/sharing/sharing.grpc.client";
+import {DomainHttpController} from "./domain-manager/domain-manager.http.controller";
+import {DomainGrpcClient} from "./domain-manager/domain-manager.grpc.client";
 
 @Module({
-    imports: [ClientsModule.register([authClient, eventHandlerClient, appsManager, pixelTokenManager, orgClient])],
+    imports: [ClientsModule.register([authClient, eventHandlerClient, appsManager, pixelTokenManager, orgClient, domainManager])],
     controllers: [
         AuthHttpController,
         EventHandlerHttpController,
@@ -32,7 +41,8 @@ import {SharingGrpcClient} from "./org/sharing/sharing.grpc.client";
         CampaignHttpController,
         RoleHttpController,
         TeamHttpController,
-        SharingHttpController
+        SharingHttpController,
+        DomainHttpController
     ],
     providers: [
         AuthGrpcClient,
@@ -43,6 +53,7 @@ import {SharingGrpcClient} from "./org/sharing/sharing.grpc.client";
         MemberGrpcClient,
         RoleGrpcClient,
         TeamGrpcClient,
+        DomainGrpcClient,
         SharingGrpcClient,
     ],
 })
