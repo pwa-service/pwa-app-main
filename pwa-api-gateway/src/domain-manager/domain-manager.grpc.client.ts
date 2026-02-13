@@ -18,7 +18,7 @@ interface IDomainGrpcService {
 export class DomainGrpcClient implements OnModuleInit {
     private svc!: IDomainGrpcService;
 
-    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
+    constructor(@Inject('DOMAIN_MANAGER_GRPC') private readonly client: ClientGrpc) {}
 
     onModuleInit() {
         this.svc = this.client.getService<IDomainGrpcService>('DomainService');
