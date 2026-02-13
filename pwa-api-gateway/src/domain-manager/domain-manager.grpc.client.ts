@@ -37,7 +37,7 @@ export class DomainGrpcClient implements OnModuleInit {
     }
 
     async update(id: string, dto: UpdateDomainDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.Update({ id, ...dto }, metadata));
+        return await lastValueFrom(this.svc.Update({ ...dto, id }, metadata));
     }
 
     async remove(id: string, metadata?: Metadata) {
