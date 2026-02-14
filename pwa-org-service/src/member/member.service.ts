@@ -1,16 +1,20 @@
-import { Inject, Injectable, OnModuleInit, BadRequestException } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
-import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
-import { firstValueFrom, Observable } from 'rxjs';
-import {CreateCampaignMemberDto, PaginationQueryDto, SignUpDto} from '../../../pwa-shared/src';
-import { RoleService } from '../roles/role.service';
-import { TeamService } from '../team/team.service';
-import { CampaignService } from '../campaign/campaign.service';
-import {ScopeType, MemberFilterQueryDto} from "../../../pwa-shared/src";
+import {BadRequestException, Inject, Injectable, OnModuleInit} from '@nestjs/common';
+import {ClientGrpc} from '@nestjs/microservices';
+import {SystemRoleName} from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import {firstValueFrom, Observable} from 'rxjs';
+import {
+    CreateCampaignMemberDto,
+    CreateTeamMemberDto,
+    MemberFilterQueryDto,
+    PaginationQueryDto,
+    ScopeType
+} from '../../../pwa-shared/src';
+import {RoleService} from '../roles/role.service';
+import {TeamService} from '../team/team.service';
+import {CampaignService} from '../campaign/campaign.service';
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {MemberRepository} from "./member.repository";
 import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
-
 
 interface AuthServiceGrpc {
     OrgSignUp(data: SignUpOrgDto): Observable<{ id: string, email: string, user: UserPayload }>;
@@ -33,32 +37,29 @@ export class MemberService implements OnModuleInit {
     }
 
     async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto, user: UserPayload) {
-        const where = { ...filters };
+        const filtersWithScope = {
+            ...filters,
+            userScope: user.scope,
+            userContextId: user.contextId
+        };
 
-        if (user.scope === ScopeType.CAMPAIGN) {
-            where.campaignId = user.contextId;
-        }
-        else if (user.scope === ScopeType.TEAM) {
-            where.teamId = user.contextId;
-            where.campaignId = undefined;
-        }
-
-        const { items, total } = await this.repo.findAll(pagination, where);
+        const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
         const members = items.map((item: any) => ({
             id: item.id.toString(),
             userId: item.userProfileId,
-            email: item.profile?.email || '',
-            username: item.profile?.username || '',
-            role: item.role?.name || 'Unknown',
+            email: item.profile?.email,
+            username: item.profile?.username,
+            role: item.role?.name,
+            scope: item.profile.scope,
             teamId: item.teamId || null,
-            campaignId: item.campaignId || null
+            campaignId: item.campaignId || (item.team ? item.team.campaignId : null)
         }));
 
         return { members, total };
     }
 
-    async createTeamLead(dto: CreateCampaignMemberDto, user: UserPayload) {
-        const role = await this.roleService.findByNameAndContext(SystemRoleName.TEAM_LEAD, user.scope, user.contextId!);
+    async createTeamLead(dto: CreateTeamMemberDto, user: UserPayload) {
+        const role = await this.roleService.findByNameAndContext(SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, dto.campaignId!);
         if (!role) throw new BadRequestException('Role Team Lead not found');
 
         const { user: authUser } = await this.callAuthService({
@@ -75,12 +76,19 @@ export class MemberService implements OnModuleInit {
             userId: authUser.id,
             teamId: dto.teamId!
         });
-        return this.formatResponse(member, dto.email);
+        return this.formatResponse({
+            ...member,
+            scope: ScopeType.TEAM,
+            team_id: dto.teamId,
+            role: role.name,
+            email: dto.email,
+            username: user.username,
+        });
     }
 
-    async createTeamMember(dto: CreateCampaignMemberDto, user: UserPayload) {
+    async createTeamMember(dto: CreateTeamMemberDto, user: UserPayload) {
         const roleName = SystemRoleName.MEDIA_BUYER;
-        const role = await this.roleService.findByNameAndContext(roleName, user.scope, user.contextId!);
+        const role = await this.roleService.findByNameAndContext(roleName, ScopeType.CAMPAIGN, dto.campaignId!);
         if (!role) throw new BadRequestException('Role not found');
 
         const { user: authUser } = await this.callAuthService({
@@ -93,23 +101,34 @@ export class MemberService implements OnModuleInit {
             roleId: role.id
         });
 
-        return this.formatResponse(member, dto.email);
+        return this.formatResponse({
+            ...member,
+            scope: ScopeType.TEAM,
+            team_id: dto.teamId,
+            role: role.name,
+            email: dto.email,
+            username: user.username,
+        });
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
-        const role = await this.roleService.findByNameAndContext(SystemRoleName.CAMPAIGN_MEMBER, user.scope, user.contextId!);
+        const role = await this.roleService.findOne(parseInt(dto.roleId!), user);
         if (!role) throw new BadRequestException('Role not found');
 
-        const { user: authUser } = await this.callAuthService(dto);
-        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, role.id);
+        const { user: authUser } = await this.callAuthService({
+            ...dto,
+            scope: ScopeType.CAMPAIGN,
+        });
+        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, parseInt(role.id));
 
-        return {
-            status: 'success',
-            userId: member.userProfileId,
-            campaignId: member.campaignId,
-            role: member.role.name,
-            email: dto.email
-        };
+        return this.formatResponse({
+            ...member,
+            user_id: user.id,
+            scope: ScopeType.CAMPAIGN,
+            role: role.name,
+            email: dto.email,
+            username: user.username,
+        });
     }
 
     private async callAuthService(dto: any) {
@@ -120,13 +139,14 @@ export class MemberService implements OnModuleInit {
         }
     }
 
-    private formatResponse(member: any, email: string) {
+    private formatResponse(member: any) {
         return {
-            status: 'success',
-            userId: member.userProfileId,
-            teamId: member.teamId,
-            role: member.role?.name,
-            credentials: { email, message: 'Created' }
+            id: member.user_id,
+            teamId: member.team_id,
+            role: member.role,
+            email: member.email,
+            scope: member.scope!,
+            username: member.username!,
         };
     }
 }

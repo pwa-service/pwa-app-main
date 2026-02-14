@@ -5,7 +5,8 @@ import { MemberGrpcClient } from './member.grpc.client';
 import {
     CreateCampaignMemberDto,
     PaginationQueryDto,
-    MemberFilterQueryDto
+    MemberFilterQueryDto,
+    CreateTeamMemberDto
 } from "../../../../pwa-shared/src";
 import { buildGrpcMetadata } from "../../common/jwt-to-metadata";
 
@@ -40,13 +41,13 @@ export class MemberHttpController {
 
     @Post('team/lead')
     @ApiOperation({ summary: 'Create a Team Lead (requires Campaign Owner rights)' })
-    async createTeamLead(@Body() dto: CreateCampaignMemberDto, @Req() req: any) {
+    async createTeamLead(@Body() dto: CreateTeamMemberDto, @Req() req: any) {
         return this.client.createTeamLead(dto, buildGrpcMetadata(req));
     }
 
     @Post('team/member')
     @ApiOperation({ summary: 'Create a standard Team Member' })
-    async createTeamMember(@Body() dto: CreateCampaignMemberDto, @Req() req: any) {
+    async createTeamMember(@Body() dto: CreateTeamMemberDto, @Req() req: any) {
         return this.client.createTeamMember(dto, buildGrpcMetadata(req));
     }
 }

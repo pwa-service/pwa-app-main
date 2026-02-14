@@ -6,17 +6,16 @@ import {
     ResourceType,
     AccessLevel,
     MemberFilterQueryDto,
-    WorkingObjectType,
     GrpcAuthInterceptor
 } from '../../../pwa-shared/src';
 import { AllowedScopes } from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
-import {CanCreate, CanUpdate, RequireGlobalAccess} from "../../../pwa-shared/src/common/decorators/access.decorators";
-import {PaginationQueryDto, ScopeType} from "../../../pwa-shared/src";
-import { CreateCampaignMemberDto } from "../../../pwa-shared/src";
+import {RequireGlobalAccess} from "../../../pwa-shared/src/common/decorators/access.decorators";
+import {PaginationQueryDto, ScopeType, CreateTeamMemberDto, CreateCampaignMemberDto} from "../../../pwa-shared/src";
 import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
 import {GrpcFilters} from "../../../pwa-shared/src/common/decorators/filters.decorator";
+import {MemberScopeInterceptor} from "../common/interceptors/member-scope.interceptor";
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor)
@@ -26,7 +25,7 @@ export class MemberGrpcController {
     @GrpcMethod('MemberService', 'CreateCampaignMember')
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
-    @CanCreate(WorkingObjectType.CAMPAIGN, 'campaignId')
+    @UseInterceptors(MemberScopeInterceptor)
     async createCampaignMember(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
         return this.service.createCampaignMember(dto, user);
     }
@@ -35,8 +34,8 @@ export class MemberGrpcController {
     @GrpcMethod('MemberService', 'CreateTeamLead')
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
-    @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamLead(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
+    @UseInterceptors(MemberScopeInterceptor)
+    async createTeamLead(@Payload() dto: CreateTeamMemberDto, @GrpcUser() user: UserPayload) {
         return this.service.createTeamLead(dto, user);
     }
 
@@ -44,8 +43,8 @@ export class MemberGrpcController {
     @GrpcMethod('MemberService', 'CreateTeamMember')
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN, ScopeType.TEAM)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
-    @CanUpdate(WorkingObjectType.TEAM, 'teamId')
-    async createTeamMember(@Payload() dto: CreateCampaignMemberDto, @GrpcUser() user: UserPayload) {
+    @UseInterceptors(MemberScopeInterceptor)
+    async createTeamMember(@Payload() dto: CreateTeamMemberDto, @GrpcUser() user: UserPayload) {
         return this.service.createTeamMember(dto, user);
     }
 

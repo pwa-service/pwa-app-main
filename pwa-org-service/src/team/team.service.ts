@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
-import {Prisma} from '../../../pwa-prisma/src';
+import { Prisma } from '../../../pwa-prisma/src';
 import {
     CreateTeamDto,
     UpdateTeamDto,
@@ -13,7 +13,7 @@ import {
     WorkingObjectType,
     ScopeType,
 } from '../../../pwa-shared/src';
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 
 @Injectable()
@@ -94,7 +94,7 @@ export class TeamService {
         const { items, total } = await this.repo.findAll(pagination, where);
 
         return {
-            teams: items.map(this.mapToResponse),
+            teams: items.map((t) => this.mapToResponse(t)),
             total,
         };
     }
@@ -143,14 +143,16 @@ export class TeamService {
             id: team.id,
             name: team.name,
             campaignId: team.campaignId,
-            leadId: team.teamLeadId || '',
+            leadId: team.teamLead?.userProfileId || team.teamLeadId || null,
             createdAt: team.createdAt?.toISOString(),
             members: team.members ? team.members.map((m: any) => ({
                 id: m.profile.id,
-                user_id: m.profile.id,
                 email: m.profile.email,
-                role: m.role.name,
-                team_id: m.teamId
+                role: m.role?.name,
+                scope: m.profile.scope,
+                team_id: m.teamId,
+                campaign_id: team.campaignId,
+                username: m.profile.username,
             })) : []
         };
     }

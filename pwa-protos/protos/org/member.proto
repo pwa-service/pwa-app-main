@@ -9,19 +9,18 @@ service MemberService {
     rpc GetMyProfile (google.protobuf.Empty) returns (MemberResponse);
     rpc FindAll (ListMembersRequest) returns (MemberListResponse);
     rpc CreateCampaignMember (CreateCampaignMemberRequest) returns (MemberResponse);
-    rpc CreateTeamLead (CreateCampaignMemberRequest) returns (MemberResponse);
-    rpc CreateTeamMember (CreateCampaignMemberRequest) returns (MemberResponse);
+    rpc CreateTeamLead (CreateTeamMemberRequest) returns (MemberResponse);
+    rpc CreateTeamMember (CreateTeamMemberRequest) returns (MemberResponse);
 }
 
 message MemberResponse {
     string id = 1;
-    string user_id = 2;
-    string email = 3;
-    string role = 4;
-    string scope = 5;
-    optional string team_id = 6;
-    optional string campaign_id = 7;
-    string username = 8;
+    string email = 2;
+    optional string role = 3;
+    string scope = 4;
+    optional string team_id = 5;
+    optional string campaign_id = 6;
+    string username = 7;
 }
 
 
@@ -46,8 +45,14 @@ message CreateCampaignMemberRequest {
     string email = 1;
     string password = 2;
     string username = 3;
-    string scope = 4;
-    string team_id = 5;
     string campaign_id = 6;
     optional int32 role_id = 7;
+}
+
+message CreateTeamMemberRequest {
+    string email = 1;
+    string password = 2;
+    string username = 3;
+    string team_id = 5;
+    string campaign_id = 6;
 }

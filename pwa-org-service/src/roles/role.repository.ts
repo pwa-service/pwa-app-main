@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../../../pwa-prisma/src';
-import { PaginationQueryDto } from "../../../pwa-shared/src";
-import { PrismaService } from "../../../pwa-prisma/src";
-import { ScopeType, RoleFilterQueryDto } from '../../../pwa-shared/src'
+import { Prisma, PrismaService } from '../../../pwa-prisma/src';
+import { PaginationQueryDto, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
 
 @Injectable()
 export class RoleRepository {
@@ -22,13 +20,40 @@ export class RoleRepository {
         };
     }
 
+    async getUserPriority(userId: string, scope: ScopeType, contextId?: string): Promise<number> {
+        let priority = 999;
+
+        if (scope === ScopeType.SYSTEM) {
+            const user = await this.prisma.systemUser.findUnique({
+                where: { userProfileId: userId },
+                select: { role: { select: { priority: true } } }
+            });
+            if (user?.role) priority = user.role.priority;
+        }
+        else if (scope === ScopeType.CAMPAIGN && contextId) {
+            const user = await this.prisma.campaignUser.findUnique({
+                where: { userProfileId: userId },
+                select: { role: { select: { priority: true } } }
+            });
+            if (user?.role) priority = user.role.priority;
+        }
+        else if (scope === ScopeType.TEAM && contextId) {
+            const user = await this.prisma.teamUser.findUnique({
+                where: { userProfileId: userId },
+                select: { role: { select: { priority: true } } }
+            });
+            if (user?.role) priority = user.role.priority;
+        }
+
+        return priority;
+    }
+
     async findById(id: number) {
         return this.prisma.role.findUnique({
             where: { id },
             include: this.roleInclude
         });
     }
-
 
     async findByNameAndContext(name: string, scope: ScopeType, contextId?: string) {
         const where: Prisma.RoleWhereInput = { name, scope };
@@ -46,20 +71,38 @@ export class RoleRepository {
         });
     }
 
-    async findAll(pagination: PaginationQueryDto, filters: RoleFilterQueryDto) {
+    async findAll(
+        pagination: PaginationQueryDto,
+        filters: RoleFilterQueryDto & { scope?: string; contextId?: string }
+    ) {
         const { limit = 10, offset = 0 } = pagination;
-        const { campaignId, teamId, search } = filters;
-        const where: Prisma.RoleWhereInput = {};
+        const { campaignId, teamId, search, scope, contextId } = filters;
 
-        if (campaignId) where.campaignId = campaignId;
-        if (teamId) where.teamId = teamId;
+        const andConditions: Prisma.RoleWhereInput[] = [];
+
+        if (scope === ScopeType.CAMPAIGN) {
+            andConditions.push({
+                OR: [
+                    { campaignId: contextId },
+                ]
+            });
+        } else if (scope === ScopeType.TEAM) {
+            andConditions.push({ teamId: contextId });
+        }
+
+        if (campaignId) andConditions.push({ campaignId });
+        if (teamId) andConditions.push({ teamId });
 
         if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } }
-            ];
+            andConditions.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } }
+                ]
+            });
         }
+
+        const where: Prisma.RoleWhereInput = andConditions.length > 0 ? { AND: andConditions } : {};
 
         const [items, total] = await this.prisma.$transaction([
             this.prisma.role.findMany({

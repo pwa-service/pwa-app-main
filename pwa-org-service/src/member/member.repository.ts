@@ -1,23 +1,82 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../pwa-prisma/src';
-import { PaginationQueryDto, MemberFilterQueryDto } from '../../../pwa-shared/src';
-import { Prisma } from '../../../pwa-prisma/src';
+import {Injectable} from '@nestjs/common';
+import {Prisma, PrismaService} from '../../../pwa-prisma/src';
+import {MemberFilterQueryDto, PaginationQueryDto, ScopeType} from '../../../pwa-shared/src';
+
 
 @Injectable()
 export class MemberRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto) {
+    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { scope?: ScopeType, contextId?: string }) {
         const { take, skip } = this.getPaginationParams(pagination);
-        const { search, roleId, teamId, campaignId } = filters;
+        const { search, roleId, teamId, campaignId, scope, contextId } = filters;
 
-        if (teamId) {
-            return this.findAllTeamMembers(teamId, take, skip, search, roleId);
-        } else if (campaignId) {
-            return this.findAllCampaignMembers(campaignId, take, skip, search, roleId);
-        } else {
-            return this.findAllCampaignMembers(undefined, take, skip, search, roleId);
+        const campWhere: Prisma.CampaignUserWhereInput = {};
+        const teamWhere: Prisma.TeamUserWhereInput = {};
+
+        let fetchCampaigns = false;
+        let fetchTeams = false;
+
+        if (scope === ScopeType.SYSTEM) {
+            fetchCampaigns = true;
+            fetchTeams = true;
         }
+        else if (scope === ScopeType.CAMPAIGN) {
+            fetchCampaigns = true;
+            fetchTeams = true;
+            campWhere.campaignId = contextId;
+            teamWhere.team = { campaignId: contextId };
+        }
+        else if (scope === ScopeType.TEAM) {
+            fetchTeams = true;
+            teamWhere.teamId = contextId;
+        }
+
+        if (campaignId) {
+            campWhere.campaignId = campaignId;
+            fetchTeams = false;
+        }
+        if (teamId) {
+            teamWhere.teamId = teamId;
+            fetchCampaigns = false;
+        }
+        if (roleId) {
+            campWhere.roleId = roleId;
+            teamWhere.roleId = roleId;
+        }
+
+        if (search) {
+            const searchObj: Prisma.UserProfileWhereInput = {
+                OR: [
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { username: { contains: search, mode: 'insensitive' } }
+                ]
+            };
+            campWhere.profile = searchObj;
+            teamWhere.profile = searchObj;
+        }
+
+        if (fetchCampaigns && !fetchTeams) {
+            return this.executeQueries(this.prisma.campaignUser, campWhere, take, skip);
+        }
+        if (fetchTeams && !fetchCampaigns) {
+            return this.executeQueries(this.prisma.teamUser, teamWhere, take, skip);
+        }
+
+        const [campItems, campTotal, teamItems, teamTotal] = await Promise.all([
+            this.prisma.campaignUser.findMany({ where: campWhere, include: { role: true, profile: true } }),
+            this.prisma.campaignUser.count({ where: campWhere }),
+            this.prisma.teamUser.findMany({ where: teamWhere, include: { role: true, profile: true, team: true } }),
+            this.prisma.teamUser.count({ where: teamWhere })
+        ]);
+
+        const allItems = [...campItems, ...teamItems].sort(
+            (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        );
+
+        const paginatedItems = allItems.slice(skip, skip + take);
+
+        return { items: paginatedItems, total: campTotal + teamTotal };
     }
 
     private getPaginationParams(pagination?: PaginationQueryDto) {
@@ -27,70 +86,17 @@ export class MemberRepository {
         };
     }
 
-    private async findAllTeamMembers(
-        teamId: string,
-        take: number,
-        skip: number,
-        search?: string,
-        roleId?: number
-    ) {
-        const where: Prisma.TeamUserWhereInput = { teamId };
-
-        if (roleId) where.roleId = roleId;
-        if (search) {
-            where.profile = {
-                OR: [
-                    { email: { contains: search, mode: 'insensitive' } },
-                    { username: { contains: search, mode: 'insensitive' } }
-                ]
-            };
-        }
-
-        const [items, total] = await this.prisma.$transaction([
-            this.prisma.teamUser.findMany({
+    private async executeQueries(model: any, where: any, take: number, skip: number) {
+        const [items, total] = await Promise.all([
+            model.findMany({
                 where,
                 take,
                 skip,
-                include: { role: true, profile: true },
+                include: { role: true, profile: true, team: true },
                 orderBy: { createdAt: 'desc' }
             }),
-            this.prisma.teamUser.count({ where })
+            model.count({ where })
         ]);
-
-        return { items, total };
-    }
-
-    private async findAllCampaignMembers(
-        campaignId: string | undefined,
-        take: number,
-        skip: number,
-        search?: string,
-        roleId?: number
-    ) {
-        const where: Prisma.CampaignUserWhereInput = {};
-
-        if (campaignId) where.campaignId = campaignId;
-        if (roleId) where.roleId = roleId;
-        if (search) {
-            where.profile = {
-                OR: [
-                    { email: { contains: search, mode: 'insensitive' } },
-                    { username: { contains: search, mode: 'insensitive' } }
-                ]
-            };
-        }
-
-        const [items, total] = await this.prisma.$transaction([
-            this.prisma.campaignUser.findMany({
-                where,
-                take,
-                skip,
-                include: { role: true, profile: true },
-                orderBy: { createdAt: 'desc' }
-            }),
-            this.prisma.campaignUser.count({ where })
-        ]);
-
         return { items, total };
     }
 }

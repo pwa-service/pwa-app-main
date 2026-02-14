@@ -5,15 +5,16 @@ import { Metadata } from "@grpc/grpc-js";
 import {
     CreateCampaignMemberDto,
     PaginationQueryDto,
-    MemberFilterQueryDto
+    MemberFilterQueryDto,
+    CreateTeamMemberDto
 } from "../../../../pwa-shared/src";
 
 interface IMemberGrpcService {
     GetMyProfile(data: { id: string }, md?: Metadata): Observable<any>;
     FindAll(data: { pagination: PaginationQueryDto, filters: MemberFilterQueryDto }, md?: Metadata): Observable<any>;
     CreateCampaignMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
-    CreateTeamLead(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
-    CreateTeamMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
+    CreateTeamLead(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
+    CreateTeamMember(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
 }
 
 @Injectable()
@@ -38,11 +39,11 @@ export class MemberGrpcClient implements OnModuleInit {
         return lastValueFrom(this.svc.CreateCampaignMember(dto, metadata));
     }
 
-    async createTeamLead(dto: CreateCampaignMemberDto, metadata?: Metadata) {
+    async createTeamLead(dto: CreateTeamMemberDto, metadata?: Metadata) {
         return lastValueFrom(this.svc.CreateTeamLead(dto, metadata));
     }
 
-    async createTeamMember(dto: CreateCampaignMemberDto, metadata?: Metadata) {
+    async createTeamMember(dto: CreateTeamMemberDto, metadata?: Metadata) {
         return lastValueFrom(this.svc.CreateTeamMember(dto, metadata));
     }
 }

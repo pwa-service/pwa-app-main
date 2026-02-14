@@ -1,8 +1,8 @@
 import { PartialType, OmitType } from '@nestjs/swagger';
-import {CreateCampaignMemberDto} from "./create-member.dto";
+import {CreateTeamMemberDto} from "./create-team-member.dto";
 
 export class UpdateMemberDto extends PartialType(
-    OmitType(CreateCampaignMemberDto, ['campaignId', 'teamId', 'username'] as const),
+    OmitType(CreateTeamMemberDto, ['campaignId', 'teamId', 'username'] as const),
 ) {
     id: string;
 }

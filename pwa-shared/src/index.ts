@@ -52,6 +52,7 @@ export * from './types/org/member/dto/create-member.dto';
 export * from './types/org/member/dto/update-member.dto';
 export * from './types/org/member/dto/get-member.dto';
 export * from './types/org/member/dto/filter-query.dto';
+export * from './types/org/member/dto/create-team-member.dto';
 
 export * from './types/org/roles/enums/scope.enum';
 export * from './types/org/roles/dto/assign-role.dto';

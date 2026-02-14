@@ -6,8 +6,8 @@ import {
     NotFoundException,
     OnModuleInit
 } from '@nestjs/common';
-import {RoleRepository} from './role.repository';
-import {RolePriority, SystemRoleName} from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import { RoleRepository } from './role.repository';
+import { RolePriority, SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import {
     AccessLevel,
     AssignRoleDto,
@@ -18,7 +18,7 @@ import {
     ScopeType,
     UpdateRoleDto
 } from "../../../pwa-shared/src";
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 @Injectable()
 export class RoleService implements OnModuleInit {
@@ -59,6 +59,7 @@ export class RoleService implements OnModuleInit {
         };
 
         const newPriority = RolePriority.MEMBER;
+
         const roleData: any = {
             name: dto.name,
             description: dto.description,
@@ -115,8 +116,7 @@ export class RoleService implements OnModuleInit {
         return this.toRoleResponse(updatedRole);
     }
 
-    async findOne(idStr: string, user: UserPayload) {
-        const id = parseInt(idStr);
+    async findOne(id: number, user: UserPayload) {
         const role = await this.repo.findById(id);
 
         if (!role) throw new NotFoundException('Role not found');
@@ -142,15 +142,14 @@ export class RoleService implements OnModuleInit {
     }
 
     async findAll(pagination: PaginationQueryDto, filters: RoleFilterQueryDto, user: UserPayload) {
-        const effectiveFilters = { ...filters, scope: user.scope };
+        const filtersWithScope = {
+            ...filters,
+            userScope: user.scope,
+            userContextId: user.contextId
+        };
 
-        if (user.scope === ScopeType.CAMPAIGN) {
-            effectiveFilters.campaignId = user.contextId!;
-        } else if (user.scope === ScopeType.TEAM) {
-            effectiveFilters.teamId = user.contextId!;
-        }
+        const result = await this.repo.findAll(pagination, filtersWithScope);
 
-        const result = await this.repo.findAll(pagination, effectiveFilters);
         const mappedRoles = result.items.map((role: any) => this.toRoleResponse(role));
 
         return {
@@ -201,7 +200,6 @@ export class RoleService implements OnModuleInit {
 
         await this.repo.delete(id);
     }
-
 
     private toRoleResponse(role: any) {
         const globalRules = role.accessProfile?.accessProfile?.globalRules || {

@@ -24,7 +24,18 @@ export class TeamRepository {
         return this.prisma.team.findUnique({
             where: { id },
             include: {
-                members: { include: { profile: true, role: true } }
+                teamLead: {
+                    include: {
+                        profile: true,
+                        role: true
+                    }
+                },
+                members: {
+                    include: {
+                        profile: true,
+                        role: true
+                    }
+                }
             },
         });
     }
@@ -39,6 +50,12 @@ export class TeamRepository {
                 take,
                 skip,
                 include: {
+                    teamLead: {
+                        include: {
+                            profile: true,
+                            role: true
+                        }
+                    },
                     members: {
                         include: {
                             profile: true,

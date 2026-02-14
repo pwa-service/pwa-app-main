@@ -32,7 +32,7 @@ message TeamResponse {
     string id = 1;
     string name = 2;
     string campaign_id = 3;
-    string lead_id = 4;
+    optional string lead_id = 4;
     string created_at = 5;
     repeated org.member.MemberResponse members = 6;
 }
