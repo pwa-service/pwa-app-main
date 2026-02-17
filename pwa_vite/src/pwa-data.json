@@ -1,4 +1,31 @@
 {
   "destination_url": "",
-  "product_url": ""
+  "product_url": "",
+
+  "name": "Aviator Win Pro",
+  "domain": "aviator-game-win.com",
+  "status": "draft",
+  "lang": "en",
+  "description": "Main PWA for the spring campaign targeting tier-1 GEOs.",
+
+  "tags": [{ "text": "casino" }, { "text": "aviator" }, { "text": "high-rort" }],
+
+  "terms": [
+    { "text": "<h1>Privacy Policy</h1><p>We collect data...</p>" },
+    { "text": "<h1>Terms of Service</h1><p>By using this app...</p>" }
+  ],
+
+  "comments": [
+    { "author": "Media Buyer 1", "text": "Please use the blue logo version." },
+    { "author": "Team Lead", "text": "Approved for testing." }
+  ],
+
+  "events": [
+    "page_view",
+    "view_content",
+    "initiate_checkout",
+    "registration",
+    "deposit",
+    "purchase"
+  ]
 }

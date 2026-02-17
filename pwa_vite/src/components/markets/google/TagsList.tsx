@@ -1,22 +1,22 @@
 import { classNames } from "../../../utils/classNames";
 
 interface TagsListProps {
-  tags: string[];
+  tags: { text: string }[];
 }
 
 const TagsList = ({ tags }: TagsListProps) => {
   return (
     <div className="flex flex-wrap gap-3 mb-6 md:mb-10">
-      {tags?.map((tag: string) => (
+      {tags?.map(({ text }, index) => (
         <p
-          key={tag}
+          key={index}
           className={classNames(
             "flex items-center justify-between",
-            "font-medium text-zinc-600",
+            "font-medium text-zinc-600 capitalize",
             "py-1 px-6 rounded-full border border-zinc-300"
           )}
         >
-          {tag}
+          {text}
         </p>
       ))}
     </div>
