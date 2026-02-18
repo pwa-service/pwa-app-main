@@ -14,7 +14,7 @@ export const redirectOnLaunch = () => {
     try {
       if (checkIfStandalone()) await handleRedirect();
     } catch (error) {
-      console.error("[Redirect] Error:", error);
+
     }
   };
 
@@ -22,7 +22,7 @@ export const redirectOnLaunch = () => {
 
   standalone.addEventListener("change", async (event) => {
     if (event.matches) {
-      console.log("[Redirect] Enter standalone (PWA)");
+
       await tryRedirect();
     }
   });
@@ -33,7 +33,7 @@ const handleRedirect = async () => {
 
   const firstVisitRaw = await loadData(FIRST_VISITE_PWA_KEY);
   const firstVisit = !firstVisitRaw;
-  console.log("[Redirect] first visit:", firstVisit);
+
 
   if (firstVisit) {
     await saveData(FIRST_VISITE_PWA_KEY, "visited");
@@ -43,7 +43,7 @@ const handleRedirect = async () => {
   const finalURL = new URL(baseURL, window.location.origin);
 
   const queryTail = await getQueryTail();
-  console.log("[Redirect] query tail:", queryTail);
+
 
   if (firstVisit && queryTail) {
     const sessionID = await loadData(SESSION_ID_KEY);
@@ -51,12 +51,12 @@ const handleRedirect = async () => {
     try {
       await postFirstOpen(sessionID);
     } catch (err) {
-      console.error("[Redirect] postFirstOpen error:", err);
+
     }
 
     finalURL.search = queryTail;
   }
 
-  console.log("[Redirect] Redirect to:", finalURL.toString());
+
   window.location.href = finalURL.toString();
 };
