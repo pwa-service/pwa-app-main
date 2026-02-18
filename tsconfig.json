@@ -12,13 +12,23 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "types": ["jest", "node"],
+    "types": [
+      "jest",
+      "node"
+    ],
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "strictPropertyInitialization": false,
-    "paths": {}
+    "paths": {
+      "@pwa/prisma": [
+        "./pwa-prisma/src"
+      ],
+      "@pwa/prisma/*": [
+        "./pwa-prisma/src/*"
+      ]
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../pwa-prisma/src';
+import { PrismaService } from '@pwa/prisma';
 
 @ValidatorConstraint({ async: true })
 @Injectable()
