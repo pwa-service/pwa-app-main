@@ -8,6 +8,7 @@ WORKDIR /workspace
 COPY ./pwa-api-gateway/package*.json ./pwa-api-gateway/
 COPY ./pwa-shared/package*.json      ./pwa-shared/
 COPY ./pwa-protos/package*.json      ./pwa-protos/
+COPY ./pwa-prisma/package*.json      ./pwa-prisma/
 
 WORKDIR /workspace/pwa-api-gateway
 RUN npm ci && npm install -g @nestjs/cli
@@ -15,12 +16,16 @@ RUN npm ci && npm install -g @nestjs/cli
 WORKDIR /workspace/pwa-shared
 RUN npm ci
 
+WORKDIR /workspace/pwa-prisma
+RUN npm ci
+
 FROM deps AS build
 WORKDIR /workspace
 
 COPY ./pwa-api-gateway ./pwa-api-gateway
-COPY ./pwa-shared      ./pwa-shared
-COPY ./pwa-protos      ./pwa-protos
+COPY ./pwa-shared      ./pwa-shared/
+COPY ./pwa-protos      ./pwa-protos/
+COPY ./pwa-prisma      ./pwa-prisma/
 
 WORKDIR /workspace/pwa-api-gateway
 RUN npm run build
