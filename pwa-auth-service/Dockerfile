@@ -32,11 +32,11 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 
 WORKDIR /workspace/pwa-auth-service
 RUN mkdir -p ./prisma \
- && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
+    && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN mkdir -p ./protos \
- && cp -r ../pwa-protos/protos/* ./protos/
+    && cp -r ../pwa-protos/protos/* ./protos/
 RUN npx nest build -p tsconfig.json
 
 FROM node:22-alpine AS runner
