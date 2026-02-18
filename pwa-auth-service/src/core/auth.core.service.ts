@@ -1,22 +1,22 @@
-import {Inject, Injectable, OnModuleInit} from '@nestjs/common';
-import {exportJWK, generateKeyPair, importJWK, importPKCS8, jwtVerify, SignJWT,} from 'jose';
-import {ClientGrpc, RpcException} from '@nestjs/microservices';
-import {Metadata, status} from '@grpc/grpc-js';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { exportJWK, generateKeyPair, importJWK, importPKCS8, jwtVerify, SignJWT, } from 'jose';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
+import { Metadata, status } from '@grpc/grpc-js';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import {MailerService} from "@nestjs-modules/mailer";
-import {Counter} from "prom-client";
-import {InjectMetric} from "@willsoto/nestjs-prometheus";
-import {firstValueFrom, Observable} from 'rxjs';
+import { MailerService } from "@nestjs-modules/mailer";
+import { Counter } from "prom-client";
+import { InjectMetric } from "@willsoto/nestjs-prometheus";
+import { firstValueFrom, Observable } from 'rxjs';
 
-import {RefreshStore} from '../../../pwa-shared/src/modules/auth/common/refresh.store';
-import {AuthRepository} from './auth.repository';
-import {AccessLevel, RestorePasswordDto, SignInDto, SignUpDto} from "../../../pwa-shared/src";
-import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
-import {ScopeType} from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
-import {JwtVerifierService} from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
+import { RefreshStore } from '../../../pwa-shared/src/modules/auth/common/refresh.store';
+import { AuthRepository } from './auth.repository';
+import { AccessLevel, RestorePasswordDto, SignInDto, SignUpDto } from "../../../pwa-shared/src";
+import { TelegramAuthDto } from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
+import { JwtVerifierService } from "../../../pwa-shared/src/modules/auth/jwt-verifier.service";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { SignUpOrgDto } from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 
 interface CampaignGrpcService {
@@ -41,7 +41,7 @@ export class AuthCoreService implements OnModuleInit {
         private readonly mailerService: MailerService,
         private readonly jwt: JwtVerifierService,
         @Inject('CAMPAIGN_PACKAGE') private campaignClient: ClientGrpc,
-    ) {}
+    ) { }
 
     async onModuleInit() {
         this.campaignService = this.campaignClient.getService<CampaignGrpcService>('CampaignService');
@@ -90,7 +90,7 @@ export class AuthCoreService implements OnModuleInit {
 
         this.loginSuccessCounter.labels('email').inc();
 
-        let contextUser = null;
+        let contextUser: any = null;
         if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
         else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
         else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
@@ -167,7 +167,7 @@ export class AuthCoreService implements OnModuleInit {
                 throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
             }
 
-            let contextUser = null;
+            let contextUser: any = null;
             if (dbUser.scope === ScopeType.SYSTEM) contextUser = dbUser.systemUser;
             else if (dbUser.scope === ScopeType.CAMPAIGN) contextUser = dbUser.campaignUser;
             else if (dbUser.scope === ScopeType.TEAM) contextUser = dbUser.teamUser;
@@ -255,7 +255,7 @@ export class AuthCoreService implements OnModuleInit {
             }, metadata));
             tempPayload.contextId = campaignResponse.id
             campaignResponse.campaignUser = tempPayload
-                campaignResponse.campaignUser.role = {
+            campaignResponse.campaignUser.role = {
                 accessProfile: {
                     accessProfile: {
                         globalRules: tempPayload.access
@@ -287,7 +287,7 @@ export class AuthCoreService implements OnModuleInit {
         await this.repo.updatePassword(user.id, hash);
         await this.store.revoke(user.id);
 
-        let contextUser = null;
+        let contextUser: any = null;
         if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
         else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
         else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
@@ -323,7 +323,7 @@ export class AuthCoreService implements OnModuleInit {
 
         const refreshedUser = await this.repo.findById(updated.id);
 
-        let contextUser = null;
+        let contextUser: any = null;
         if (refreshedUser) {
             if (refreshedUser.scope === ScopeType.SYSTEM) contextUser = refreshedUser.systemUser;
             else if (refreshedUser.scope === ScopeType.CAMPAIGN) contextUser = refreshedUser.campaignUser;
@@ -350,7 +350,7 @@ export class AuthCoreService implements OnModuleInit {
             const user = await this.repo.findById(sub);
             if (!user) throw new RpcException({ code: status.PERMISSION_DENIED, message: 'User not found' });
 
-            let contextUser = null;
+            let contextUser: any = null;
             if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
             else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
             else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
@@ -405,7 +405,7 @@ export class AuthCoreService implements OnModuleInit {
                 return { message: "Context creation required" };
             }
 
-            let contextUser = null;
+            let contextUser: any = null;
             if (user.scope === ScopeType.SYSTEM) contextUser = user.systemUser;
             else if (user.scope === ScopeType.CAMPAIGN) contextUser = user.campaignUser;
             else if (user.scope === ScopeType.TEAM) contextUser = user.teamUser;
