@@ -21,9 +21,6 @@
       ],
       "@pwa/prisma/*": [
         "../pwa-prisma/src/*"
-      ],
-      "*": [
-        "node_modules/*"
       ]
     },
     "strictPropertyInitialization": false

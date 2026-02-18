@@ -1,4 +1,6 @@
 const path = require('path');
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('./tsconfig.test.json');
 
 module.exports = {
     displayName: 'auth-service',
@@ -23,9 +25,9 @@ module.exports = {
         'node_modules/(?!(jose)/)'
     ],
 
-    moduleNameMapper: {
-        "^@pwa/shared/(.*)$": "<rootDir>/../pwa-shared/src/$1"
-    },
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+        prefix: '<rootDir>/',
+    }),
 
     moduleDirectories: ['node_modules', '<rootDir>'],
     coveragePathIgnorePatterns: [
