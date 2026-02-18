@@ -26,6 +26,7 @@ COPY ./pwa-api-gateway ./pwa-api-gateway
 COPY ./pwa-shared      ./pwa-shared/
 COPY ./pwa-protos      ./pwa-protos/
 COPY ./pwa-prisma      ./pwa-prisma/
+COPY ./tsconfig.json ./tsconfig.json
 
 WORKDIR /workspace/pwa-api-gateway
 RUN npm run build

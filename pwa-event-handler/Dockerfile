@@ -27,6 +27,7 @@ COPY ./pwa-event-handler ./pwa-event-handler
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
+COPY ./tsconfig.json ./tsconfig.json
 
 
 

@@ -26,6 +26,7 @@ COPY ./pwa-manager      ./pwa-manager
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
+COPY ./tsconfig.json ./tsconfig.json
 
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma

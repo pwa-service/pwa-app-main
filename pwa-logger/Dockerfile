@@ -22,6 +22,7 @@ WORKDIR /workspace
 COPY ./pwa-logger ./pwa-logger
 COPY ./pwa-prisma ./pwa-prisma
 COPY ./pwa-shared ./pwa-shared
+COPY ./tsconfig.json ./tsconfig.json
 
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma

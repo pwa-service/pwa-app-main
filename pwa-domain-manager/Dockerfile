@@ -26,6 +26,7 @@ COPY ./pwa-domain-manager ./pwa-domain-manager
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
+COPY ./tsconfig.json ./tsconfig.json
 
 
 

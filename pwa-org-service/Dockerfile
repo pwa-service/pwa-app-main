@@ -26,6 +26,7 @@ COPY ./pwa-org-service ./pwa-org-service
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
+COPY ./tsconfig.json ./tsconfig.json
 
 
 
