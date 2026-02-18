@@ -17,7 +17,31 @@ import (
 
 const numCopyWorkers = 10
 const pwaDataSrc = "src/pwa-data.json"
-const productUrl = "https://beton.win"
+
+type Term struct {
+	Text string `json:"text"`
+}
+
+type Tag struct {
+	Text string `json:"text"`
+}
+
+type Comment struct {
+	Author string `json:"author"`
+	Text   string `json:"text"`
+}
+
+type AppConfig struct {
+	Name           string    `json:"name"`
+	Lang           string    `json:"lang"`
+	Description    string    `json:"description,omitempty"`
+	Terms          []Term    `json:"terms"`
+	Tags           []Tag     `json:"tags"`
+	Comments       []Comment `json:"comments"`
+	Events         []string  `json:"events"`
+	DestinationUrl string    `json:"destinationUrl"`
+	ProductUrl     string    `json:"productUrl"`
+}
 
 type copyJob struct {
 	srcPath string
@@ -121,7 +145,7 @@ func copyFile(srcPath, dstPath string, baseMode os.FileMode) error {
 	return nil
 }
 
-func updateDestinationURL(filePath string, newURL string) error {
+func updatePWAData(filePath string, config *AppConfig) error {
 	log.Printf("Reading: %s", filePath)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -139,9 +163,20 @@ func updateDestinationURL(filePath string, newURL string) error {
 		return fmt.Errorf("failed to parse JSON (check syntax): %w", err)
 	}
 
-	log.Printf("Setting pwa data variables...")
-	configData["destination_url"] = newURL
-	configData["product_url"] = productUrl
+	// Add config fields if provided
+	if config != nil {
+		configData["destination_url"] = config.DestinationUrl
+		configData["product_url"] = config.ProductUrl
+		configData["name"] = config.Name
+		configData["lang"] = config.Lang
+		if config.Description != "" {
+			configData["description"] = config.Description
+		}
+		configData["terms"] = config.Terms
+		configData["tags"] = config.Tags
+		configData["comments"] = config.Comments
+		configData["events"] = config.Events
+	}
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")
 	if err != nil {
@@ -182,7 +217,7 @@ func updateTraeficConfig(filePath string, domain string) error {
 	return nil
 }
 
-func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string, error) {
+func runBuild(reactAppPath string, traeficConfSrc string, domain string, config *AppConfig) (string, error) {
 	localBuildDir := fmt.Sprintf("../builds/pwa_vite_%s", domain)
 	err := copyDir(reactAppPath, localBuildDir)
 	if err != nil {
@@ -194,7 +229,7 @@ func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get absolute path for build dir")
 	}
-	err = updateDestinationURL(path.Join(absLocalBuildDir, pwaDataSrc), fmt.Sprintf("https://%s", "domforpwaalfatest.com/Z2zSjt"))
+	err = updatePWAData(path.Join(absLocalBuildDir, pwaDataSrc), config)
 	if err != nil {
 		return "", err
 	}

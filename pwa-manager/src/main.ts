@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import { PwaManagerModule } from "./core/pwa-manager.module";
+import { useContainer } from 'class-validator';
+import { ValidationPipe } from '@nestjs/common';
+import { StripUserPipe } from '../../pwa-shared/src/common/pipes/strip-user.pipe';
 
 async function bootstrap() {
     const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
@@ -28,6 +31,9 @@ async function bootstrap() {
             },
         },
     );
+    useContainer(app.select(PwaManagerModule), { fallbackOnErrors: true });
+    app.useGlobalPipes(new StripUserPipe());
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     await app.listen();
 }
 bootstrap();

@@ -21,7 +21,7 @@ const BUILD_STATUS_NEW = "BUILD_PWA_CHANNEL:CREATE_APP_EVENT"
 const BUILD_STATUS_FINISHED = "BUILD_PWA_CHANNEL:BUILD_FINISHED_EVENT"
 
 type Config struct {
-	ReactAppPath      string `env:"REACT_APP_PATH" envDefault:"../../pwa_vite"`
+	ReactAppPath      string `env:"REACT_APP_PATH" envDefault:"../pwa_vite"`
 	TraeficConfPath   string `env:"TRAEFIC_CONF_PATH" envDefault:"../docker/docker-compose.yaml"`
 	WorkerConcurrency int    `env:"WORKER_CONCURRENCY" envDefault:"10"`
 	RedisHost         string `env:"REDIS_HOST" envDefault:"localhost"`
@@ -34,8 +34,9 @@ type Config struct {
 }
 
 type CreateAppJob struct {
-	Domain string `json:"domain"`
-	AppID  string `json:"appId"`
+	Domain string     `json:"domain"`
+	AppID  string     `json:"appId"`
+	Config *AppConfig `json:"config,omitempty"`
 }
 
 type BuildStatusUpdate struct {
@@ -183,7 +184,7 @@ func processMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON 
 	}
 	defer transporter.Close()
 
-	absLocalBuildDir, buildErr := runBuild(cfg.ReactAppPath, cfg.TraeficConfPath, jobData.Domain)
+	absLocalBuildDir, buildErr := runBuild(cfg.ReactAppPath, cfg.TraeficConfPath, jobData.Domain, jobData.Config)
 	localBuildDirToRemove := absLocalBuildDir
 	localBuildDir := path.Join(absLocalBuildDir, "dist")
 

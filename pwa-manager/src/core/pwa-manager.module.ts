@@ -1,20 +1,22 @@
 import { Module } from '@nestjs/common';
 import { PwaManagerController } from './pwa-manager.controller';
 import { PwaManagerCoreService } from './pwa-manager.core.service';
-import {GeneratorPubSubModule} from "../generator/generator.queue.module";
-import {PrismaModule} from "../../../pwa-prisma/src";
-import {PwaManagerRepository} from "./pwa-manager.repository";
+import { GeneratorPubSubModule } from "../generator/generator.queue.module";
+import { PrismaModule } from "../../../pwa-prisma/src";
+import { PwaManagerRepository } from "./pwa-manager.repository";
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import {
     GrpcAuthInterceptor,
 } from "../../../pwa-shared/src";
-import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
-import {PixelTokenModule} from "../pixel-token-manager/pixel-token.module";
-import {ClientsModule, Transport} from "@nestjs/microservices";
-import {join} from "path";
+import { GrpcAuthModule } from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
+import { PixelTokenModule } from "../pixel-token-manager/pixel-token.module";
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { join } from "path";
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
+import { IsDomainExistsConstraint } from "../../../pwa-shared/src/common/validators/is-domain-exists.validator";
+
 @Module({
     imports: [PrismaModule, GeneratorPubSubModule, GrpcAuthModule, PixelTokenModule, ClientsModule.register([
         {
@@ -39,7 +41,8 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
     providers: [
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PwaManagerCoreService,
-        PwaManagerRepository
+        PwaManagerRepository,
+        IsDomainExistsConstraint
     ],
 })
-export class PwaManagerModule {}
+export class PwaManagerModule { }

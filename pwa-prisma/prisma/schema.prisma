@@ -83,8 +83,8 @@ enum WorkingObjectType {
   PWA
   FLOW
   PIXEL_TOKEN
-  TEAM // Додано
-  CAMPAIGN // Додано
+  TEAM
+  CAMPAIGN
 }
 
 enum ObjectRelationType {
@@ -136,12 +136,13 @@ model UserProfile {
   errorLogs ErrorLog[]
   tasks     Task[]
 
-  // Sharing Interactions (Global Sharing)
+  // Sharing Interactions
   sharesReceived ShareUserProfile[] @relation("UserProfileShares")
   sharesCreated  ShareUserProfile[] @relation("UserProfileShareCreator")
 
   // Ownership & Links
   campaignsOwned   Campaign[]         @relation("LegalCampaignOwner")
+  domainsOwned     Domain[]           @relation("DomainOwner")
   PixelToken       PixelToken[]
   PwaVersion       PwaVersion[]
   FlowVersion      FlowVersion[]
@@ -161,7 +162,7 @@ model Role {
   name        String
   priority    Int       @default(100)
   description String?   @db.Text
-  scope       ScopeType // SYSTEM | CAMPAIGN | TEAM
+  scope       ScopeType
 
   // Context Links
   campaignId String? @map("campaign_id")
@@ -223,12 +224,9 @@ model CampaignUser {
   campaign Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   role     Role        @relation(fields: [roleId], references: [id])
 
-  // Asset Creation
   pwaAppsCreated PwaApp[] @relation("PwaCreator")
   flowsCreated   Flow[]   @relation("FlowCreator")
-  domainsOwned   Domain[]
 
-  // Sharing Creator Links
   sharesCreatedRole ShareRole[] @relation("ShareRoleCreator")
 
   @@map("campaign_users")
@@ -245,17 +243,12 @@ model TeamUser {
   team    Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   role    Role        @relation(fields: [roleId], references: [id])
 
-  // Asset Creation
   pwaAppsCreated PwaApp[] @relation("TeamPwaCreator")
   flowsCreated   Flow[]   @relation("TeamFlowCreator")
 
-  // Sharing Creator Links
-  sharesCreatedRole ShareRole[] @relation("ShareRoleCreatorTeam")
-
-  // Operational Links (Specific Access to Working Objects)
+  sharesCreatedRole  ShareRole[]             @relation("ShareRoleCreatorTeam")
   workingObjectLinks WorkingObjectTeamUser[]
 
-  // Leadership
   TeamLeaderOf Team[] @relation("TeamLeader")
 
   @@map("team_users")
@@ -294,7 +287,6 @@ model Campaign {
   alerts      Alert[]
   tasks       Task[]
 
-  // Link to itself as a Working Object (1:1)
   workingObjectLink WorkingObjectCampaign?
 
   @@map("campaigns")
@@ -325,20 +317,20 @@ model Team {
 }
 
 // =========================
-// ASSETS
+// ASSETS & PWA
 // =========================
 
 model Domain {
-  id        String   @id @default(uuid())
-  hostname  String   @unique
-  status    Status   @default(active)
-  pwaAppId  String   @map("pwa_app_id")
-  ownerId   String   @map("owner_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id       String  @id @default(uuid())
+  hostname String  @unique
+  status   Status  @default(active)
+  pwaAppId String? @map("pwa_app_id")
+  ownerId  String? @map("owner_id")
 
-  pwaApp PwaApp        @relation(fields: [pwaAppId], references: [id])
-  owner  CampaignUser? @relation(fields: [ownerId], references: [id])
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  pwaApp    PwaApp?      @relation(fields: [pwaAppId], references: [id])
+  owner     UserProfile? @relation("DomainOwner", fields: [ownerId], references: [id])
 
   eventLogs EventLog[]
 
@@ -375,6 +367,11 @@ model PwaApp {
   domainId     String    @map("domain_id")
   isDeleted    Boolean   @default(false) @map("is_deleted")
 
+  mainLocale String? @default("en") @map("main_locale")
+
+  destinationUrl String? @map("destination_url")
+  productUrl     String? @map("product_url")
+
   createdByCampaignUserId String? @map("created_by_campaign_user_id")
   createdByTeamUserId     String? @map("created_by_team_user_id")
 
@@ -398,22 +395,32 @@ model PwaApp {
   sessions     PwaSession[]
   eventLogs    EventLog[]
 
+  // --- Нові реляційні таблиці ---
+  tags     PwaTag[]
+  terms    PwaTerm[]
+  comments PwaComment[]
+
+  // --- Новий профіль подій ---
+  eventsProfile PwaEventsProfile?
+
   workingObjectLink WorkingObjectPwa?
 
   @@map("pwa_apps")
 }
 
 model PwaDetails {
-  id             String  @id @default(uuid())
-  pwaAppId       String  @unique @map("pwa_app_id")
-  publicName     String? @map("public_name")
-  iconUrl        String? @map("icon_url")
-  logoUrl        String? @map("logo_url")
-  themeColor     String? @map("theme_color")
-  screenshots    Json?
-  privacyPolicy  String? @map("privacy_policy") @db.Text
-  termsOfService String? @map("terms_of_service") @db.Text
-  tags           String?
+  id          String  @id @default(uuid())
+  pwaAppId    String  @unique @map("pwa_app_id")
+  publicName  String? @map("public_name")
+  iconUrl     String? @map("icon_url")
+  logoUrl     String? @map("logo_url")
+  themeColor  String? @map("theme_color")
+  screenshots Json?
+
+  // Легасі поля можна залишити або видалити, якщо ви повністю перейшли на PwaTerm/PwaTag
+  // privacyPolicy  String? @map("privacy_policy") @db.Text
+  // termsOfService String? @map("terms_of_service") @db.Text
+  // tags           String?
 
   pwaApp PwaApp @relation(fields: [pwaAppId], references: [id])
 
@@ -426,11 +433,59 @@ model PwaContent {
   locale      String?
   title       String?
   description String? @db.Text
-  comments    Json?
+
+  // Коментарі тепер у PwaComment, це поле можна залишити як легасі або для іншого типу контенту
+  // comments    Json?
 
   pwaApp PwaApp @relation(fields: [pwaAppId], references: [id])
 
   @@map("pwa_contents")
+}
+
+// --- Нові таблиці для нормалізованих даних ---
+
+model PwaTag {
+  id       String @id @default(uuid())
+  text     String
+  pwaAppId String @map("pwa_app_id")
+  pwaApp   PwaApp @relation(fields: [pwaAppId], references: [id], onDelete: Cascade)
+
+  @@map("pwa_tags")
+}
+
+model PwaTerm {
+  id       String @id @default(uuid())
+  text     String @db.Text
+  pwaAppId String @map("pwa_app_id")
+  pwaApp   PwaApp @relation(fields: [pwaAppId], references: [id], onDelete: Cascade)
+
+  @@map("pwa_terms")
+}
+
+model PwaComment {
+  id       String @id @default(uuid())
+  author   String
+  text     String @db.Text
+  pwaAppId String @map("pwa_app_id")
+  pwaApp   PwaApp @relation(fields: [pwaAppId], references: [id], onDelete: Cascade)
+
+  @@map("pwa_comments")
+}
+
+model PwaEventsProfile {
+  id       String @id @default(uuid())
+  pwaAppId String @unique @map("pwa_app_id")
+
+  viewContent Boolean @default(false) @map("view_content")
+  firstOpen   Boolean @default(false) @map("first_open")
+  reg         Boolean @default(false) @map("reg")
+  sub         Boolean @default(false) @map("sub")
+  dep         Boolean @default(false) @map("dep")
+  redep       Boolean @default(false) @map("redep")
+
+  pwaApp PwaApp @relation(fields: [pwaAppId], references: [id], onDelete: Cascade)
+
+  @@map("pwa_events_profile")
 }
 
 model PwaEventsConfig {
@@ -730,8 +785,6 @@ model WorkingObjectTeam {
   @@map("working_object_team")
 }
 
-// Rename from WorkingObjectUser to WorkingObjectTeamUser
-// to explicitly show this links a TeamUser to a resource
 model WorkingObjectTeamUser {
   workingObjectId String                    @map("working_object_id")
   teamUserId      String                    @map("team_user_id") // FK to TeamUser

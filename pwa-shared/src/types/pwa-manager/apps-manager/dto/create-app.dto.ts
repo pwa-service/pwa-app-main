@@ -1,5 +1,44 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsUUID, MinLength } from 'class-validator';
+import {
+    IsNotEmpty,
+    IsString,
+    MinLength,
+    IsOptional,
+    IsArray,
+    ValidateNested,
+    IsEnum
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { PwaAppStatus } from "../enum/pwa-status.enum";
+
+
+import { IsDomainExists } from '../../../../common/validators/is-domain-exists.validator';
+
+export class TermDto {
+    @ApiProperty({ example: 'Умови використання...' })
+    @IsString()
+    @IsNotEmpty()
+    text!: string;
+}
+
+export class TagDto {
+    @ApiProperty({ example: 'finance' })
+    @IsString()
+    @IsNotEmpty()
+    text!: string;
+}
+
+export class CommentDto {
+    @ApiProperty({ example: 'Media Buyer 1', description: 'Автор коментаря' })
+    @IsString()
+    @IsNotEmpty()
+    author!: string;
+
+    @ApiProperty({ example: 'Потрібно змінити логотип', description: 'Текст коментаря' })
+    @IsString()
+    @IsNotEmpty()
+    text!: string;
+}
 
 export class CreateAppDto {
     @ApiProperty()
@@ -11,31 +50,67 @@ export class CreateAppDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    domain!: string;
+    domainId!: string;
 
-    @ApiProperty()
+    ownerId!: string;
+
+    @ApiProperty({
+        enum: PwaAppStatus,
+        description: 'Статус додатку',
+        example: PwaAppStatus.DRAFT
+    })
+    @IsEnum(PwaAppStatus, { message: 'status must be a valid enum value' })
     @IsNotEmpty()
-    @IsUUID('4')
-    ownerUserId!: string;
+    status!: PwaAppStatus;
 
-    @ApiProperty()
+    @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
     description?: string;
 
-    @ApiProperty()
-    @IsOptional()
-    @IsUUID()
-    appId?: string;
+    @ApiProperty({ type: [CommentDto], description: 'Масив коментарів (автор + текст)' })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => CommentDto)
+    comments!: CommentDto[];
 
-    @ApiProperty()
-    @IsNotEmpty()
+    @ApiProperty({ example: 'en' })
     @IsString()
-    status!: string;
-
-
-    @ApiProperty()
     @IsNotEmpty()
-    @IsUUID()
-    campaignId!: string;
+    lang!: string;
+
+    @ApiProperty({ type: [TermDto], description: 'Масив юридичних текстів' })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TermDto)
+    terms!: TermDto[];
+
+    @ApiProperty({ type: [TagDto], description: 'Масив тегів для пошуку та групування' })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TagDto)
+    tags!: TagDto[];
+
+    @ApiProperty({ example: ['page_view', 'registration', 'deposit'], description: 'Список подій для трекінгу', type: [String] })
+    @IsArray()
+    @IsString({ each: true })
+    events!: string[];
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    destinationUrl?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    productUrl?: string;
+}
+
+export class CreateAppWithValidationDto extends CreateAppDto {
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    @IsDomainExists()
+    declare domainId: string;
 }
