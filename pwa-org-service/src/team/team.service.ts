@@ -18,14 +18,13 @@ import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload
 
 @Injectable()
 export class TeamService {
-    constructor(private readonly repo: TeamRepository) {}
+    constructor(private readonly repo: TeamRepository) { }
 
     async create(dto: CreateTeamDto) {
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
                 campaignId: dto.campaignId,
-                teamLeadId: dto.leadId || undefined,
             },
             {
                 type: WorkingObjectType.TEAM,
