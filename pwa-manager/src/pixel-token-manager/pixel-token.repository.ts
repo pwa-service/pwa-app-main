@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import {Prisma, PrismaService} from "../../../pwa-prisma/src";
+import { Prisma, PrismaService } from "../../../pwa-prisma/src";
 import {
     CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
 } from "../../../pwa-shared/src";
 
 @Injectable()
 export class PixelTokenRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async create(data: CreatePixelTokenDto) {
         return this.prisma.pixelToken.create({ data });

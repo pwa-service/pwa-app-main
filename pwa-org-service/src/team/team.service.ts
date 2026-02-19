@@ -31,7 +31,8 @@ export class TeamService {
                 status: 'active',
             }
         );
-        return this.mapToResponse(team);
+        const full = await this.repo.findById(team.id);
+        return this.mapToResponse(full);
     }
 
     async findOne(id: string) {
@@ -149,8 +150,8 @@ export class TeamService {
                 email: m.profile.email,
                 role: m.role?.name,
                 scope: m.profile.scope,
-                team_id: m.teamId,
-                campaign_id: team.campaignId,
+                teamId: m.teamId,
+                campaignId: team.campaignId,
                 username: m.profile.username,
             })) : []
         };

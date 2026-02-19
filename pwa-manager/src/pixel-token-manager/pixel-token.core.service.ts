@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import {
     CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
 } from "../../../pwa-shared/src";
-import {PixelTokenRepository} from "./pixel-token.repository";
+import { PixelTokenRepository } from "./pixel-token.repository";
 
 
 @Injectable()
 export class PixelTokenService {
-    constructor(private readonly repository: PixelTokenRepository) {}
+    constructor(private readonly repository: PixelTokenRepository) { }
 
     async create(dto: CreatePixelTokenDto) {
         return this.repository.create(dto);
