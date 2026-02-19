@@ -79,19 +79,9 @@ message DeleteAppRequest {
 message PwaAppResponse {
     string id = 1;
     string name = 2;
-    string domain = 3;       // Hostname (витягнутий з релейшена)
-    string description = 4;
-    string status = 5;
-    string main_locale = 6;
-    string build_url = 7;
-    string campaign_id = 8;
-    string owner_id = 9;
-
-    // Повертаємо повну структуру
-    repeated PwaTag tags = 10;
-    repeated PwaTerm terms = 11;
-    repeated PwaComment comments = 12;
-    repeated string events = 13;
+    string domain = 3;
+    string status = 4;
+    string build_url = 5;
 }
 
 message ListAppsResponse {

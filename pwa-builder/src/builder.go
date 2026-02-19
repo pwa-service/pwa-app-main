@@ -41,6 +41,11 @@ type AppConfig struct {
 	Events         []string  `json:"events"`
 	DestinationUrl string    `json:"destinationUrl"`
 	ProductUrl     string    `json:"productUrl"`
+	Author         string    `json:"author,omitempty"`
+	Rating         string    `json:"rating,omitempty"`
+	InstallCount   string    `json:"installCount,omitempty"`
+	Reviews        string    `json:"reviews,omitempty"`
+	DownloadSize   string    `json:"downloadSize,omitempty"`
 }
 
 type copyJob struct {
@@ -163,7 +168,6 @@ func updatePWAData(filePath string, config *AppConfig) error {
 		return fmt.Errorf("failed to parse JSON (check syntax): %w", err)
 	}
 
-	// Add config fields if provided
 	if config != nil {
 		configData["destination_url"] = config.DestinationUrl
 		configData["product_url"] = config.ProductUrl
@@ -176,6 +180,21 @@ func updatePWAData(filePath string, config *AppConfig) error {
 		configData["tags"] = config.Tags
 		configData["comments"] = config.Comments
 		configData["events"] = config.Events
+		if config.Author != "" {
+			configData["author"] = config.Author
+		}
+		if config.Rating != "" {
+			configData["rating"] = config.Rating
+		}
+		if config.InstallCount != "" {
+			configData["install_count"] = config.InstallCount
+		}
+		if config.Reviews != "" {
+			configData["reviews"] = config.Reviews
+		}
+		if config.DownloadSize != "" {
+			configData["download_size"] = config.DownloadSize
+		}
 	}
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")
@@ -261,12 +280,17 @@ func runBuild(reactAppPath string, traeficConfSrc string, domain string, config 
 	traeficConfDest := path.Join(absLocalBuildDir, "dist/docker-compose.yaml")
 	log.Printf("Copying docker config to %s", absLocalBuildDir)
 
-	srcInfo, err := os.Stat(traeficConfSrc)
+	absTraeficConfSrc, err := filepath.Abs(traeficConfSrc)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stat traeficConfSrc for permissions")
+		return "", errors.Wrap(err, "failed to resolve absolute path for traeficConfSrc")
 	}
 
-	if err := copyFile(traeficConfSrc, traeficConfDest, srcInfo.Mode()); err != nil {
+	srcInfo, err := os.Stat(absTraeficConfSrc)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to stat traeficConfSrc at %s", absTraeficConfSrc)
+	}
+
+	if err := copyFile(absTraeficConfSrc, traeficConfDest, srcInfo.Mode()); err != nil {
 		return "", errors.Wrapf(err, "failed to copy docker-compose.yaml")
 	}
 

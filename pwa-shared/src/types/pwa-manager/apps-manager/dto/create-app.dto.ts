@@ -105,6 +105,31 @@ export class CreateAppDto {
     @IsOptional()
     @IsString()
     productUrl?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    author?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    rating?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    installCount?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    reviews?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    downloadSize?: string;
 }
 
 export class CreateAppWithValidationDto extends CreateAppDto {

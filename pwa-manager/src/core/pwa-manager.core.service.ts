@@ -34,7 +34,12 @@ export class PwaManagerCoreService {
                 comments: data.comments,
                 events: data.events,
                 destinationUrl: data.destinationUrl,
-                productUrl: data.productUrl
+                productUrl: data.productUrl,
+                author: data.author,
+                rating: data.rating,
+                installCount: data.installCount,
+                reviews: data.reviews,
+                downloadSize: data.downloadSize,
             }
         };
 
@@ -61,6 +66,35 @@ export class PwaManagerCoreService {
         if (!app) throw new NotFoundException('App not found');
 
         const updated = await this.repo.update(id, dto);
+
+        const hostname = updated.domains?.[0]?.hostname;
+        if (hostname) {
+            const content = updated.contents?.find((c: any) => c.locale === updated.mainLocale) || updated.contents?.[0];
+            const rebuildPayload = {
+                appId: updated.id,
+                domain: hostname,
+                config: {
+                    name: updated.name,
+                    description: content?.description || '',
+                    lang: updated.mainLocale || 'en',
+                    tags: updated.tags?.map((t: any) => ({ text: t.text })) || [],
+                    terms: updated.terms?.map((t: any) => ({ text: t.text })) || [],
+                    comments: updated.comments?.map((c: any) => ({ author: c.author, text: c.text })) || [],
+                    events: this.mapProfileToEvents(updated.eventsProfile),
+                    destinationUrl: updated.destinationUrl || '',
+                    productUrl: updated.productUrl || '',
+                    author: updated.author || '',
+                    rating: updated.rating || '',
+                    installCount: updated.installCount || '',
+                    reviews: updated.reviews || '',
+                    downloadSize: updated.downloadSize || '',
+                }
+            };
+
+            this.logger.log(`Triggering rebuild for app ${id} on domain ${hostname}`);
+            await this.builderPub.rebuildApp(rebuildPayload);
+        }
+
         return this.mapToResponse(updated);
     }
 
@@ -68,24 +102,46 @@ export class PwaManagerCoreService {
         const app = await this.repo.getAppById(id);
         if (!app) throw new NotFoundException('App not found');
 
+        const hostname = app.domains?.[0]?.hostname;
+        const domainId = app.domains?.[0]?.id;
+
         await this.repo.delete(id);
+
+        if (hostname) {
+            this.logger.log(`Publishing delete event for app ${id} on domain ${hostname}`);
+            await this.builderPub.deleteApp({
+                appId: id,
+                domain: hostname,
+                domainId: domainId,
+            });
+        }
+
         return { success: true, id };
+    }
+
+    private mapProfileToEvents(profile: any): string[] {
+        if (!profile) return [];
+        const map: Record<string, string> = {
+            viewContent: 'view-content',
+            firstOpen: 'first-open',
+            reg: 'reg',
+            sub: 'sub',
+            dep: 'dep',
+            redep: 'redep',
+        };
+        return Object.entries(map)
+            .filter(([key]) => profile[key] === true)
+            .map(([, value]) => value);
     }
 
     private mapToResponse(app: any) {
         const domain = app.domains?.[0]?.hostname || '';
-
-        const content = app.contents?.find((c: any) => c.locale === app.mainLocale) || app.contents?.[0];
-
         return {
             id: app.id,
             name: app.name,
             domain: domain,
-            description: content?.description || '',
             status: app.status,
-            main_locale: app.mainLocale,
-            campaign_id: app.campaignId,
-            build_url: domain ? `https://${domain}?app_id=${app.id}` : ''
+            buildUrl: domain ? `https://${domain}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : ''
         };
     }
 }

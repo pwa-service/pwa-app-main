@@ -372,6 +372,12 @@ model PwaApp {
   destinationUrl String? @map("destination_url")
   productUrl     String? @map("product_url")
 
+  author       String? @map("author")
+  rating       String? @map("rating")
+  installCount String? @map("install_count")
+  reviews      String? @map("reviews")
+  downloadSize String? @map("download_size")
+
   createdByCampaignUserId String? @map("created_by_campaign_user_id")
   createdByTeamUserId     String? @map("created_by_team_user_id")
 

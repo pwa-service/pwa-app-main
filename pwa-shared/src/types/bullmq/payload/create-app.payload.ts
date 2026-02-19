@@ -8,6 +8,11 @@ export interface AppConfig {
     events: string[];
     destinationUrl?: string;
     productUrl?: string;
+    author?: string;
+    rating?: string;
+    installCount?: string;
+    reviews?: string;
+    downloadSize?: string;
 }
 
 export class CreateAppPayload {
@@ -20,4 +25,10 @@ export interface BuildFinishedPayload {
     appId: string;
     status: string;
     error?: string;
+}
+
+export interface DeleteAppPayload {
+    appId: string;
+    domain: string;
+    domainId?: string;
 }

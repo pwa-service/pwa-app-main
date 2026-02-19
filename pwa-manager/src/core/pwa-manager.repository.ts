@@ -45,6 +45,11 @@ export class PwaManagerRepository {
                     domainId: data.domainId,
                     destinationUrl: data.destinationUrl,
                     productUrl: data.productUrl,
+                    author: data.author,
+                    rating: data.rating,
+                    installCount: data.installCount,
+                    reviews: data.reviews,
+                    downloadSize: data.downloadSize,
 
                     campaign: { connect: { id: campaignId } },
                     details: { create: { publicName: data.name } },
@@ -110,6 +115,11 @@ export class PwaManagerRepository {
                     mainLocale: data.lang,
                     destinationUrl: data.destinationUrl,
                     productUrl: data.productUrl,
+                    author: data.author,
+                    rating: data.rating,
+                    installCount: data.installCount,
+                    reviews: data.reviews,
+                    downloadSize: data.downloadSize,
                     details: { update: { publicName: data.name } }
                 }
             });
@@ -151,7 +161,45 @@ export class PwaManagerRepository {
     }
 
     async delete(id: string) {
-        return this.prisma.pwaApp.delete({ where: { id } });
+        return this.prisma.$transaction(async (tx) => {
+            await tx.pwaDetails.deleteMany({ where: { pwaAppId: id } });
+            await tx.pwaContent.deleteMany({ where: { pwaAppId: id } });
+            await tx.pwaEventsConfig.deleteMany({ where: { pwaAppId: id } });
+            await tx.pwaVersion.deleteMany({ where: { pwaAppId: id } });
+
+            await tx.domain.updateMany({
+                where: { pwaAppId: id },
+                data: { pwaAppId: null, ownerId: null }
+            });
+
+            await tx.pwaSession.updateMany({
+                where: { pwaAppId: id },
+                data: { pwaAppId: null }
+            });
+
+            await tx.eventLog.updateMany({
+                where: { pwaAppId: id },
+                data: { pwaAppId: null }
+            });
+
+            await tx.flow.updateMany({
+                where: { pwaAppId: id },
+                data: { pwaAppId: null }
+            });
+
+            return tx.pwaApp.delete({ where: { id } });
+        });
+    }
+
+    async setDomainActive(domainId: string) {
+        return this.prisma.domain.update({
+            where: { id: domainId },
+            data: {
+                status: 'active',
+                ownerId: null,
+                pwaAppId: null,
+            }
+        });
     }
 
     private mapEventsToProfile(events: string[] = []) {

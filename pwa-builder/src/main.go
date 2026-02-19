@@ -19,10 +19,12 @@ import (
 
 const BUILD_STATUS_NEW = "BUILD_PWA_CHANNEL:CREATE_APP_EVENT"
 const BUILD_STATUS_FINISHED = "BUILD_PWA_CHANNEL:BUILD_FINISHED_EVENT"
+const DELETE_STATUS_NEW = "BUILD_PWA_CHANNEL:DELETE_APP_EVENT"
+const DELETE_STATUS_FINISHED = "BUILD_PWA_CHANNEL:DELETE_FINISHED_EVENT"
 
 type Config struct {
 	ReactAppPath      string `env:"REACT_APP_PATH" envDefault:"../pwa_vite"`
-	TraeficConfPath   string `env:"TRAEFIC_CONF_PATH" envDefault:"../docker/docker-compose.yaml"`
+	TraeficConfPath   string `env:"TRAEFIC_CONF_PATH" envDefault:"docker/docker-compose.yaml"`
 	WorkerConcurrency int    `env:"WORKER_CONCURRENCY" envDefault:"10"`
 	RedisHost         string `env:"REDIS_HOST" envDefault:"localhost"`
 	RedisPort         string `env:"REDIS_PORT" envDefault:"6379"`
@@ -39,10 +41,24 @@ type CreateAppJob struct {
 	Config *AppConfig `json:"config,omitempty"`
 }
 
+type DeleteAppJob struct {
+	Domain   string `json:"domain"`
+	AppID    string `json:"appId"`
+	DomainID string `json:"domainId,omitempty"`
+}
+
 type BuildStatusUpdate struct {
 	AppID  string `json:"appId"`
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`
+}
+
+type DeleteStatusUpdate struct {
+	AppID    string `json:"appId"`
+	Domain   string `json:"domain"`
+	DomainID string `json:"domainId,omitempty"`
+	Status   string `json:"status"`
+	Error    string `json:"error,omitempty"`
 }
 
 func keepAlivePinger(ctx context.Context, rdb *redis.Client) {
@@ -97,16 +113,16 @@ func main() {
 	pingerCtx, cancelPinger := context.WithCancel(context.Background())
 	go keepAlivePinger(pingerCtx, rdbClient)
 
-	pubsub := rdbListener.Subscribe(ctx, BUILD_STATUS_NEW)
+	pubsub := rdbListener.Subscribe(ctx, BUILD_STATUS_NEW, DELETE_STATUS_NEW)
 	defer pubsub.Close()
 
 	_, err = pubsub.Receive(ctx)
 	if err != nil {
-		log.Fatalf("Failed to subscribe to channel '%s': %v", BUILD_STATUS_NEW, err)
+		log.Fatalf("Failed to subscribe to channels: %v", err)
 	}
 
 	ch := pubsub.Channel()
-	fmt.Printf("Starting Pub/Sub worker with concurrency limit %d... Waiting for jobs on channel '%s'\n", cfg.WorkerConcurrency, BUILD_STATUS_NEW)
+	fmt.Printf("Starting Pub/Sub worker with concurrency limit %d... Waiting for jobs on channels '%s', '%s'\n", cfg.WorkerConcurrency, BUILD_STATUS_NEW, DELETE_STATUS_NEW)
 
 	workerPool := make(chan struct{}, cfg.WorkerConcurrency)
 	var wg sync.WaitGroup
@@ -117,11 +133,16 @@ func main() {
 			workerPool <- struct{}{}
 			wg.Add(1)
 
-			go func(payload string) {
+			go func(channel string, payload string) {
 				defer wg.Done()
 				defer func() { <-workerPool }()
-				processMessage(workerCtx, rdbClient, cfg, payload)
-			}(msg.Payload)
+				switch channel {
+				case BUILD_STATUS_NEW:
+					processMessage(workerCtx, rdbClient, cfg, payload)
+				case DELETE_STATUS_NEW:
+					processDeleteMessage(workerCtx, rdbClient, cfg, payload)
+				}
+			}(msg.Channel, msg.Payload)
 		}
 	}()
 
@@ -221,6 +242,46 @@ func processMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON 
 	publishStatus(ctx, rdb, jobData.AppID, "SUCCESS", "")
 }
 
+func processDeleteMessage(ctx context.Context, rdb *redis.Client, cfg Config, jobJSON string) {
+	var jobData DeleteAppJob
+	if err := json.Unmarshal([]byte(jobJSON), &jobData); err != nil {
+		log.Printf("Go Worker: Failed to unmarshal delete job JSON: %v. Data: %s", err, jobJSON)
+		return
+	}
+
+	select {
+	case <-ctx.Done():
+		log.Printf("Delete job %s skipped due to worker shutdown.", jobData.AppID)
+		return
+	default:
+	}
+
+	fmt.Printf("Processing DELETE job for App ID: %s (Domain: %s)\n", jobData.AppID, jobData.Domain)
+
+	sftpCreds := SftpCredentials{
+		User:     cfg.SftpUser,
+		Password: cfg.SftpPassword,
+		Host:     cfg.SftpHost,
+	}
+
+	remoteDir := path.Join(cfg.RemoteBaseDir, jobData.Domain)
+	transporter, err := NewSftpUploader(sftpCreds, remoteDir)
+	if err != nil {
+		publishDeleteStatus(ctx, rdb, jobData, "ERROR", fmt.Sprintf("SFTP connection failed: %v", err))
+		return
+	}
+	defer transporter.Close()
+
+	if err := transporter.DestroyApp(remoteDir); err != nil {
+		log.Printf("Delete failed for %s: %v", jobData.AppID, err)
+		publishDeleteStatus(ctx, rdb, jobData, "ERROR", fmt.Sprintf("Destroy failed: %v", err))
+		return
+	}
+
+	log.Printf("Delete job %s for domain %s completed successfully.", jobData.AppID, jobData.Domain)
+	publishDeleteStatus(ctx, rdb, jobData, "SUCCESS", "")
+}
+
 func publishStatus(ctx context.Context, rdb *redis.Client, appId string, status string, errMsg string) {
 	payload := BuildStatusUpdate{
 		AppID:  appId,
@@ -235,5 +296,24 @@ func publishStatus(ctx context.Context, rdb *redis.Client, appId string, status 
 
 	if err := rdb.Publish(ctx, BUILD_STATUS_FINISHED, jsonPayload).Err(); err != nil {
 		log.Printf("Failed to publish status update to channel %s: %v", BUILD_STATUS_FINISHED, err)
+	}
+}
+
+func publishDeleteStatus(ctx context.Context, rdb *redis.Client, jobData DeleteAppJob, status string, errMsg string) {
+	payload := DeleteStatusUpdate{
+		AppID:    jobData.AppID,
+		Domain:   jobData.Domain,
+		DomainID: jobData.DomainID,
+		Status:   status,
+		Error:    errMsg,
+	}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Failed to marshal delete status payload: %v", err)
+		return
+	}
+
+	if err := rdb.Publish(ctx, DELETE_STATUS_FINISHED, jsonPayload).Err(); err != nil {
+		log.Printf("Failed to publish delete status to channel %s: %v", DELETE_STATUS_FINISHED, err)
 	}
 }

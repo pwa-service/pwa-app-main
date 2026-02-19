@@ -6,19 +6,20 @@ import {
 } from '@nestjs/common';
 import Redis from 'ioredis';
 import {
-    BUILD_FINISHED_EVENT, BUILD_PWA_CHANNEL // Припускаємо, що це "BUILD_PWA_CHANNEL:BUILD_FINISHED_EVENT"
+    BUILD_FINISHED_EVENT, BUILD_PWA_CHANNEL, DELETE_FINISHED_EVENT
 } from "../../../pwa-shared/src/types/bullmq/queues";
 import { PwaManagerRepository } from "../core/pwa-manager.repository";
 import {
     REDIS_SUBSCRIBER,
     REDIS_PUBLISHER
 } from "../../../pwa-shared/src/modules/redis/pub-sub.providers";
-import {CreateAppPayload, BuildFinishedPayload} from "../../../pwa-shared/src";
+import { CreateAppPayload, BuildFinishedPayload, DeleteAppPayload } from "../../../pwa-shared/src";
 
 @Injectable()
 export class GeneratorSubscriber implements OnModuleInit {
     private readonly logger = new Logger(GeneratorSubscriber.name);
-    private readonly channel = `${BUILD_PWA_CHANNEL}:${BUILD_FINISHED_EVENT}`;
+    private readonly buildChannel = `${BUILD_PWA_CHANNEL}:${BUILD_FINISHED_EVENT}`;
+    private readonly deleteChannel = `${BUILD_PWA_CHANNEL}:${DELETE_FINISHED_EVENT}`;
     private readonly PENDING_BUILDS_KEY = 'pending:builds';
     private readonly LOCK_KEY_PREFIX = 'lock:build:';
 
@@ -26,19 +27,21 @@ export class GeneratorSubscriber implements OnModuleInit {
         private readonly repo: PwaManagerRepository,
         @Inject(REDIS_SUBSCRIBER) private readonly subscriberClient: Redis,
         @Inject(REDIS_PUBLISHER) private readonly commandClient: Redis,
-    ) {}
+    ) { }
 
     async onModuleInit() {
-        await this.subscriberClient.subscribe(this.channel);
+        await this.subscriberClient.subscribe(this.buildChannel, this.deleteChannel);
         this.subscriberClient.on('message', (channel, message) => {
-            if (channel === this.channel) {
-                this.handleCleanup(message);
+            if (channel === this.buildChannel) {
+                this.handleBuildCleanup(message);
+            } else if (channel === this.deleteChannel) {
+                this.handleDeleteFinished(message);
             }
         });
-        this.logger.log(`Subscribed to FINISHED JOBS channel: ${this.channel}`);
+        this.logger.log(`Subscribed to channels: ${this.buildChannel}, ${this.deleteChannel}`);
     }
 
-    private async handleCleanup(message: string) {
+    private async handleBuildCleanup(message: string) {
         let statusPayload: BuildFinishedPayload;
         try {
             statusPayload = JSON.parse(message);
@@ -63,13 +66,40 @@ export class GeneratorSubscriber implements OnModuleInit {
             await this.commandClient.hdel(this.PENDING_BUILDS_KEY, appId);
             await this.commandClient.del(lockKey);
 
-            this.logger.log(`Cleanup complete for ${appId}. Status: ${error}`);
+            this.logger.log(`Cleanup complete for ${appId}. Status: ${status}`);
             if (status === 'ERROR') {
-                this.logger.error(`Build failed for ${appId}: ${Error}`);
+                this.logger.error(`Build failed for ${appId}: ${error}`);
             }
 
         } catch (error) {
             this.logger.error(`Failed to cleanup job ${appId}: ${error}`);
+        }
+    }
+
+    private async handleDeleteFinished(message: string) {
+        let payload: DeleteAppPayload & { status: string; error?: string };
+        try {
+            payload = JSON.parse(message);
+        } catch (error) {
+            this.logger.error(`Failed to parse DELETE_FINISHED message: ${message}`, error);
+            return;
+        }
+
+        const { appId, domainId, status, error } = payload;
+        this.logger.log(`Received delete status for ${appId}: ${status}`);
+
+        if (status === 'ERROR') {
+            this.logger.error(`Delete failed for ${appId}: ${error}`);
+            return;
+        }
+
+        try {
+            if (domainId) {
+                await this.repo.setDomainActive(domainId);
+                this.logger.log(`Domain ${domainId} set to active after app ${appId} deletion.`);
+            }
+        } catch (error) {
+            this.logger.error(`Failed to set domain active for ${appId}: ${error}`);
         }
     }
 }
