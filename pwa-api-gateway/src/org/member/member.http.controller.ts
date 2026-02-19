@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../../common/jwt-auth.guard";
 import { MemberGrpcClient } from './member.grpc.client';
@@ -15,7 +15,7 @@ import { buildGrpcMetadata } from "../../common/jwt-to-metadata";
 @UseGuards(JwtAuthGuard)
 @Controller('members')
 export class MemberHttpController {
-    constructor(private readonly client: MemberGrpcClient) {}
+    constructor(private readonly client: MemberGrpcClient) { }
 
     @Get('me')
     @ApiOperation({ summary: 'Get current user profile details' })
@@ -49,5 +49,11 @@ export class MemberHttpController {
     @ApiOperation({ summary: 'Create a standard Team Member' })
     async createTeamMember(@Body() dto: CreateTeamMemberDto, @Req() req: any) {
         return this.client.createTeamMember(dto, buildGrpcMetadata(req));
+    }
+
+    @Delete(':userId')
+    @ApiOperation({ summary: 'Delete a user and all related data' })
+    async deleteUser(@Param('userId') userId: string, @Req() req: any) {
+        return this.client.deleteUser(userId, buildGrpcMetadata(req));
     }
 }

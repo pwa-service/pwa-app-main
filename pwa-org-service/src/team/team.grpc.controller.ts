@@ -1,6 +1,6 @@
-import {Controller, UseInterceptors} from '@nestjs/common';
-import {GrpcMethod, Payload} from '@nestjs/microservices';
-import {TeamService} from './team.service';
+import { Controller, UseInterceptors } from '@nestjs/common';
+import { GrpcMethod, Payload } from '@nestjs/microservices';
+import { TeamService } from './team.service';
 import {
     AddMemberDto,
     AssignLeadDto,
@@ -11,23 +11,27 @@ import {
     UpdateTeamDto,
     ScopeType, GrpcAuthInterceptor
 } from '../../../pwa-shared/src';
-import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import {ScopeInterceptor} from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
-import {AllowedScopes} from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
-import {GrpcPagination} from "../../../pwa-shared/src/common/decorators/pagination.decorator";
-import {GrpcFilters} from "../../../pwa-shared/src/common/decorators/filters.decorator";
+import { GrpcUser } from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { ScopeInterceptor } from "../../../pwa-shared/src/common/interceptors/scope.interceptor";
+import { AllowedScopes } from "../../../pwa-shared/src/common/decorators/check-scope.decorator";
+import { GrpcPagination } from "../../../pwa-shared/src/common/decorators/pagination.decorator";
+import { GrpcFilters } from "../../../pwa-shared/src/common/decorators/filters.decorator";
+import { IsLeadBelongsToCampaignInterceptor } from '../common/interceptors/is-lead-belongs-to-campaign.interceptor';
+import { IsCampaignExists } from '../common/pipes/is-campaign-exists.pipe';
+import { IsTeamExists } from '../common/pipes/is-team-exists.pipe';
+import { IsUserProfileExists } from '../common/pipes/is-user-profile-exists.pipe';
 
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor)
 export class TeamGrpcController {
-    constructor(private readonly service: TeamService) {}
+    constructor(private readonly service: TeamService) { }
 
-    @UseInterceptors(ScopeInterceptor)
+    @UseInterceptors(ScopeInterceptor, IsLeadBelongsToCampaignInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'Create')
-    async create(@Payload() data: CreateTeamDto) {
+    async create(@Payload(IsCampaignExists, IsUserProfileExists) data: CreateTeamDto) {
         return this.service.create(data);
     }
 
@@ -58,19 +62,19 @@ export class TeamGrpcController {
     }
 
     @GrpcMethod('TeamService', 'AddMemberToTeam')
-    async addMember(@Payload() data: AddMemberDto) {
+    async addMember(@Payload(IsTeamExists, IsUserProfileExists) data: AddMemberDto) {
         return this.service.addMemberToTeam(data);
     }
 
     @GrpcMethod('TeamService', 'RemoveMember')
-    async removeMember(@Payload() data: RemoveMemberDto) {
+    async removeMember(@Payload(IsTeamExists, IsUserProfileExists) data: RemoveMemberDto) {
         return this.service.removeMember(data);
     }
 
     @UseInterceptors(ScopeInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'AssignTeamLead')
-    async assignTeamLead(data: AssignLeadDto) {
+    async assignTeamLead(@Payload(IsTeamExists, IsUserProfileExists) data: AssignLeadDto) {
         return this.service.assignTeamLead(data);
     }
 }

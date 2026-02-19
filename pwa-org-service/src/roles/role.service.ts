@@ -24,7 +24,7 @@ import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload
 export class RoleService implements OnModuleInit {
     private readonly logger = new Logger(RoleService.name);
 
-    constructor(private repo: RoleRepository) {}
+    constructor(private repo: RoleRepository) { }
 
     async onModuleInit() {
         const rootRole = await this.repo.findByNameAndContext(SystemRoleName.PRODUCT_OWNER, ScopeType.SYSTEM);
@@ -90,9 +90,7 @@ export class RoleService implements OnModuleInit {
     async update(dto: UpdateRoleDto, scope: ScopeType) {
         const roleId = parseInt(dto.id);
         const role = await this.repo.findById(roleId);
-
-        if (!role) throw new NotFoundException('Role not found');
-        if (role.scope !== scope) throw new ForbiddenException('Cannot edit role from different scope');
+        if (role!.scope !== scope) throw new ForbiddenException('Cannot edit role from different scope');
 
         if (role.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot edit Root System Role');
@@ -162,10 +160,8 @@ export class RoleService implements OnModuleInit {
         const roleId = dto.roleId;
         const targetRole = await this.repo.findById(roleId);
 
-        if (!targetRole) throw new NotFoundException('Role not found');
-
         const operatorLevel = SCOPE_PRIORITY[operatorScope] || 0;
-        const targetRoleLevel = SCOPE_PRIORITY[targetRole.scope] || 0;
+        const targetRoleLevel = SCOPE_PRIORITY[targetRole!.scope] || 0;
 
         if (targetRoleLevel > operatorLevel) {
             throw new ForbiddenException(
@@ -190,9 +186,7 @@ export class RoleService implements OnModuleInit {
     async delete(idStr: string, scope: ScopeType): Promise<void> {
         const id = parseInt(idStr);
         const role = await this.repo.findById(id);
-
-        if (!role) throw new NotFoundException('Role not found');
-        if (role.scope !== scope) throw new ForbiddenException('Access denied');
+        if (role!.scope !== scope) throw new ForbiddenException('Access denied');
 
         if (role.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot delete System Role');
@@ -207,7 +201,7 @@ export class RoleService implements OnModuleInit {
             finAccess: AccessLevel.None,
             logAccess: AccessLevel.None,
             usersAccess: AccessLevel.None,
-            sharingAccess:  AccessLevel.None
+            sharingAccess: AccessLevel.None
         };
 
         return {

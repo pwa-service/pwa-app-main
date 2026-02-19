@@ -1,11 +1,11 @@
-import {Injectable} from '@nestjs/common';
-import {Prisma, PrismaService} from '../../../pwa-prisma/src';
-import {MemberFilterQueryDto, PaginationQueryDto, ScopeType} from '../../../pwa-shared/src';
+import { Injectable } from '@nestjs/common';
+import { Prisma, PrismaService } from '../../../pwa-prisma/src';
+import { MemberFilterQueryDto, PaginationQueryDto, ScopeType } from '../../../pwa-shared/src';
 
 
 @Injectable()
 export class MemberRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { scope?: ScopeType, contextId?: string }) {
         const { take, skip } = this.getPaginationParams(pagination);
@@ -98,5 +98,22 @@ export class MemberRepository {
             model.count({ where })
         ]);
         return { items, total };
+    }
+
+    async deleteUser(userId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            // Delete shares created by this user (no cascade on creator relation)
+            await tx.shareUserProfile.deleteMany({
+                where: { createdBy: userId },
+            });
+
+            // Delete user profile — cascades to:
+            // system_users, campaign_users, team_users,
+            // shares_user_profile (received), global_access_user,
+            // working_object_team_user (via team_user cascade)
+            await tx.userProfile.delete({
+                where: { id: userId },
+            });
+        });
     }
 }

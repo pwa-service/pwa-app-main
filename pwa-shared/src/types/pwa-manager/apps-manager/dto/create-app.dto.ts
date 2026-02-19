@@ -12,8 +12,6 @@ import { Type } from 'class-transformer';
 import { PwaAppStatus } from "../enum/pwa-status.enum";
 
 
-import { IsDomainExists } from '../../../../common/validators/is-domain-exists.validator';
-
 export class TermDto {
     @ApiProperty({ example: 'Умови використання...' })
     @IsString()
@@ -91,7 +89,7 @@ export class CreateAppDto {
     @Type(() => TagDto)
     tags!: TagDto[];
 
-    @ApiProperty({ example: ['page_view', 'registration', 'deposit'], description: 'Список подій для трекінгу', type: [String] })
+    @ApiProperty({ example: ['reg', 'sub', 'dep', 'redep'], description: 'Список подій для трекінгу', type: [String] })
     @IsArray()
     @IsString({ each: true })
     events!: string[];
@@ -130,12 +128,4 @@ export class CreateAppDto {
     @IsOptional()
     @IsString()
     downloadSize?: string;
-}
-
-export class CreateAppWithValidationDto extends CreateAppDto {
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    @IsDomainExists()
-    declare domainId: string;
 }

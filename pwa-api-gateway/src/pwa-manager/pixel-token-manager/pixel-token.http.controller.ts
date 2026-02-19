@@ -5,8 +5,8 @@ import {
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PixelTokenGrpcClient } from './pixel-token.grpc.client';
-import {buildGrpcMetadata} from "../../common/jwt-to-metadata";
-import {JwtAuthGuard} from "../../common/jwt-auth.guard";
+import { buildGrpcMetadata } from "../../common/jwt-to-metadata";
+import { JwtAuthGuard } from "../../common/jwt-auth.guard";
 import {
     PixelTokenFiltersQueryDto,
     UpdatePixelTokenDto,
@@ -18,13 +18,13 @@ import {
 @UseGuards(JwtAuthGuard)
 @Controller('pixel-token')
 export class PixelTokenHttpController {
-    constructor(private readonly pixelTokenService: PixelTokenGrpcClient) {}
+    constructor(private readonly client: PixelTokenGrpcClient) { }
 
     @Post()
     @HttpCode(201)
     @ApiOperation({ summary: 'Create a new pixel token' })
     async create(@Body() dto: any, @Req() req: Request) {
-        return this.pixelTokenService.create(dto, buildGrpcMetadata(req));
+        return this.client.create(dto, buildGrpcMetadata(req));
     }
 
     @Get()
@@ -35,14 +35,14 @@ export class PixelTokenHttpController {
         @Query() filters: PixelTokenFiltersQueryDto,
         @Req() req: Request
     ) {
-        return this.pixelTokenService.findAll(pagination, filters, buildGrpcMetadata(req));
+        return this.client.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Get(':id')
     @HttpCode(200)
     @ApiOperation({ summary: 'Get a pixel token by ID' })
     async findOne(@Param('id') id: string, @Req() req: Request) {
-        return this.pixelTokenService.findOne(id, buildGrpcMetadata(req));
+        return this.client.findOne(id, buildGrpcMetadata(req));
     }
 
     @Patch(':id')
@@ -53,13 +53,13 @@ export class PixelTokenHttpController {
         @Body() dto: UpdatePixelTokenDto,
         @Req() req: Request
     ) {
-        return this.pixelTokenService.update(id, dto, buildGrpcMetadata(req));
+        return this.client.update(id, dto, buildGrpcMetadata(req));
     }
 
     @Delete(':id')
     @HttpCode(204)
     @ApiOperation({ summary: 'Delete a pixel token' })
     async remove(@Param('id') id: string, @Req() req: Request) {
-        return this.pixelTokenService.remove(id, buildGrpcMetadata(req));
+        return this.client.remove(id, buildGrpcMetadata(req));
     }
 }

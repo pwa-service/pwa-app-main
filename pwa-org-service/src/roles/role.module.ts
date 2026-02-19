@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { RoleRepository } from './role.repository';
-import {RoleGrpcController} from "./role.grpc.controller";
-import {PrismaModule} from "../../../pwa-prisma/src";
-import {ClientsModule, Transport} from "@nestjs/microservices";
-import {join} from "path";
+import { RoleGrpcController } from "./role.grpc.controller";
+import { PrismaModule } from "../../../pwa-prisma/src";
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { join } from "path";
+import { IsRoleExists } from '../common/pipes/is-role-exists.pipe';
+import { IsUserProfileExists } from '../common/pipes/is-user-profile-exists.pipe';
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
@@ -32,7 +34,7 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
         ]),
     ],
     controllers: [RoleGrpcController],
-    providers: [RoleService, RoleRepository],
+    providers: [RoleService, RoleRepository, IsRoleExists, IsUserProfileExists],
     exports: [RoleService],
 })
-export class RoleModule {}
+export class RoleModule { }

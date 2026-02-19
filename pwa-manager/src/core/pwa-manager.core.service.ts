@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PwaManagerRepository, PwaAppWithRelations } from './pwa-manager.repository';
+import { PwaManagerRepository } from './pwa-manager.repository';
 import { CreateAppDto, UpdateAppDto, PaginationQueryDto } from '../../../pwa-shared/src';
 import { GeneratorPublisher } from '../generator/generator.publisher';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";

@@ -280,6 +280,7 @@ model Campaign {
   roles   Role[]
 
   pwaApps     PwaApp[]
+  pixelTokens PixelToken[]
   flows       Flow[]
   pwaSessions PwaSession[]
   eventLogs   EventLog[]
@@ -307,6 +308,7 @@ model Team {
   roles   Role[]
 
   pwaApps     PwaApp[]
+  pixelTokens PixelToken[]
   flows       Flow[]
   pwaSessions PwaSession[]
   eventLogs   EventLog[]
@@ -342,11 +344,15 @@ model PixelToken {
   token       String    @unique
   description String?
   ownerId     String?   @map("owner_id")
+  campaignId  String?   @map("campaign_id")
+  teamId      String?   @map("team_id")
   status      Status    @default(active)
   createdAt   DateTime? @default(now()) @map("created_at")
   updatedAt   DateTime? @updatedAt @map("updated_at")
 
-  owner UserProfile? @relation(fields: [ownerId], references: [id])
+  owner    UserProfile? @relation(fields: [ownerId], references: [id])
+  campaign Campaign?    @relation(fields: [campaignId], references: [id])
+  team     Team?        @relation(fields: [teamId], references: [id])
 
   pwaApps   PwaApp[]
   sessions  PwaSession[]
@@ -359,7 +365,7 @@ model PixelToken {
 
 model PwaApp {
   id           String    @id @default(uuid())
-  name         String    @unique
+  name         String
   status       PwaStatus @default(draft)
   campaignId   String    @map("campaign_id")
   teamId       String?   @map("team_id")

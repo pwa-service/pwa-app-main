@@ -1,7 +1,7 @@
-import {BadRequestException, Inject, Injectable, OnModuleInit} from '@nestjs/common';
-import {ClientGrpc} from '@nestjs/microservices';
-import {SystemRoleName} from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
-import {firstValueFrom, Observable} from 'rxjs';
+import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import { firstValueFrom, Observable } from 'rxjs';
 import {
     CreateCampaignMemberDto,
     CreateTeamMemberDto,
@@ -9,12 +9,12 @@ import {
     PaginationQueryDto,
     ScopeType
 } from '../../../pwa-shared/src';
-import {RoleService} from '../roles/role.service';
-import {TeamService} from '../team/team.service';
-import {CampaignService} from '../campaign/campaign.service';
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import {MemberRepository} from "./member.repository";
-import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
+import { RoleService } from '../roles/role.service';
+import { TeamService } from '../team/team.service';
+import { CampaignService } from '../campaign/campaign.service';
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { MemberRepository } from "./member.repository";
+import { SignUpOrgDto } from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 interface AuthServiceGrpc {
     OrgSignUp(data: SignUpOrgDto): Observable<{ id: string, email: string, user: UserPayload }>;
@@ -30,7 +30,7 @@ export class MemberService implements OnModuleInit {
         private readonly teamService: TeamService,
         private readonly campaignService: CampaignService,
         @Inject('AUTH_PACKAGE') private authClient: ClientGrpc,
-    ) {}
+    ) { }
 
     onModuleInit() {
         this.authService = this.authClient.getService<AuthServiceGrpc>('AuthService');
@@ -112,23 +112,25 @@ export class MemberService implements OnModuleInit {
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
-        const role = await this.roleService.findOne(parseInt(dto.roleId!), user);
-        if (!role) throw new BadRequestException('Role not found');
-
         const { user: authUser } = await this.callAuthService({
             ...dto,
             scope: ScopeType.CAMPAIGN,
         });
-        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, parseInt(role.id));
+        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, parseInt(dto.roleId!));
 
         return this.formatResponse({
             ...member,
             user_id: user.id,
             scope: ScopeType.CAMPAIGN,
-            role: role.name,
+            role: dto.roleId,
             email: dto.email,
             username: user.username,
         });
+    }
+
+    async deleteUser(userId: string) {
+        await this.repo.deleteUser(userId);
+        return {};
     }
 
     private async callAuthService(dto: any) {

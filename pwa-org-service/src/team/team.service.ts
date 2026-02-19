@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
+import { RoleService } from '../roles/role.service';
 import { Prisma } from '../../../pwa-prisma/src';
 import {
     CreateTeamDto,
@@ -13,14 +14,19 @@ import {
     WorkingObjectType,
     ScopeType,
 } from '../../../pwa-shared/src';
+import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 
 @Injectable()
 export class TeamService {
-    constructor(private readonly repo: TeamRepository) { }
+    constructor(
+        private readonly repo: TeamRepository,
+        private readonly roleService: RoleService,
+    ) { }
 
     async create(dto: CreateTeamDto) {
+
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
@@ -31,6 +37,24 @@ export class TeamService {
                 status: 'active',
             }
         );
+
+        if (dto.leadId) {
+            const role = await this.roleService.findByNameAndContext(
+                SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, dto.campaignId
+            );
+            if (!role) throw new BadRequestException('Role Team Lead not found');
+
+            await this.addMemberToTeam({
+                teamId: team.id,
+                userId: dto.leadId,
+                roleId: role.id,
+            });
+            await this.assignTeamLead({
+                teamId: team.id,
+                userId: dto.leadId,
+            });
+        }
+
         const full = await this.repo.findById(team.id);
         return this.mapToResponse(full);
     }
@@ -57,7 +81,7 @@ export class TeamService {
         const team = await this.repo.findById(id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
-        await this.repo.delete(id);
+        await this.repo.deleteWithCascade(id, team.campaignId);
         return {};
     }
 

@@ -15,7 +15,7 @@ import { join } from "path";
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
-import { IsDomainExistsConstraint } from "../../../pwa-shared/src/common/validators/is-domain-exists.validator";
+import { IsDomainExists } from "../common/pipes/is-domain-exists.pipe";
 
 @Module({
     imports: [PrismaModule, GeneratorPubSubModule, GrpcAuthModule, PixelTokenModule, ClientsModule.register([
@@ -42,7 +42,7 @@ import { IsDomainExistsConstraint } from "../../../pwa-shared/src/common/validat
         { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
         PwaManagerCoreService,
         PwaManagerRepository,
-        IsDomainExistsConstraint
+        IsDomainExists,
     ],
 })
 export class PwaManagerModule { }

@@ -12,27 +12,27 @@ import {
 @Controller('pwa-apps-manager')
 @ApiTags('Apps Manager')
 export class PwaManagerHttpController {
-    constructor(private readonly generator: PwaManagerGrpcClient) {}
+    constructor(private readonly client: PwaManagerGrpcClient) { }
 
     @Post('app')
     @HttpCode(200)
     @ApiOperation({ summary: 'Creates a new PWA application record.' })
     async createApp(@Body() dto: CreateAppDto, @Req() req: Request) {
-        return this.generator.createApp(dto, buildGrpcMetadata(req));
+        return this.client.createApp(dto, buildGrpcMetadata(req));
     }
 
     @Get('app/:id')
     @HttpCode(200)
     @ApiOperation({ summary: 'Retrieves PWA application details by ID.' })
     async getAppById(@Param('id') id: string, @Req() req: Request) {
-        return this.generator.getAppById(id, buildGrpcMetadata(req));
+        return this.client.getAppById(id, buildGrpcMetadata(req));
     }
 
-    @Post('apps')
+    @Get('apps')
     @HttpCode(200)
     @ApiOperation({ summary: 'Retrieves a list of PWA applications with pagination.' })
     async findAll(@Body() pagination: PaginationQueryDto, @Req() req: Request) {
-        return this.generator.findAll(pagination, buildGrpcMetadata(req));
+        return this.client.findAll(pagination, buildGrpcMetadata(req));
     }
 
     @Put('app/:id')
@@ -43,13 +43,13 @@ export class PwaManagerHttpController {
         @Body() dto: UpdateAppDto,
         @Req() req: Request
     ) {
-        return this.generator.updateApp(id, dto, buildGrpcMetadata(req));
+        return this.client.updateApp(id, dto, buildGrpcMetadata(req));
     }
 
     @Delete('app/:id')
     @HttpCode(200)
     @ApiOperation({ summary: 'Deletes a PWA application.' })
     async deleteApp(@Param('id') id: string, @Req() req: Request) {
-        return this.generator.deleteApp(id, buildGrpcMetadata(req));
+        return this.client.deleteApp(id, buildGrpcMetadata(req));
     }
 }

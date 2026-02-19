@@ -2,7 +2,7 @@ import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
 import { PixelTokenService } from "./pixel-token.core.service";
 import {
-    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
+    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, ScopeType, UpdatePixelTokenDto
 } from "../../../pwa-shared/src";
 import { GrpcAuthInterceptor } from "../../../pwa-shared/src";
 import { GrpcUser } from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
@@ -19,8 +19,7 @@ export class PixelTokenController {
 
     @GrpcMethod('PixelTokenService', 'Create')
     async create(@Payload(IsPixelTokenUnique) dto: CreatePixelTokenDto, @GrpcUser() user: UserPayload) {
-        dto.ownerId = user.id;
-        return this.service.create(dto);
+        return this.service.create(dto, user);
     }
 
     @GrpcMethod('PixelTokenService', 'FindAll')
@@ -29,7 +28,7 @@ export class PixelTokenController {
         @GrpcFilters() filters: PixelTokenFiltersQueryDto,
         @GrpcUser() user: UserPayload
     ) {
-        return this.service.findAll(pagination, filters, user.id);
+        return this.service.findAll(pagination, filters, user);
     }
 
     @UseInterceptors(IsPixelTokenExistsInterceptor)

@@ -1,9 +1,10 @@
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
 import { PwaManagerCoreService } from './pwa-manager.core.service';
-import { CreateAppDto, CreateAppWithValidationDto, UpdateAppDto, GrpcAuthInterceptor, PaginationQueryDto } from "../../../pwa-shared/src";
+import { CreateAppDto, UpdateAppDto, GrpcAuthInterceptor, PaginationQueryDto } from "../../../pwa-shared/src";
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import { GrpcUser } from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import { IsDomainExists } from '../common/pipes/is-domain-exists.pipe';
 
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
@@ -11,7 +12,7 @@ export class PwaManagerController {
     constructor(private readonly coreService: PwaManagerCoreService) { }
 
     @GrpcMethod('PwaAppsManagerService', 'CreateApp')
-    async createApp(@Payload() data: CreateAppWithValidationDto, @GrpcUser() user: UserPayload) {
+    async createApp(@Payload(IsDomainExists) data: CreateAppDto, @GrpcUser() user: UserPayload) {
         return this.coreService.createApp(data, user);
     }
 
