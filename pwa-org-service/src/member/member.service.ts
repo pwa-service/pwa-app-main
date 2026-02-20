@@ -50,6 +50,7 @@ export class MemberService implements OnModuleInit {
             email: item.profile?.email,
             username: item.profile?.username,
             role: item.role?.name,
+            roleId: item.roleId,
             scope: item.profile.scope,
             teamId: item.teamId || null,
             campaignId: item.campaignId || (item.team ? item.team.campaignId : null)
@@ -81,6 +82,7 @@ export class MemberService implements OnModuleInit {
             scope: ScopeType.TEAM,
             team_id: dto.teamId,
             role: role.name,
+            roleId: role.id,
             email: dto.email,
             username: user.username,
         });
@@ -106,6 +108,7 @@ export class MemberService implements OnModuleInit {
             scope: ScopeType.TEAM,
             team_id: dto.teamId,
             role: role.name,
+            roleId: role.id,
             email: dto.email,
             username: user.username,
         });
@@ -123,6 +126,7 @@ export class MemberService implements OnModuleInit {
             user_id: user.id,
             scope: ScopeType.CAMPAIGN,
             role: dto.roleId,
+            roleId: dto.roleId,
             email: dto.email,
             username: user.username,
         });
@@ -146,6 +150,7 @@ export class MemberService implements OnModuleInit {
             id: member.user_id,
             teamId: member.team_id,
             role: member.role,
+            roleId: member.roleId,
             email: member.email,
             scope: member.scope!,
             username: member.username!,
