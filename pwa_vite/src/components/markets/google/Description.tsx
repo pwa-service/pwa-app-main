@@ -1,40 +1,23 @@
+import { type ReactNode } from "react";
+
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
-import { useIsWebView } from "../../../hooks/useIsWebView";
 
 import { classNames } from "../../../utils/classNames";
-import { getQueryTail } from "../../../helpers/getQueryTail";
-import { redirectFromWebView } from "../../../helpers/redirectFromWebView";
-
-import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
-import { FiDownload } from "react-icons/fi";
-import { TbRating21Plus } from "react-icons/tb";
-import CircularProgress from "../CircularProgress";
-import InstallButton from "../InstallButton";
 import { getPWAData } from "../../../helpers/getPWAData";
+
+import { FaFileDownload } from "react-icons/fa";
+import { TbRating21Plus } from "react-icons/tb";
+import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
+
+import CircularProgress from "../CircularProgress";
+import PWAInstallContainer from "../../PWAInstallContainer";
 
 interface DescriptionProps {
   imageSRC: string;
 }
 
 const Description = ({ imageSRC }: DescriptionProps) => {
-  const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
-  const { isWebView } = useIsWebView();
-
-  const handleInstall = () => {
-    if (isWebView) {
-      redirectFromWebView();
-      return;
-    }
-
-    promptInstall();
-  };
-
-  const handleOpenPWA = async () => {
-    const queryTail = await getQueryTail();
-    const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-
-    window.open(url, "_blank", "noopener");
-  };
+  const { isInstalling, progress } = usePWAInstall();
 
   const scale = isInstalling ? 0.5 : 1;
 
@@ -55,17 +38,16 @@ const Description = ({ imageSRC }: DescriptionProps) => {
 
               <img
                 src={imageSRC}
-                alt="product image"
+                alt="product"
                 width={240}
                 height={240}
                 loading="eager"
                 fetchPriority="high"
-                sizes="(max-width: 768px) 141px, (max-width: 1280px) 180px, 240px"
                 style={{ transform: `scale(${scale})` }}
                 className={classNames(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
                   "rounded-2xl md:rounded-4xl shadow-2xl z-[30]",
-                  "transition-transform duration-200 "
+                  "transition-transform duration-200"
                 )}
               />
             </div>
@@ -83,47 +65,52 @@ const Description = ({ imageSRC }: DescriptionProps) => {
           </div>
         </div>
 
-        <div className={classNames("flex items-center mt-6 md:mt-10 overflow-x-auto")}>
-          <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
-            <div className="flex items-center gap-1">
-              <span className="font-medium">{getPWAData("rating")}</span>
-              <MdStar className="w-4 h-4" />
-            </div>
+        <div className="flex items-center mt-6 md:mt-10 overflow-x-auto">
+          <StatItem
+            value={getPWAData("rating")}
+            label={`${getPWAData("reviewsCount")} ${getPWAData("reviewsCountLabel")}`}
+            icon={<MdStar className="w-4 h-4" />}
+          />
 
-            <span className="text-sm text-zinc-500">
-              {getPWAData("reviewsCount")} {getPWAData("reviewsCountLabel")}
-            </span>
-          </div>
+          <Divider />
 
-          <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />
+          <StatItem label="Editors Choice" icon={<MdOutlineVerifiedUser className="w-5 h-5" />} />
+          <Divider />
 
-          <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
-            <MdOutlineVerifiedUser className="w-5 h-5" />
-            <span className="text-sm text-zinc-600">Editors Choise</span>
-          </div>
+          <StatItem
+            value={`${getPWAData("appSize")} ${getPWAData("appSizeLabel")}`}
+            label="App size"
+            icon={<FaFileDownload className="w-5 h-5" />}
+          />
+          <Divider />
 
-          <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />
-
-          <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
-            <FiDownload className="w-5 h-5" />
-            <span className="text-sm text-zinc-600">
-              {getPWAData("appSize")} {getPWAData("appSizeLabel")}
-            </span>
-          </div>
-
-          <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />
-
-          <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
-            <TbRating21Plus className="w-5 h-5" />
-            <span className="text-sm text-zinc-600">Rated for 21+</span>
-          </div>
+          <StatItem label="Rated for 21+" icon={<TbRating21Plus className="w-5 h-5" />} />
         </div>
       </div>
 
-      {isInstalled && !isInstalling && <InstallButton label="Open" onClick={handleOpenPWA} />}
-      {!isInstalling && !isInstalled && <InstallButton label="Install" onClick={handleInstall} />}
+      <PWAInstallContainer />
     </div>
   );
 };
+
+const Divider = () => <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />;
+
+interface StatItemProps {
+  value?: string;
+  label: string;
+  icon: ReactNode;
+}
+
+const StatItem = ({ value, label, icon }: StatItemProps) => (
+  <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
+    <div className="flex items-center gap-1">
+      {value && <span className="font-medium">{value}</span>}
+
+      {icon}
+    </div>
+
+    <span className="text-sm text-zinc-500 whitespace-nowrap">{label}</span>
+  </div>
+);
 
 export default Description;

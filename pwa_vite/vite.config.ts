@@ -22,8 +22,9 @@ export default defineConfig(async () => {
     themeColor: "#1a1a1a",
     backgroundColor: "#000000",
 
-    icon: "./app_icon.webp",
-    screenshot: "./screenshot.webp",
+    icon: "/app_icon.webp",
+    screenshot: "/screenshot.webp",
+    screenshotMobile: "/screenshot-mobile.webp",
   };
 
   return {
@@ -143,22 +144,36 @@ export default defineConfig(async () => {
           theme_color: settings.themeColor,
           background_color: settings.backgroundColor,
 
-          screenshots: [
-            {
-              src: settings.screenshot,
-              sizes: "1280x720",
-              type: "image/webp",
-              form_factor: "wide",
-              label: settings.title,
-            },
-          ],
+          // screenshots: [
+          //   {
+          //     src: settings.screenshot,
+          //     sizes: "1280x720",
+          //     type: "image/webp",
+          //     form_factor: "wide",
+          //     label: "Desktop version",
+          //   },
+
+          //   {
+          //     src: settings.screenshotMobile,
+          //     sizes: "720x1280",
+          //     type: "image/webp",
+          //     label: "Mobile version",
+          //   },
+          // ],
 
           icons: [
             {
               src: settings.icon,
               type: "image/webp",
               sizes: "512x512",
-              purpose: "any maskable",
+              purpose: "any",
+            },
+
+            {
+              src: settings.icon,
+              type: "image/webp",
+              sizes: "512x512",
+              purpose: "maskable",
             },
           ],
 
