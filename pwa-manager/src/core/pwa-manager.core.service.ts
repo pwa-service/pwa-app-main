@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PwaManagerRepository } from './pwa-manager.repository';
-import { CreateAppDto, UpdateAppDto, PaginationQueryDto } from '../../../pwa-shared/src';
+import { CreateAppDto, UpdateAppDto, PaginationQueryDto, PwaAppFiltersQueryDto } from '../../../pwa-shared/src';
 import { GeneratorPublisher } from '../generator/generator.publisher';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
@@ -37,9 +37,20 @@ export class PwaManagerCoreService {
                 productUrl: data.productUrl,
                 author: data.author,
                 rating: data.rating,
+
+                adsText: data.adsText,
+                category: data.category,
+                categorySubtitle: data.categorySubtitle,
+                reviewsCount: data.reviewsCount,
+                reviewsCountLabel: data.reviewsCountLabel,
+                appSize: data.appSize,
+                appSizeLabel: data.appSizeLabel,
                 installCount: data.installCount,
-                reviews: data.reviews,
-                downloadSize: data.downloadSize,
+                installCountLabel: data.installCountLabel,
+                ageLimit: data.ageLimit,
+                ageLimitLabel: data.ageLimitLabel,
+                iconUrl: (pwaApp as any).iconUrl || '',
+                galleryUrls: (pwaApp as any).galleryUrls || [],
             }
         };
 
@@ -53,8 +64,8 @@ export class PwaManagerCoreService {
         return this.mapToResponse(app);
     }
 
-    async getAllApps(pagination: PaginationQueryDto) {
-        const { items, total } = await this.repo.findAll(pagination);
+    async getAllApps(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto | undefined) {
+        const { items, total } = await this.repo.findAll(pagination, filters);
         return {
             items: items.map(item => this.mapToResponse(item)),
             total
@@ -70,7 +81,7 @@ export class PwaManagerCoreService {
         const hostname = updated.domains?.[0]?.hostname;
         if (hostname) {
             const content = updated.contents?.find((c: any) => c.locale === updated.mainLocale) || updated.contents?.[0];
-            const rebuildPayload = {
+            const rebuildPayload: any = {
                 appId: updated.id,
                 domain: hostname,
                 config: {
@@ -85,9 +96,20 @@ export class PwaManagerCoreService {
                     productUrl: updated.productUrl || '',
                     author: updated.author || '',
                     rating: updated.rating || '',
-                    installCount: updated.installCount || '',
-                    reviews: updated.reviews || '',
-                    downloadSize: updated.downloadSize || '',
+
+                    adsText: (updated as any).adsText || '',
+                    category: (updated as any).category || '',
+                    categorySubtitle: (updated as any).categorySubtitle || '',
+                    reviewsCount: Number((updated as any).reviewsCount) || 0,
+                    reviewsCountLabel: (updated as any).reviewsCountLabel || '',
+                    appSize: Number((updated as any).appSize) || 0,
+                    appSizeLabel: (updated as any).appSizeLabel || '',
+                    installCount: Number((updated as any).installCount) || 0,
+                    installCountLabel: (updated as any).installCountLabel || '',
+                    ageLimit: Number((updated as any).ageLimit) || 0,
+                    ageLimitLabel: (updated as any).ageLimitLabel || '',
+                    iconUrl: (updated as any).iconUrl || '',
+                    galleryUrls: (updated as any).galleryUrls || [],
                 }
             };
 

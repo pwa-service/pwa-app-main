@@ -10,9 +10,19 @@ export interface AppConfig {
     productUrl?: string;
     author?: string;
     rating?: string;
-    installCount?: string;
-    reviews?: string;
-    downloadSize?: string;
+    adsText?: string;
+    category?: string;
+    categorySubtitle?: string;
+    reviewsCount?: number;
+    reviewsCountLabel?: string;
+    appSize?: number;
+    appSizeLabel?: string;
+    installCount?: number;
+    installCountLabel?: string;
+    ageLimit?: number;
+    ageLimitLabel?: string;
+    iconUrl?: string;
+    galleryUrls?: string[];
 }
 
 export class CreateAppPayload {

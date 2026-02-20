@@ -1,7 +1,7 @@
 import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod, Payload } from '@nestjs/microservices';
 import { PwaManagerCoreService } from './pwa-manager.core.service';
-import { CreateAppDto, UpdateAppDto, GrpcAuthInterceptor, PaginationQueryDto } from "../../../pwa-shared/src";
+import { CreateAppDto, UpdateAppDto, GrpcAuthInterceptor, PaginationQueryDto, PwaAppFiltersQueryDto } from "../../../pwa-shared/src";
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 import { GrpcUser } from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
 import { IsDomainExists } from '../common/pipes/is-domain-exists.pipe';
@@ -22,8 +22,8 @@ export class PwaManagerController {
     }
 
     @GrpcMethod('PwaAppsManagerService', 'FindAll')
-    async findAll(@Payload() data: { pagination: PaginationQueryDto }) {
-        return this.coreService.getAllApps(data.pagination);
+    async findAll(@Payload() data: { pagination: PaginationQueryDto; filters?: PwaAppFiltersQueryDto }) {
+        return this.coreService.getAllApps(data.pagination, data.filters);
     }
 
     @GrpcMethod('PwaAppsManagerService', 'UpdateApp')

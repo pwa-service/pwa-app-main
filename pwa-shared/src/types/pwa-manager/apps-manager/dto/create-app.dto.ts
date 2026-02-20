@@ -6,11 +6,13 @@ import {
     IsOptional,
     IsArray,
     ValidateNested,
-    IsEnum
+    IsEnum,
+    IsNumber
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { PwaAppStatus } from "../enum/pwa-status.enum";
+import { Type } from 'class-transformer';
 
+export type EventType = "page_view" | "registration" | "deposit";
 
 export class TermDto {
     @ApiProperty({ example: 'Умови використання...' })
@@ -57,7 +59,6 @@ export class CreateAppDto {
         description: 'Статус додатку',
         example: PwaAppStatus.DRAFT
     })
-    @IsEnum(PwaAppStatus, { message: 'status must be a valid enum value' })
     @IsNotEmpty()
     status!: PwaAppStatus;
 
@@ -89,10 +90,10 @@ export class CreateAppDto {
     @Type(() => TagDto)
     tags!: TagDto[];
 
-    @ApiProperty({ example: ['reg', 'sub', 'dep', 'redep'], description: 'Список подій для трекінгу', type: [String] })
+    @ApiProperty({ example: ['page_view', 'registration', 'deposit'], description: 'Список подій для трекінгу', type: [String] })
     @IsArray()
     @IsString({ each: true })
-    events!: string[];
+    events!: EventType[];
 
     @ApiProperty({ required: false })
     @IsOptional()
@@ -117,15 +118,65 @@ export class CreateAppDto {
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    installCount?: string;
+    adsText?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    reviews?: string;
+    category?: string;
 
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    downloadSize?: string;
+    categorySubtitle?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsNumber()
+    reviewsCount?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    reviewsCountLabel?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsNumber()
+    appSize?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    appSizeLabel?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsNumber()
+    installCount?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    installCountLabel?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsNumber()
+    ageLimit?: number;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    ageLimitLabel?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    iconUrl?: string;
+
+    @ApiProperty({ required: false, type: [String] })
+    @IsOptional()
+    @IsString({ each: true })
+    galleryUrls?: string[];
 }

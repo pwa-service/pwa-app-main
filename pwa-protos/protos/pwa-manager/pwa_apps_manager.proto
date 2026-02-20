@@ -30,17 +30,33 @@ message PwaComment {
 
 message CreateAppRequest {
     string name = 1;
-    string domain_id = 2;    // ID домену
+    string domain_id = 2;
     string campaign_id = 3;
-    string owner_id = 4;     // ID власника
-    string status = 5;       // Enum як string
+    string owner_id = 4;
+    string status = 5;
     string lang = 6;
     string description = 7;
 
     repeated PwaTag tags = 8;
     repeated PwaTerm terms = 9;
     repeated PwaComment comments = 10;
-    repeated string events = 11; // Масив рядків (reg, dep...)
+    repeated string events = 11;
+
+    string ads_text = 12;
+    string category = 13;
+    string category_subtitle = 14;
+    int32 reviews_count = 15;
+    string reviews_count_label = 16;
+    int32 app_size = 17;
+    string app_size_label = 18;
+    int32 install_count = 19;
+    string install_count_label = 20;
+    int32 age_limit = 21;
+    string age_limit_label = 22;
+    string author = 23;
+    string rating = 24;
+    string icon_url = 25;
+    repeated string gallery_urls = 26;
 }
 
 message GetAppByIdRequest {
@@ -72,6 +88,22 @@ message UpdateAppRequest {
     repeated PwaTerm terms = 8;
     repeated PwaComment comments = 9;
     repeated string events = 10;
+
+    string ads_text = 11;
+    string category = 12;
+    string category_subtitle = 13;
+    int32 reviews_count = 14;
+    string reviews_count_label = 15;
+    int32 app_size = 16;
+    string app_size_label = 17;
+    int32 install_count = 18;
+    string install_count_label = 19;
+    int32 age_limit = 20;
+    string age_limit_label = 21;
+    string author = 22;
+    string rating = 23;
+    string icon_url = 24;
+    repeated string gallery_urls = 25;
 }
 
 message DeleteAppRequest {

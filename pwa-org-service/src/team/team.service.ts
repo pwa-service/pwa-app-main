@@ -165,24 +165,18 @@ export class TeamService {
         );
         if (!mediaBuyerRole) throw new BadRequestException('Role Media Buyer not found');
 
-        // If there's an existing lead, demote them to MEDIA_BUYER
+
         if (team.teamLeadId && team.teamLeadId !== newLead.id) {
             const oldLead = team.teamLead;
             if (oldLead) {
                 await this.roleService.updateMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
-                try {
-                    await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
-                } catch { /* ignore if not a campaign member */ }
+                await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
             }
         }
 
-        // Promote new lead to TEAM_LEAD role
         await this.roleService.updateMemberRole(dto.userId, teamLeadRole.id);
-        try {
-            await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
-        } catch { /* ignore if not a campaign member */ }
+        await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
 
-        // Update team's teamLeadId
         const updated = await this.repo.update(dto.teamId, {
             teamLeadId: newLead.id
         });

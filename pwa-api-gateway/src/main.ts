@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {GrpcErrorInterceptor} from "./common/interceptors/grpc-error.interceptor";
+import multipart from '@fastify/multipart';
+import { GrpcErrorInterceptor } from "./common/interceptors/grpc-error.interceptor";
 
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(
@@ -14,6 +15,7 @@ async function bootstrap() {
         { cors: false }
     );
 
+    await app.register(multipart);
     app.setGlobalPrefix('api');
     const config = new DocumentBuilder()
         .setTitle('PWA Gateway API')

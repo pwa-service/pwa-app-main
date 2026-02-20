@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../pwa-prisma/src';
-import { CreateAppDto, UpdateAppDto, PaginationQueryDto, PwaAppStatus } from '../../../pwa-shared/src';
-import { Prisma, PwaStatus } from '@prisma/client';
+import { PrismaService, Prisma } from '../../../pwa-prisma/src';
+import { CreateAppDto, UpdateAppDto, PaginationQueryDto, PwaAppStatus, PwaAppFiltersQueryDto } from '../../../pwa-shared/src';
 
 
 const appInclude = {
@@ -40,16 +39,32 @@ export class PwaManagerRepository {
             const pwaApp = await tx.pwaApp.create({
                 data: {
                     name: data.name,
-                    status: (data.status as unknown as PwaStatus) || PwaStatus.draft,
+                    status: (data.status as PwaAppStatus) || PwaAppStatus.PUBLISHED,
                     mainLocale: data.lang,
                     domainId: data.domainId,
                     destinationUrl: data.destinationUrl,
                     productUrl: data.productUrl,
                     author: data.author,
                     rating: data.rating,
+
+                    adsText: data.adsText,
+                    category: data.category,
+                    categorySubtitle: data.categorySubtitle,
+
                     installCount: data.installCount,
-                    reviews: data.reviews,
-                    downloadSize: data.downloadSize,
+                    installCountLabel: data.installCountLabel,
+
+                    reviewsCount: data.reviewsCount,
+                    reviewsCountLabel: data.reviewsCountLabel,
+
+                    appSize: data.appSize,
+                    appSizeLabel: data.appSizeLabel,
+
+                    ageLimit: data.ageLimit,
+                    ageLimitLabel: data.ageLimitLabel,
+
+                    iconUrl: data.iconUrl,
+                    galleryUrls: data.galleryUrls || [],
 
                     campaign: { connect: { id: campaignId } },
                     details: { create: { publicName: data.name } },
@@ -91,16 +106,45 @@ export class PwaManagerRepository {
         });
     }
 
-    async findAll(pagination: PaginationQueryDto) {
+    async findAll(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto) {
         const { limit = 10, offset = 0 } = pagination;
+
+        const where: Prisma.PwaAppWhereInput = {
+            isDeleted: false,
+        };
+
+        if (filters?.search) {
+            where.OR = [
+                { name: { contains: filters.search, mode: 'insensitive' } },
+                { contents: { some: { description: { contains: filters.search, mode: 'insensitive' } } } }
+            ];
+        }
+
+        if (filters?.status) {
+            where.status = filters.status as PwaAppStatus.PUBLISHED;
+        }
+
+        if (filters?.campaignId) {
+            where.campaignId = filters.campaignId;
+        }
+
+        if (filters?.ownerName) {
+            where.OR = [
+                ...(where.OR || []),
+                { creatorCampaign: { profile: { username: { contains: filters.ownerName, mode: 'insensitive' } } } },
+                { creatorTeam: { profile: { username: { contains: filters.ownerName, mode: 'insensitive' } } } }
+            ];
+        }
+
         const [items, total] = await this.prisma.$transaction([
             this.prisma.pwaApp.findMany({
+                where,
                 take: Number(limit),
                 skip: Number(offset),
                 orderBy: { createdAt: 'desc' },
                 include: appInclude
             }),
-            this.prisma.pwaApp.count()
+            this.prisma.pwaApp.count({ where })
         ]);
         return { items, total };
     }
@@ -111,15 +155,32 @@ export class PwaManagerRepository {
                 where: { id },
                 data: {
                     name: data.name,
-                    status: data.status ? (data.status as unknown as PwaStatus) : undefined,
+                    status: data.status ? (data.status as unknown as PwaAppStatus) : PwaAppStatus.PUBLISHED,
                     mainLocale: data.lang,
                     destinationUrl: data.destinationUrl,
                     productUrl: data.productUrl,
                     author: data.author,
                     rating: data.rating,
+
+                    adsText: data.adsText,
+                    category: data.category,
+                    categorySubtitle: data.categorySubtitle,
+
                     installCount: data.installCount,
-                    reviews: data.reviews,
-                    downloadSize: data.downloadSize,
+                    installCountLabel: data.installCountLabel,
+
+                    reviewsCount: data.reviewsCount,
+                    reviewsCountLabel: data.reviewsCountLabel,
+
+                    appSize: data.appSize,
+                    appSizeLabel: data.appSizeLabel,
+
+                    ageLimit: data.ageLimit,
+                    ageLimitLabel: data.ageLimitLabel,
+
+                    iconUrl: data.iconUrl,
+                    galleryUrls: data.galleryUrls,
+
                     details: { update: { publicName: data.name } }
                 }
             });

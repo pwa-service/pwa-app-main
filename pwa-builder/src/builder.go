@@ -43,9 +43,20 @@ type AppConfig struct {
 	ProductUrl     string    `json:"productUrl"`
 	Author         string    `json:"author,omitempty"`
 	Rating         string    `json:"rating,omitempty"`
-	InstallCount   string    `json:"installCount,omitempty"`
-	Reviews        string    `json:"reviews,omitempty"`
-	DownloadSize   string    `json:"downloadSize,omitempty"`
+
+	AdsText           string   `json:"adsText,omitempty"`
+	Category          string   `json:"category,omitempty"`
+	CategorySubtitle  string   `json:"categorySubtitle,omitempty"`
+	ReviewsCount      int      `json:"reviewsCount,omitempty"`
+	ReviewsCountLabel string   `json:"reviewsCountLabel,omitempty"`
+	AppSize           float64  `json:"appSize,omitempty"`
+	AppSizeLabel      string   `json:"appSizeLabel,omitempty"`
+	InstallCount      int      `json:"installCount,omitempty"`
+	InstallCountLabel string   `json:"installCountLabel,omitempty"`
+	AgeLimit          int      `json:"ageLimit,omitempty"`
+	AgeLimitLabel     string   `json:"ageLimitLabel,omitempty"`
+	IconUrl           string   `json:"iconUrl,omitempty"`
+	GalleryUrls       []string `json:"galleryUrls,omitempty"`
 }
 
 type copyJob struct {
@@ -186,15 +197,19 @@ func updatePWAData(filePath string, config *AppConfig) error {
 		if config.Rating != "" {
 			configData["rating"] = config.Rating
 		}
-		if config.InstallCount != "" {
-			configData["install_count"] = config.InstallCount
-		}
-		if config.Reviews != "" {
-			configData["reviews"] = config.Reviews
-		}
-		if config.DownloadSize != "" {
-			configData["download_size"] = config.DownloadSize
-		}
+		configData["ads_text"] = config.AdsText
+		configData["category"] = config.Category
+		configData["category_subtitle"] = config.CategorySubtitle
+		configData["reviews_count"] = config.ReviewsCount
+		configData["reviews_count_label"] = config.ReviewsCountLabel
+		configData["app_size"] = config.AppSize
+		configData["app_size_label"] = config.AppSizeLabel
+		configData["install_count"] = config.InstallCount
+		configData["install_count_label"] = config.InstallCountLabel
+		configData["age_limit"] = config.AgeLimit
+		configData["age_limit_label"] = config.AgeLimitLabel
+		configData["icon_url"] = config.IconUrl
+		configData["gallery_urls"] = config.GalleryUrls
 	}
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")

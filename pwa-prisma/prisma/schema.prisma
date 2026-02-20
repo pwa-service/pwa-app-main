@@ -378,11 +378,26 @@ model PwaApp {
   destinationUrl String? @map("destination_url")
   productUrl     String? @map("product_url")
 
-  author       String? @map("author")
-  rating       String? @map("rating")
-  installCount String? @map("install_count")
-  reviews      String? @map("reviews")
-  downloadSize String? @map("download_size")
+  author           String? @map("author")
+  rating           String? @map("rating")
+  adsText          String? @map("ads_text")
+  category         String? @map("category")
+  categorySubtitle String? @map("category_subtitle")
+
+  installCount      Int?    @map("install_count")
+  installCountLabel String? @map("install_count_label")
+
+  reviewsCount      Int?    @map("reviews_count")
+  reviewsCountLabel String? @map("reviews_count_label")
+
+  appSize      Float?  @map("app_size")
+  appSizeLabel String? @map("app_size_label")
+
+  ageLimit      Int?    @map("age_limit")
+  ageLimitLabel String? @map("age_limit_label")
+
+  iconUrl     String?  @map("icon_url")
+  galleryUrls String[] @map("gallery_urls")
 
   createdByCampaignUserId String? @map("created_by_campaign_user_id")
   createdByTeamUserId     String? @map("created_by_team_user_id")
