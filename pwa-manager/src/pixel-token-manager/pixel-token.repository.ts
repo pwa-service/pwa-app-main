@@ -32,6 +32,18 @@ export class PixelTokenRepository {
             };
         }
 
+        if (filters.campaignName) {
+            where.campaign = {
+                name: { contains: filters.campaignName, mode: 'insensitive' }
+            };
+        }
+
+        if (filters.teamName) {
+            where.team = {
+                name: { contains: filters.teamName, mode: 'insensitive' }
+            };
+        }
+
         if (filters.search) {
             where.OR = [
                 { token: { contains: filters.search, mode: 'insensitive' } },
@@ -53,6 +65,12 @@ export class PixelTokenRepository {
                 include: {
                     owner: {
                         select: { username: true, email: true }
+                    },
+                    campaign: {
+                        select: { id: true, name: true }
+                    },
+                    team: {
+                        select: { id: true, name: true }
                     }
                 }
             }),

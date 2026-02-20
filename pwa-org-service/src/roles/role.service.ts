@@ -195,6 +195,14 @@ export class RoleService implements OnModuleInit {
         await this.repo.delete(id);
     }
 
+    async updateMemberRole(userId: string, roleId: number) {
+        return this.repo.updateMemberRole(userId, roleId);
+    }
+
+    async updateCampaignMemberRole(userId: string, roleId: number) {
+        return this.repo.updateCampaignMemberRole(userId, roleId);
+    }
+
     private toRoleResponse(role: any) {
         const globalRules = role.accessProfile?.accessProfile?.globalRules || {
             statAccess: AccessLevel.None,

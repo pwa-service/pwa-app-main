@@ -19,14 +19,14 @@ import {
     UpdateCampaignDto,
     CampaignFiltersQueryDto
 } from "../../../../pwa-shared/src";
-import { buildGrpcMetadata } from "../../common/jwt-to-metadata"; // Перевірте шлях
+import { buildGrpcMetadata } from "../../common/jwt-to-metadata";
 
 @ApiTags('Campaigns')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('campaigns')
 export class CampaignHttpController {
-    constructor(private readonly client: CampaignGrpcClient) {}
+    constructor(private readonly client: CampaignGrpcClient) { }
 
     @Post()
     @ApiOperation({ summary: 'Create new campaign' })

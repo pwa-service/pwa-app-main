@@ -81,7 +81,7 @@ export class TeamService {
         const team = await this.repo.findById(id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
-        await this.repo.deleteWithCascade(id, team.campaignId);
+        await this.repo.delete(id, team.campaignId);
         return {};
     }
 
@@ -152,11 +152,39 @@ export class TeamService {
         const team = await this.repo.findById(dto.teamId);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
-        const member = await this.repo.findMember(dto.teamId, dto.userId);
-        if (!member) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
+        const newLead = await this.repo.findMember(dto.teamId, dto.userId);
+        if (!newLead) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
 
+        const teamLeadRole = await this.roleService.findByNameAndContext(
+            SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, team.campaignId
+        );
+        if (!teamLeadRole) throw new BadRequestException('Role Team Lead not found');
+
+        const mediaBuyerRole = await this.roleService.findByNameAndContext(
+            SystemRoleName.MEDIA_BUYER, ScopeType.CAMPAIGN, team.campaignId
+        );
+        if (!mediaBuyerRole) throw new BadRequestException('Role Media Buyer not found');
+
+        // If there's an existing lead, demote them to MEDIA_BUYER
+        if (team.teamLeadId && team.teamLeadId !== newLead.id) {
+            const oldLead = team.teamLead;
+            if (oldLead) {
+                await this.roleService.updateMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+                try {
+                    await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+                } catch { /* ignore if not a campaign member */ }
+            }
+        }
+
+        // Promote new lead to TEAM_LEAD role
+        await this.roleService.updateMemberRole(dto.userId, teamLeadRole.id);
+        try {
+            await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
+        } catch { /* ignore if not a campaign member */ }
+
+        // Update team's teamLeadId
         const updated = await this.repo.update(dto.teamId, {
-            teamLeadId: member.id
+            teamLeadId: newLead.id
         });
 
         return this.mapToResponse(updated);

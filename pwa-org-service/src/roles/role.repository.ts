@@ -4,7 +4,7 @@ import { PaginationQueryDto, RoleFilterQueryDto, ScopeType } from '../../../pwa-
 
 @Injectable()
 export class RoleRepository {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     private get roleInclude() {
         return {
@@ -228,5 +228,19 @@ export class RoleRepository {
                 create: { userProfileId, roleId }
             });
         }
+    }
+
+    async updateMemberRole(userProfileId: string, roleId: number) {
+        return this.prisma.teamUser.update({
+            where: { userProfileId },
+            data: { roleId },
+        });
+    }
+
+    async updateCampaignMemberRole(userProfileId: string, roleId: number) {
+        return this.prisma.campaignUser.update({
+            where: { userProfileId },
+            data: { roleId },
+        });
     }
 }

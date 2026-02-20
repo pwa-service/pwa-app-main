@@ -15,7 +15,7 @@ export class WorkingObjectSharingInterceptor implements NestInterceptor {
     constructor(
         private reflector: Reflector,
         private prisma: PrismaService
-    ) {}
+    ) { }
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         if (context.getType() !== 'rpc') return next.handle();
@@ -129,11 +129,11 @@ export class WorkingObjectSharingInterceptor implements NestInterceptor {
     }
 
     private async findWorkingObject(type: WorkingObjectType, entityId: string) {
-        if (type === 'PWA') return this.prisma.workingObjectPwa.findFirst({ where: { pwaAppId: entityId } });
-        if (type === 'FLOW') return this.prisma.workingObjectFlow.findFirst({ where: { flowId: entityId } });
-        if (type === 'PIXEL_TOKEN') return this.prisma.workingObjectPixelToken.findFirst({ where: { pixelTokenId: entityId } });
-        if (type === 'TEAM') return this.prisma.workingObjectTeam.findFirst({ where: { teamId: entityId } });
-        if (type === 'CAMPAIGN') return this.prisma.workingObjectCampaign.findFirst({ where: { campaignId: entityId } });
+        if (type === WorkingObjectType.PWA) return this.prisma.workingObjectPwa.findFirst({ where: { pwaAppId: entityId } });
+        if (type === WorkingObjectType.FLOW) return this.prisma.workingObjectFlow.findFirst({ where: { flowId: entityId } });
+        if (type === WorkingObjectType.PIXEL_TOKEN) return this.prisma.workingObjectPixelToken.findFirst({ where: { pixelTokenId: entityId } });
+        if (type === WorkingObjectType.TEAM) return this.prisma.workingObjectTeam.findFirst({ where: { teamId: entityId } });
+        if (type === WorkingObjectType.CAMPAIGN) return this.prisma.workingObjectCampaign.findFirst({ where: { campaignId: entityId } });
         return null;
     }
 }

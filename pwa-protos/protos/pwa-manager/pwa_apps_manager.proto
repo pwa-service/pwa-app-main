@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package pwa_apps_manager.v1;
 
-import "shared.proto"; // PaginationParams
+import "shared.proto";
 
 service PwaAppsManagerService {
     rpc CreateApp (CreateAppRequest) returns (PwaAppResponse);
@@ -12,7 +12,6 @@ service PwaAppsManagerService {
     rpc DeleteApp (DeleteAppRequest) returns (DeleteAppResponse);
 }
 
-// --- Shared Messages (Value Objects) ---
 
 message PwaTag {
     string text = 1;
@@ -50,13 +49,18 @@ message GetAppByIdRequest {
 
 message ListAppsRequest {
     shared.PaginationParams pagination = 1;
-    // optional string search = 2;
+    AppFilters filters = 2;
+}
+
+message AppFilters {
+    optional string search = 1;
+    optional string status = 2;
+    optional string campaign_id = 3;
+    optional string owner_name = 4;
 }
 
 message UpdateAppRequest {
-    string id = 1; // ID додатку
-
-    // Всі поля опціональні, gRPC передасть дефолтні значення, якщо їх немає
+    string id = 1;
     string name = 2;
     string status = 3;
     string lang = 4;

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService, TeamUser } from '../../../pwa-prisma/src';
-import { PaginationQueryDto } from "../../../pwa-shared/src";
+import { PaginationQueryDto, ScopeType } from "../../../pwa-shared/src";
 
 @Injectable()
 export class TeamRepository {
@@ -79,13 +79,8 @@ export class TeamRepository {
         });
     }
 
-    async delete(id: string) {
-        return this.prisma.team.delete({
-            where: { id },
-        });
-    }
 
-    async deleteWithCascade(teamId: string, campaignId: string) {
+    async delete(teamId: string, campaignId: string) {
         return this.prisma.$transaction(async (tx) => {
             const teamMembers = await tx.teamUser.findMany({
                 where: { teamId },
@@ -94,7 +89,7 @@ export class TeamRepository {
 
             if (teamMembers.length > 0) {
                 const defaultRole = await tx.role.findFirst({
-                    where: { scope: 'CAMPAIGN', campaignId },
+                    where: { scope: ScopeType.CAMPAIGN, campaignId },
                     select: { id: true },
                 });
 
@@ -114,7 +109,7 @@ export class TeamRepository {
             }
 
             await tx.role.deleteMany({
-                where: { scope: 'TEAM', teamId },
+                where: { scope: ScopeType.TEAM, teamId },
             });
 
             await tx.team.delete({

@@ -102,15 +102,9 @@ export class MemberRepository {
 
     async deleteUser(userId: string) {
         return this.prisma.$transaction(async (tx) => {
-            // Delete shares created by this user (no cascade on creator relation)
             await tx.shareUserProfile.deleteMany({
                 where: { createdBy: userId },
             });
-
-            // Delete user profile — cascades to:
-            // system_users, campaign_users, team_users,
-            // shares_user_profile (received), global_access_user,
-            // working_object_team_user (via team_user cascade)
             await tx.userProfile.delete({
                 where: { id: userId },
             });

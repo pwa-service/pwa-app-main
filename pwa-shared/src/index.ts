@@ -19,6 +19,7 @@ export * from './types/event-handler/common.types';
 export * from './types/pwa-manager/apps-manager/dto/get-app.dto';
 export * from './types/pwa-manager/apps-manager/dto/create-app.dto';
 export * from './types/pwa-manager/apps-manager/dto/update-app.dto';
+export * from './types/pwa-manager/apps-manager/dto/filters-query.dto';
 export * from './types/pwa-manager/apps-manager/enum/pwa-status.enum';
 export * from './types/pwa-manager/pixel-token-manager/dto/create-pixel-token.dto';
 export * from './types/pwa-manager/pixel-token-manager/dto/update-pixel-token.dto';
