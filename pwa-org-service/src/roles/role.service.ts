@@ -92,7 +92,7 @@ export class RoleService implements OnModuleInit {
         const role = await this.repo.findById(roleId);
         if (role!.scope !== scope) throw new ForbiddenException('Cannot edit role from different scope');
 
-        if (role.name === SystemRoleName.PRODUCT_OWNER) {
+        if (role!.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot edit Root System Role');
         }
 
@@ -107,7 +107,7 @@ export class RoleService implements OnModuleInit {
         const updatedRole = await this.repo.update(
             roleId,
             { name: dto.name, description: dto.description },
-            role.accessProfile!.accessProfileId,
+            role!.accessProfile!.accessProfileId,
             rulesUpdateData
         );
 
@@ -161,22 +161,22 @@ export class RoleService implements OnModuleInit {
         const targetRole = await this.repo.findById(roleId);
 
         const operatorLevel = SCOPE_PRIORITY[operatorScope] || 0;
-        const targetRoleLevel = SCOPE_PRIORITY[targetRole!.scope] || 0;
+        const targetRoleLevel = SCOPE_PRIORITY[targetRole!.scope as ScopeType] || 0;
 
         if (targetRoleLevel > operatorLevel) {
             throw new ForbiddenException(
-                `Insufficient privileges: ${operatorScope} scope cannot assign ${targetRole.scope} roles`
+                `Insufficient privileges: ${operatorScope} scope cannot assign ${targetRole!.scope} roles`
             );
         }
 
         let targetContextId: string | undefined;
-        if (targetRole.scope === ScopeType.CAMPAIGN) targetContextId = targetRole.campaignId!;
-        if (targetRole.scope === ScopeType.TEAM) targetContextId = targetRole.teamId!;
+        if (targetRole!.scope === ScopeType.CAMPAIGN) targetContextId = targetRole!.campaignId!;
+        if (targetRole!.scope === ScopeType.TEAM) targetContextId = targetRole!.teamId!;
 
         await this.repo.assignUserToContext(
             dto.userId,
             roleId,
-            targetRole.scope as ScopeType,
+            targetRole!.scope as ScopeType,
             targetContextId
         );
 
@@ -188,7 +188,7 @@ export class RoleService implements OnModuleInit {
         const role = await this.repo.findById(id);
         if (role!.scope !== scope) throw new ForbiddenException('Access denied');
 
-        if (role.name === SystemRoleName.PRODUCT_OWNER) {
+        if (role!.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot delete System Role');
         }
 
