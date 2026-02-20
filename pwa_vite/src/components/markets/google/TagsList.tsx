@@ -1,13 +1,12 @@
 import { classNames } from "../../../utils/classNames";
+import { getPWAData } from "../../../helpers/getPWAData";
 
-interface TagsListProps {
-  tags: { text: string }[];
-}
+const TagsList = () => {
+  const tagsList = getPWAData("tags");
 
-const TagsList = ({ tags }: TagsListProps) => {
   return (
     <div className="flex flex-wrap gap-3 mb-6 md:mb-10">
-      {tags?.map(({ text }, index) => (
+      {tagsList?.map(({ text }, index) => (
         <p
           key={index}
           className={classNames(

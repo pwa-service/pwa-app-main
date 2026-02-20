@@ -1,16 +1,8 @@
+import type { BeforeInstallPromptEvent } from "../types/global";
+
 import { useState, useEffect, useCallback } from "react";
 import { useInstallProgress } from "./useInstallProgress";
-
 import { PWA_INSTALLED_KEY } from "../constants/storage";
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-
-  userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-};
 
 const getIsInstalled = () => {
   try {
@@ -21,62 +13,67 @@ const getIsInstalled = () => {
 };
 
 export const usePWAInstall = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
+    window.deferredPrompt || null
+  );
+
   const [isInstalled, setIsInstalled] = useState<boolean>(getIsInstalled());
 
   const { isInstalling, progress, startProgress } = useInstallProgress();
 
   useEffect(() => {
-    const onInstalled = () => {
-      setIsInstalled(true);
-      localStorage.setItem(PWA_INSTALLED_KEY, "true");
-    };
-
-    window.addEventListener("appinstalled", onInstalled);
-    return () => window.removeEventListener("appinstalled", onInstalled);
-  }, []);
-
-  useEffect(() => {
-    const handler = (event: Event) => {
+    const handleBeforeInstall = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    const handleCustomReady = () => {
+      if (window.deferredPrompt) {
+        setDeferredPrompt(window.deferredPrompt);
+      }
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("pwa-prompt-ready", handleCustomReady);
+
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("pwa-prompt-ready", handleCustomReady);
+    };
   }, []);
 
   const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) {
-      alert("Something went wrong");
-      console.warn("promptInstall called but deferredPrompt is null");
+    const promptEvent = deferredPrompt || window.deferredPrompt;
+
+    if (!promptEvent) {
+      console.warn("Attempt to call the installation without an event");
       return false;
     }
 
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    try {
+      await promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
 
-    if (outcome === "dismissed") {
-      console.log("User dismissed installation");
-      return false;
-    }
-
-    if (outcome === "accepted") {
-      const isDesktop = window.matchMedia("(pointer: fine)").matches;
-
-      if (isDesktop) {
+      if (outcome === "accepted") {
+        startProgress();
         setDeferredPrompt(null);
+        window.deferredPrompt = null;
+
         return true;
       }
-
-      startProgress();
-      setDeferredPrompt(null);
-      return true;
+    } catch (error) {
+      console.error("Error when calling the setup window:", error);
     }
+
+    return false;
   }, [deferredPrompt, startProgress]);
 
   return {
-    deferredPrompt,
+    canInstall: !!deferredPrompt,
     promptInstall,
     isInstalling,
     progress,

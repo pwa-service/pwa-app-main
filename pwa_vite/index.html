@@ -1,10 +1,37 @@
 <!doctype html>
-<html lang="en">
+<html lang="<%- lang || 'en' %>">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/webp" href="/app_icon.webp" />
-    <title>Agüero Casino</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+
+    <title><%- title %></title>
+    <meta name="description" content="<%- description %>" />
+
+    <link rel="canonical" href="<%- url %>" />
+    <link rel="icon" type="image/webp" href="<%- favicon %>" />
+    <meta name="theme-color" content="<%- themeColor %>" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="<%- url %>" />
+    <meta property="og:title" content="<%- title %>" />
+    <meta property="og:description" content="<%- description %>" />
+    <meta property="og:image" content="<%- ogImage %>" />
+
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="<%- url %>" />
+    <meta property="twitter:title" content="<%- title %>" />
+    <meta property="twitter:description" content="<%- description %>" />
+    <meta property="twitter:image" content="<%- ogImage %>" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="<%- title %>" />
+    <link rel="apple-touch-icon" href="<%- favicon %>" />
+
+    <meta name="mobile-web-app-capable" content="yes" />
   </head>
 
   <body>
