@@ -45,7 +45,7 @@ export class MemberService implements OnModuleInit {
 
         const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
         const members = items.map((item: any) => ({
-            id: item.id.toString(),
+            id: item.userProfileId,
             userId: item.userProfileId,
             email: item.profile?.email,
             username: item.profile?.username,
