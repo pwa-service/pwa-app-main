@@ -1,23 +1,53 @@
 {
-  "destination_url": "",
-  "product_url": "",
-
-  "name": "Aviator Win Pro",
-  "domain": "aviator-game-win.com",
-  "status": "draft",
+  "domainId": "test-domain-123",
+  "status": "published",
   "lang": "en",
-  "description": "Main PWA for the spring campaign targeting tier-1 GEOs.",
 
-  "tags": [{ "text": "casino" }, { "text": "aviator" }, { "text": "high-rort" }],
+  "destinationUrl": "https://example.com/dest",
+  "productUrl": "https://example.com/product",
 
-  "terms": [
-    { "text": "<h1>Privacy Policy</h1><p>We collect data...</p>" },
-    { "text": "<h1>Terms of Service</h1><p>By using this app...</p>" }
-  ],
+  "name": "Test",
+  "description": "This is a test description",
+  "author": "Beton.win",
+
+  "rating": "4.8",
+  "adsText": "Contains ads",
+  "category": "Games",
+  "categorySubtitle": "Casino",
+
+  "reviewsCount": 1250,
+  "reviewsCountLabel": "reviews",
+
+  "appSize": 4.5,
+  "appSizeLabel": "MB",
+
+  "installCount": 50000,
+  "installCountLabel": "downloads",
+
+  "ageLimit": 21,
+  "ageLimitLabel": "+",
 
   "comments": [
-    { "author": "Media Buyer 1", "text": "Please use the blue logo version." },
-    { "author": "Team Lead", "text": "Approved for testing." }
+    { "author": "John Doe", "text": "Great app, works perfectly!" },
+    { "author": "Jane Smith", "text": "Very intuitive interface and fast loading." },
+    { "author": "Alex Rivera", "text": "Best in its category, highly recommend for beginners." },
+    { "author": "Michael K.", "text": "Good performance, but I would like to see more themes." },
+    { "author": "Sarah Brown", "text": "Customer support helped me within 5 minutes. 5 stars!" },
+    { "author": "Dmitry V.", "text": "Everything is fine, waiting for the next update." }
+  ],
+
+  "terms": [
+    { "text": "Privacy Policy apply." },
+    { "text": "Must be 21+ to use this service." },
+    { "text": "Data encryption enabled." }
+  ],
+
+  "tags": [
+    { "text": "Fast" },
+    { "text": "Secure" },
+    { "text": "Top Rated" },
+    { "text": "Premium" },
+    { "text": "Verified" }
   ],
 
   "events": [

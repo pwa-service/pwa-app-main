@@ -29,7 +29,8 @@ export const redirectOnLaunch = () => {
 };
 
 const handleRedirect = async () => {
-  const { destination_url, product_url } = getPWAData();
+  const destinationUrl = getPWAData("destinationUrl");
+  const productUrl = getPWAData("productUrl");
 
   const firstVisitRaw = await loadData(FIRST_VISITE_PWA_KEY);
   const firstVisit = !firstVisitRaw;
@@ -39,7 +40,7 @@ const handleRedirect = async () => {
     await saveData(FIRST_VISITE_PWA_KEY, "visited");
   }
 
-  const baseURL = firstVisit ? destination_url : product_url;
+  const baseURL = firstVisit ? destinationUrl : productUrl;
   const finalURL = new URL(baseURL, window.location.origin);
 
   const queryTail = await getQueryTail();

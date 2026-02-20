@@ -36,6 +36,7 @@
     "typescript-eslint": "^8.43.0",
     "vite": "^7.1.6",
     "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-html": "^3.2.2",
     "vite-plugin-preload": "^0.4.4",
     "vite-plugin-pwa": "^1.0.3",
     "workbox-window": "^7.3.0"

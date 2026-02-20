@@ -1,16 +1,14 @@
 import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
-
 import { data } from "../constants/template";
-import { reviews } from "../constants/market";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
 
 import SectionContainer from "../components/markets/google/SectionContainer";
+import About from "../components/markets/google/About";
 import TagsList from "../components/markets/google/TagsList";
 import DataSafetyList from "../components/markets/google/DataSafetyList";
-import { getPWAData } from "../helpers/getPWAData";
 
 const ImageSlider = lazy(() => import("../components/markets/google/ImageSlider"));
 const ExpandedGallery = lazy(() => import("../components/markets/ExpandedGallery"));
@@ -20,8 +18,6 @@ const Comments = lazy(() => import("../components/markets/google/Comments"));
 const GoogleMarketPage = () => {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [showGallery, setShowGallery] = useState<boolean>(false);
-
-  const { name, description, tags, comments } = getPWAData();
 
   const { isPWA } = useIsPWA();
 
@@ -36,7 +32,7 @@ const GoogleMarketPage = () => {
 
   return (
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
-      <Description imageSRC={data.productImage} productName={name} />
+      <Description imageSRC={data.productImage} />
 
       <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
         <ImageSlider
@@ -57,21 +53,8 @@ const GoogleMarketPage = () => {
       )}
 
       <SectionContainer title="About this up">
-        <ul className="flex flex-col gap-5">
-          {[description].map((row, index) => (
-            <li key={index}>
-              <p className="text-zinc-600">
-                {row.split("\n").map((line, i) => (
-                  <span key={i} className="block">
-                    {line}
-                  </span>
-                ))}
-              </p>
-            </li>
-          ))}
-        </ul>
-
-        <TagsList tags={tags} />
+        <About />
+        <TagsList />
       </SectionContainer>
 
       <SectionContainer title="Data safety">
@@ -86,12 +69,12 @@ const GoogleMarketPage = () => {
 
       <SectionContainer title="Rating and reviews">
         <Suspense fallback={null}>
-          <Reviews {...reviews} />
+          <Reviews />
         </Suspense>
       </SectionContainer>
 
       <Suspense fallback={null}>
-        <Comments comments={comments.map((comment) => ({ ...comment, type: "user" }))} />
+        <Comments />
       </Suspense>
     </main>
   );

@@ -10,13 +10,13 @@ import { FiDownload } from "react-icons/fi";
 import { TbRating21Plus } from "react-icons/tb";
 import CircularProgress from "../CircularProgress";
 import InstallButton from "../InstallButton";
+import { getPWAData } from "../../../helpers/getPWAData";
 
 interface DescriptionProps {
   imageSRC: string;
-  productName: string;
 }
 
-const Description = ({ imageSRC, productName }: DescriptionProps) => {
+const Description = ({ imageSRC }: DescriptionProps) => {
   const { promptInstall, isInstalling, progress, isInstalled } = usePWAInstall();
   const { isWebView } = useIsWebView();
 
@@ -73,7 +73,7 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
 
           <div className="flex flex-col">
             <div className="text-[clamp(2rem,5vw,4rem)] w-full">
-              <h1 className="font-medium leading-none mr-10">{productName}</h1>
+              <h1 className="font-medium leading-none mr-10">{getPWAData("name")}</h1>
             </div>
 
             <div className="inline-flex items-center gap-1 mt-4">
@@ -86,11 +86,13 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
         <div className={classNames("flex items-center mt-6 md:mt-10 overflow-x-auto")}>
           <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
             <div className="flex items-center gap-1">
-              <span className="font-medium">4.8</span>
+              <span className="font-medium">{getPWAData("rating")}</span>
               <MdStar className="w-4 h-4" />
             </div>
 
-            <span className="text-sm text-zinc-500">499 reviews</span>
+            <span className="text-sm text-zinc-500">
+              {getPWAData("reviewsCount")} {getPWAData("reviewsCountLabel")}
+            </span>
           </div>
 
           <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />
@@ -104,7 +106,9 @@ const Description = ({ imageSRC, productName }: DescriptionProps) => {
 
           <div className="h-12 flex flex-col items-center justify-between shrink-0 px-2">
             <FiDownload className="w-5 h-5" />
-            <span className="text-sm text-zinc-600">6.9 MB</span>
+            <span className="text-sm text-zinc-600">
+              {getPWAData("appSize")} {getPWAData("appSizeLabel")}
+            </span>
           </div>
 
           <div className="shrink-0 w-px h-6 mx-3 bg-black/20" />

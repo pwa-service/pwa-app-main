@@ -1,19 +1,14 @@
 import { memo } from "react";
+import { getPWAData } from "../../../helpers/getPWAData";
 
 import Stars from "./Stars";
 
-interface CommentsProps {
-  comments: {
-    author: string;
-    text: string;
-    type: string;
-  }[];
-}
+const Comments = memo(() => {
+  const commentsList = getPWAData("comments").map((comment) => ({ ...comment, type: "user" }));
 
-const Comments = memo(({ comments }: CommentsProps) => {
   return (
     <div className="w-full flex flex-col gap-10 mt-16">
-      {comments.map(({ type, author, text }, index) =>
+      {commentsList.map(({ type, author, text }, index) =>
         type === "user" ? (
           <div key={index} className="flex flex-col">
             <div className="flex items-center gap-4 mb-6">
