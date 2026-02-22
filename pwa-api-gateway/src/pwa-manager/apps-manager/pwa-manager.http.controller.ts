@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { PwaManagerGrpcClient } from './pwa-manager.grpc.client';
 import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
 import {
@@ -11,6 +11,7 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { createWriteStream, mkdirSync, existsSync } from 'fs';
 import { join, extname } from 'path';
+import { CreateAppMultipartDto, UpdateAppMultipartDto } from './dto/pwa-app-multipart.dto';
 
 const pump = promisify(pipeline);
 
@@ -27,6 +28,8 @@ export class PwaManagerHttpController {
 
     @Post('app')
     @HttpCode(200)
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: CreateAppMultipartDto })
     @ApiOperation({ summary: 'Creates a new PWA application record with images.' })
     async createApp(@Req() req: any) {
         if (!req.isMultipart()) {
@@ -41,6 +44,8 @@ export class PwaManagerHttpController {
 
     @Put('app/:id')
     @HttpCode(200)
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: UpdateAppMultipartDto })
     @ApiOperation({ summary: 'Updates an existing PWA application with images.' })
     async updateApp(
         @Param('id') id: string,
