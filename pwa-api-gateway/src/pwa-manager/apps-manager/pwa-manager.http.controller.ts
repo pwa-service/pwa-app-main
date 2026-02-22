@@ -60,13 +60,16 @@ export class PwaManagerHttpController {
         const parts = req.parts();
         const dto: any = {};
         const galleryUrls: string[] = [];
+        const protocol = req.protocol || 'http';
+        const host = req.headers.host;
 
         for await (const part of parts) {
             if (part.file) {
                 const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${extname(part.filename)}`;
                 const filePath = join(this.uploadDir, fileName);
                 await pump(part.file, createWriteStream(filePath));
-                const url = `/uploads/${fileName}`;
+
+                const url = `${protocol}://${host}/uploads/${fileName}`;
 
                 if (part.fieldname === 'icon') {
                     dto.iconUrl = url;
