@@ -180,8 +180,8 @@ func updatePWAData(filePath string, config *AppConfig) error {
 	}
 
 	if config != nil {
-		configData["destination_url"] = config.DestinationUrl
-		configData["product_url"] = config.ProductUrl
+		configData["destinationUrl"] = config.DestinationUrl
+		configData["productUrl"] = config.ProductUrl
 		configData["name"] = config.Name
 		configData["lang"] = config.Lang
 		if config.Description != "" {
@@ -197,19 +197,19 @@ func updatePWAData(filePath string, config *AppConfig) error {
 		if config.Rating != "" {
 			configData["rating"] = config.Rating
 		}
-		configData["ads_text"] = config.AdsText
+		configData["adsText"] = config.AdsText
 		configData["category"] = config.Category
-		configData["category_subtitle"] = config.CategorySubtitle
-		configData["reviews_count"] = config.ReviewsCount
-		configData["reviews_count_label"] = config.ReviewsCountLabel
-		configData["app_size"] = config.AppSize
-		configData["app_size_label"] = config.AppSizeLabel
-		configData["install_count"] = config.InstallCount
-		configData["install_count_label"] = config.InstallCountLabel
-		configData["age_limit"] = config.AgeLimit
-		configData["age_limit_label"] = config.AgeLimitLabel
-		configData["icon_url"] = config.IconUrl
-		configData["gallery_urls"] = config.GalleryUrls
+		configData["categorySubtitle"] = config.CategorySubtitle
+		configData["reviewsCount"] = config.ReviewsCount
+		configData["reviewsCountLabel"] = config.ReviewsCountLabel
+		configData["appSize"] = config.AppSize
+		configData["appSizeLabel"] = config.AppSizeLabel
+		configData["installCount"] = config.InstallCount
+		configData["installCountLabel"] = config.InstallCountLabel
+		configData["ageLimit"] = config.AgeLimit
+		configData["ageLimitLabel"] = config.AgeLimitLabel
+		configData["iconUrl"] = config.IconUrl
+		configData["galleryUrls"] = config.GalleryUrls
 	}
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")

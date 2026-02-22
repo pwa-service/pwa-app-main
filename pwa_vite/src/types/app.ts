@@ -43,4 +43,6 @@ export interface PwaAppData {
   terms: LabelItem[];
   tags: LabelItem[];
   events: EventType[];
+  iconUrl?: string;
+  galleryUrls?: string[];
 }
