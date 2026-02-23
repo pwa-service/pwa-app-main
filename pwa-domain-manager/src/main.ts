@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 import { join } from 'path';
-import {DomainManagerModule} from "./core/domain-manager.module";
-import {StripUserPipe} from "../../pwa-shared/src/common/pipes/strip-user.pipe";
+import { DomainManagerModule } from "./core/domain-manager.module";
+import { StripUserPipe } from "../../pwa-shared/src/common/pipes/strip-user.pipe";
 
 
 const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
@@ -17,7 +17,7 @@ async function bootstrap() {
             options: {
                 package: 'domain_manager.v1',
                 protoPath: join(PROTO_DIR, 'domain_manager.proto'),
-                url: process.env.DOMAIN_MANAGER_GRPC_URL || 'localhost:50057',
+                url: process.env.PWA_DOMAIN_MANAGER_GRPC_URL || '0.0.0.0:50057',
                 loader: {
                     includeDirs: [join(PROTO_DIR, 'domain_manager.proto')],
                     keepCase: false,

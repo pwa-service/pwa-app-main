@@ -115,7 +115,7 @@ export const domainManager: ClientProviderOptions = {
     options: {
         package: 'domain_manager.v1',
         protoPath: join(PROTOS_DIR, 'domain_manager.proto'),
-        url: process.env.DOMAIN_MANAGER_GRPC_URL || 'localhost:50057',
+        url: process.env.PWA_DOMAIN_MANAGER_GRPC_URL || 'localhost:50057',
         loader: {
             includeDirs: [PROTOS_DIR],
             keepCase: false,
