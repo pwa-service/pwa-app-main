@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
 
-import { isValidIcon } from "../utils/isvalidIcons";
+import { isValidIcon } from "../utils/isValidIcon";
 
 import { data } from "../constants/template";
 import placeholder from "../assets/placeholder.webp";
