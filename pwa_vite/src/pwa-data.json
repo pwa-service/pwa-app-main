@@ -10,8 +10,8 @@
   "description": "This is a test description",
   "author": "Beton.win",
 
-  "icon": "https://example.com/images/icon.png",
-  "gallery": [
+  "iconUrl": "https://example.com/images/icon.png",
+  "galleryUrls": [
     "https://example.com/images/screenshot1.png",
     "https://example.com/images/screenshot2.png",
     "https://example.com/images/screenshot3.png",

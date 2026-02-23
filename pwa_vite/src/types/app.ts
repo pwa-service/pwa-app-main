@@ -22,8 +22,8 @@ export interface PwaAppData {
   description: string;
   author: string;
 
-  icon: string;
-  gallery: string[];
+  iconUrl?: string;
+  galleryUrls?: string[];
 
   rating: string;
   adsText: string;
@@ -46,6 +46,4 @@ export interface PwaAppData {
   terms: LabelItem[];
   tags: LabelItem[];
   events: EventType[];
-  iconUrl?: string;
-  galleryUrls?: string[];
 }
