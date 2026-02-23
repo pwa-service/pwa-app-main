@@ -1,17 +1,22 @@
 import { Module } from '@nestjs/common';
 import { PixelTokenController } from './pixel-token.controller';
 import { PixelTokenRepository } from './pixel-token.repository';
-import {PixelTokenService} from "./pixel-token.core.service";
-import {PrismaModule, PrismaService} from "../../../pwa-prisma/src";
-import {GrpcAuthModule} from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
-import {GrpcAuthInterceptor} from "../../../pwa-shared/src";
-import {APP_INTERCEPTOR} from "@nestjs/core";
-import {ClientsModule, Transport} from "@nestjs/microservices";
-import {join} from "path";
-import {IsPixelTokenExistsInterceptor} from "../common/interceptors/is-pxiel-token-exists.interceptor";
+import { PixelTokenService } from "./pixel-token.core.service";
+import { PrismaModule, PrismaService } from "../../../pwa-prisma/src";
+import { GrpcAuthModule } from "../../../pwa-shared/src/modules/auth/grpc-auth.module";
+import { GrpcAuthInterceptor } from "../../../pwa-shared/src";
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { join } from "path";
+import { existsSync } from "fs";
+import { IsPixelTokenExistsInterceptor } from "../common/interceptors/is-pxiel-token-exists.interceptor";
 
 
-const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
+const PROTO_DIR = existsSync(join(process.cwd(), 'protos'))
+    ? join(process.cwd(), 'protos')
+    : join(process.cwd(), '..', 'pwa-protos', 'protos');
+
+const AUTH_PROTO_DIR = join(PROTO_DIR, 'auth.proto');
 @Module({
     imports: [
         GrpcAuthModule,
@@ -25,7 +30,7 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
                     protoPath: AUTH_PROTO_DIR,
                     url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
                     loader: {
-                        includeDirs: [AUTH_PROTO_DIR],
+                        includeDirs: [PROTO_DIR],
                         keepCase: false,
                         longs: String,
                         enums: String,
@@ -45,4 +50,4 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'a
     ],
     exports: [PixelTokenService],
 })
-export class PixelTokenModule {}
+export class PixelTokenModule { }

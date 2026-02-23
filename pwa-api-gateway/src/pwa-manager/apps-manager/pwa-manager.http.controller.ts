@@ -1,10 +1,9 @@
-import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PwaManagerGrpcClient } from './pwa-manager.grpc.client';
 import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
+import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 import {
-    CreateAppDto,
-    UpdateAppDto,
     PaginationQueryDto,
     PwaAppStatus
 } from '../../../../pwa-shared/src';
@@ -16,6 +15,7 @@ import { join, extname } from 'path';
 const pump = promisify(pipeline);
 
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('pwa-apps-manager')
 @ApiTags('Apps Manager')
 export class PwaManagerHttpController {
@@ -181,19 +181,27 @@ export class PwaManagerHttpController {
         }
 
         for (const field of numericFields) {
-            if (dto[field] !== undefined) {
+            if (dto[field] !== undefined && dto[field] !== '') {
                 dto[field] = Number(dto[field]);
             }
         }
 
         for (const field of jsonFields) {
-            if (typeof dto[field] === 'string') {
+            if (typeof dto[field] === 'string' && dto[field].trim() !== '') {
                 try {
                     dto[field] = JSON.parse(dto[field]);
                 } catch (e) {
-                    console.log(e);
+                    if (field === 'events') {
+                        dto[field] = dto[field].split(',').map((s: string) => s.trim()).filter((s: string) => s !== '');
+                    } else {
+                        console.log(`Failed to parse JSON for ${field}:`, e);
+                    }
                 }
             }
+        }
+
+        if (dto.events && !Array.isArray(dto.events)) {
+            dto.events = [];
         }
 
         return dto;

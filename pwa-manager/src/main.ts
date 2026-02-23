@@ -6,8 +6,12 @@ import { useContainer } from 'class-validator';
 import { ValidationPipe } from '@nestjs/common';
 import { StripUserPipe } from '../../pwa-shared/src/common/pipes/strip-user.pipe';
 
+import { existsSync } from 'fs';
+
 async function bootstrap() {
-    const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
+    const PROTO_DIR = existsSync(join(process.cwd(), 'protos'))
+        ? join(process.cwd(), 'protos')
+        : join(process.cwd(), '..', 'pwa-protos', 'protos');
 
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(
         PwaManagerModule,
