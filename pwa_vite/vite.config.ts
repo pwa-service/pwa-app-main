@@ -5,7 +5,7 @@ import preload from "vite-plugin-preload";
 import tailwindcss from "@tailwindcss/vite";
 
 import { getPWAData } from "./src/helpers/getPWAData";
-import { isValidIcon } from "./src/utils/isvalidIcons";
+import { isValidIcon } from "./src/utils/isValidIcon";
 
 import viteCompression from "vite-plugin-compression";
 import { createHtmlPlugin } from "vite-plugin-html";
