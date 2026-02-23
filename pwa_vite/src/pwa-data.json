@@ -10,6 +10,14 @@
   "description": "This is a test description",
   "author": "Beton.win",
 
+  "iconUrl": "https://example.com/images/icon.png",
+  "galleryUrls": [
+    "https://example.com/images/screenshot1.png",
+    "https://example.com/images/screenshot2.png",
+    "https://example.com/images/screenshot3.png",
+    "https://example.com/images/screenshot4.png"
+  ],
+
   "rating": "4.8",
   "adsText": "Contains ads",
   "category": "Games",
