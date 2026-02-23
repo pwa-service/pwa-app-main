@@ -22,6 +22,9 @@ export interface PwaAppData {
   description: string;
   author: string;
 
+  icon: string;
+  gallery: string[];
+
   rating: string;
   adsText: string;
   category: string;

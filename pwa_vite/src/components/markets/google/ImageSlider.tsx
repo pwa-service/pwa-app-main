@@ -1,5 +1,3 @@
-import type { ImageData } from "../../../types/market";
-
 import { memo, useRef, Fragment } from "react";
 import { classNames } from "../../../utils/classNames";
 
@@ -7,7 +5,7 @@ import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 
 interface ImageSliderProps {
   variant?: "google" | "apple";
-  images: ImageData[];
+  images: string[];
   handleSelectImage: (image: string) => void;
   showGallery: boolean;
 }
@@ -15,7 +13,6 @@ interface ImageSliderProps {
 const ImageSlider = memo(
   ({ variant = "google", images, handleSelectImage, showGallery }: ImageSliderProps) => {
     const scrollRef = useRef<HTMLDivElement | null>(null);
-
     const scrollByAmount = 300;
 
     const handleNext = () => {
@@ -39,17 +36,17 @@ const ImageSlider = memo(
     return (
       <div className="relative w-full h-[250px] md:h-[450px] mt-6">
         <div ref={scrollRef} className="flex h-full overflow-x-auto no-scrollbar">
-          {images.map(({ src, alt }, index) => {
+          {images.map((image, index) => {
             const isLast = index === images.length - 1;
 
             return (
               <img
                 key={index}
-                src={src}
+                src={image}
                 loading="lazy"
                 sizes="(max-width: 768px) 141px, 254px"
-                alt={alt || `slide-${index}`}
-                onClick={() => handleSelectImage(src)}
+                alt={`slide-${index}`}
+                onClick={() => handleSelectImage(image)}
                 className={classNames(
                   "w-full h-full rounded-xl object-cover",
                   isLast ? "" : "mr-2"

@@ -1,5 +1,3 @@
-import type { ImageData } from "../../types/market";
-
 import { useEffect, useRef, Fragment } from "react";
 
 import { classNames } from "../../utils/classNames";
@@ -7,7 +5,7 @@ import { classNames } from "../../utils/classNames";
 import { MdArrowBack, MdChevronLeft, MdChevronRight } from "react-icons/md";
 
 interface ExpandedGalleryProps {
-  images: ImageData[];
+  images: string[];
   selectedImage: string;
   onClose: () => void;
 }
@@ -17,7 +15,7 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
   const scrollByAmount = 300;
 
   useEffect(() => {
-    const index = images.findIndex((image) => image.src === selectedImage);
+    const index = images.findIndex((image) => image === selectedImage);
 
     if (scrollContainerRef.current && index !== -1) {
       const container = scrollContainerRef.current;
@@ -93,8 +91,8 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
           >
             <img
               loading="lazy"
-              src={image.src}
-              alt={image.alt}
+              src={image}
+              alt={`image ${index + 1}`}
               className="w-full h-full object-contain p-[5px]"
             />
           </div>

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
-import { data } from "../constants/template";
+import { getPWAData } from "../helpers/getPWAData";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
@@ -32,11 +32,11 @@ const GoogleMarketPage = () => {
 
   return (
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
-      <Description imageSRC={data.productImage} />
+      <Description />
 
       <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
         <ImageSlider
-          images={data.images}
+          images={getPWAData("gallery") || []}
           handleSelectImage={handleSelectImage}
           showGallery={showGallery}
         />
@@ -45,7 +45,7 @@ const GoogleMarketPage = () => {
       {showGallery && (
         <Suspense fallback={null}>
           <ExpandedGallery
-            images={data.images}
+            images={getPWAData("gallery") || []}
             selectedImage={selectedImage}
             onClose={handleCloseGallery}
           />

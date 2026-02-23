@@ -22,7 +22,7 @@ export default defineConfig(async () => {
     themeColor: "#1a1a1a",
     backgroundColor: "#000000",
 
-    icon: "/app_icon.webp",
+    icon: getPWAData("icon") || "/app_icon.webp",
     screenshot: "/screenshot.webp",
     screenshotMobile: "/screenshot-mobile.webp",
   };
