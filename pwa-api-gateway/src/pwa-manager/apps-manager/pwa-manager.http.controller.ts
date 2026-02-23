@@ -15,6 +15,7 @@ import { CreateAppMultipartDto, UpdateAppMultipartDto } from './dto/pwa-app-mult
 
 const pump = promisify(pipeline);
 
+@ApiBearerAuth()
 @Controller('pwa-apps-manager')
 @ApiTags('Apps Manager')
 export class PwaManagerHttpController {
@@ -29,7 +30,49 @@ export class PwaManagerHttpController {
     @Post('app')
     @HttpCode(200)
     @ApiConsumes('multipart/form-data')
-    @ApiBody({ type: CreateAppMultipartDto })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                domainId: { type: 'string' },
+                status: { type: 'string', enum: Object.values(PwaAppStatus) },
+                description: { type: 'string' },
+                comments: { type: 'string', example: '[]' },
+                lang: { type: 'string', example: 'en' },
+                terms: { type: 'string', example: '[]' },
+                tags: { type: 'string', example: '[]' },
+                events: { type: 'string', example: '[]' },
+                destinationUrl: { type: 'string' },
+                productUrl: { type: 'string' },
+                author: { type: 'string' },
+                rating: { type: 'string' },
+                adsText: { type: 'string' },
+                category: { type: 'string' },
+                categorySubtitle: { type: 'string' },
+                reviewsCount: { type: 'number' },
+                reviewsCountLabel: { type: 'string' },
+                appSize: { type: 'number' },
+                appSizeLabel: { type: 'string' },
+                installCount: { type: 'number' },
+                installCountLabel: { type: 'string' },
+                ageLimit: { type: 'number' },
+                ageLimitLabel: { type: 'string' },
+                icon: {
+                    type: 'string',
+                    format: 'binary',
+                },
+                gallery: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        format: 'binary',
+                    },
+                },
+            },
+            required: ['name', 'domainId', 'status', 'lang'],
+        },
+    })
     @ApiOperation({ summary: 'Creates a new PWA application record with images.' })
     async createApp(@Req() req: any) {
         if (!req.isMultipart()) {
@@ -45,7 +88,48 @@ export class PwaManagerHttpController {
     @Put('app/:id')
     @HttpCode(200)
     @ApiConsumes('multipart/form-data')
-    @ApiBody({ type: UpdateAppMultipartDto })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                domainId: { type: 'string' },
+                status: { type: 'string', enum: Object.values(PwaAppStatus) },
+                description: { type: 'string' },
+                comments: { type: 'string' },
+                lang: { type: 'string' },
+                terms: { type: 'string' },
+                tags: { type: 'string' },
+                events: { type: 'string' },
+                destinationUrl: { type: 'string' },
+                productUrl: { type: 'string' },
+                author: { type: 'string' },
+                rating: { type: 'string' },
+                adsText: { type: 'string' },
+                category: { type: 'string' },
+                categorySubtitle: { type: 'string' },
+                reviewsCount: { type: 'number' },
+                reviewsCountLabel: { type: 'string' },
+                appSize: { type: 'number' },
+                appSizeLabel: { type: 'string' },
+                installCount: { type: 'number' },
+                installCountLabel: { type: 'string' },
+                ageLimit: { type: 'number' },
+                ageLimitLabel: { type: 'string' },
+                icon: {
+                    type: 'string',
+                    format: 'binary',
+                },
+                gallery: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        format: 'binary',
+                    },
+                },
+            },
+        },
+    })
     @ApiOperation({ summary: 'Updates an existing PWA application with images.' })
     async updateApp(
         @Param('id') id: string,
