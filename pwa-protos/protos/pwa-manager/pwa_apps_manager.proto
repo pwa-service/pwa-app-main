@@ -112,12 +112,40 @@ message DeleteAppRequest {
 
 // --- Responses ---
 
+message PwaConfig {
+    string name = 1;
+    string description = 2;
+    string lang = 3;
+    repeated PwaTag tags = 4;
+    repeated PwaTerm terms = 5;
+    repeated PwaComment comments = 6;
+    repeated string events = 7;
+    string destination_url = 8;
+    string product_url = 9;
+    string author = 10;
+    string rating = 11;
+    string ads_text = 12;
+    string category = 13;
+    string category_subtitle = 14;
+    int32 reviews_count = 15;
+    string reviews_count_label = 16;
+    int32 app_size = 17;
+    string app_size_label = 18;
+    int32 install_count = 19;
+    string install_count_label = 20;
+    int32 age_limit = 21;
+    string age_limit_label = 22;
+    string icon_url = 23;
+    repeated string gallery_urls = 24;
+}
+
 message PwaAppResponse {
     string id = 1;
     string name = 2;
     string domain = 3;
     string status = 4;
     string build_url = 5;
+    optional PwaConfig config = 6;
 }
 
 message ListAppsResponse {
