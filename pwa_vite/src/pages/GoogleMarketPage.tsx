@@ -1,6 +1,10 @@
 import { lazy, Suspense, useState, useCallback } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
+
+import { isValidIcon } from "../utils/isvalidIcons";
+
 import { data } from "../constants/template";
+import placeholder from "../assets/placeholder.webp";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
@@ -29,23 +33,24 @@ const GoogleMarketPage = () => {
 
   const handleCloseGallery = useCallback(() => setShowGallery(false), []);
 
-  const iconUrl = getPWAData("iconUrl");
-  const galleryUrls = getPWAData("galleryUrls");
+  const iconURL = getPWAData("iconUrl");
+  const galleryURLs = getPWAData("galleryUrls");
 
-  const displayIcon = iconUrl || data.productImage;
-  const displayImages = (galleryUrls && galleryUrls.length > 0)
-    ? galleryUrls.map((url, i) => ({ src: url, alt: `gallery-image-${i}` }))
-    : data.images;
+  const productImage = isValidIcon(iconURL) ? iconURL : placeholder;
+  const sliderImages =
+    galleryURLs && galleryURLs.length > 0
+      ? galleryURLs.map((url, i) => ({ src: url, alt: `gallery-image-${i}` }))
+      : data.images;
 
   if (isPWA) return <Loader />;
 
   return (
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
-      <Description imageSRC={displayIcon} />
+      <Description imageSRC={productImage} />
 
       <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
         <ImageSlider
-          images={displayImages}
+          images={sliderImages}
           handleSelectImage={handleSelectImage}
           showGallery={showGallery}
         />
@@ -54,7 +59,7 @@ const GoogleMarketPage = () => {
       {showGallery && (
         <Suspense fallback={null}>
           <ExpandedGallery
-            images={displayImages}
+            images={sliderImages}
             selectedImage={selectedImage}
             onClose={handleCloseGallery}
           />
