@@ -1,17 +1,17 @@
 import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PwaManagerGrpcClient } from './pwa-manager.grpc.client';
 import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
 import {
     CreateAppDto,
     UpdateAppDto,
-    PaginationQueryDto
+    PaginationQueryDto,
+    PwaAppStatus
 } from '../../../../pwa-shared/src';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { createWriteStream, mkdirSync, existsSync } from 'fs';
 import { join, extname } from 'path';
-import { CreateAppMultipartDto, UpdateAppMultipartDto } from './dto/pwa-app-multipart.dto';
 
 const pump = promisify(pipeline);
 
