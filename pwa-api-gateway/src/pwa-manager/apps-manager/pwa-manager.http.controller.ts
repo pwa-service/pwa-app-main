@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PwaManagerGrpcClient } from './pwa-manager.grpc.client';
 import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
@@ -12,11 +12,13 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { createWriteStream, mkdirSync, existsSync } from 'fs';
 import { join, extname } from 'path';
+import { JwtAuthGuard } from 'pwa-api-gateway/src/common/jwt-auth.guard';
 
 const pump = promisify(pipeline);
 
 @ApiBearerAuth()
 @Controller('pwa-apps-manager')
+@UseGuards(JwtAuthGuard)
 @ApiTags('Apps Manager')
 export class PwaManagerHttpController {
     private readonly uploadDir = join(process.cwd(), 'uploads');
@@ -174,26 +176,54 @@ export class PwaManagerHttpController {
 
     private formatDto(dto: any, galleryUrls: string[]): any {
         const numericFields = ['reviewsCount', 'appSize', 'installCount', 'ageLimit'];
-        const jsonFields = ['comments', 'terms', 'tags', 'events'];
+
+        // ВАЖЛИВО: Забрали звідси 'events', залишили тільки об'єктні масиви!
+        const jsonFields = ['comments', 'terms', 'tags'];
 
         if (galleryUrls.length > 0) {
             dto.galleryUrls = galleryUrls;
         }
 
+        // 1. Обробка числових полів
         for (const field of numericFields) {
             if (dto[field] !== undefined) {
-                dto[field] = Number(dto[field]);
+                dto[field] = Number(dto[field]) || 0;
             }
         }
 
+        // 2. Обробка JSON-полів (tags, terms, comments)
         for (const field of jsonFields) {
             if (typeof dto[field] === 'string') {
                 try {
                     dto[field] = JSON.parse(dto[field]);
-                } catch (e) {
-                    console.log(e);
+                } catch (e: any) {
+                    console.log(`Помилка парсингу JSON для ${field}:`, e.message);
+                    dto[field] = []; // Якщо прийшло сміття, ставимо пустий масив
                 }
             }
+        }
+
+        // 3. ОКРЕМА ОБРОБКА ДЛЯ EVENTS (бо він приходить через кому)
+        if (typeof dto.events === 'string') {
+            // Якщо раптом прийшов валідний JSON '["dep", "reg"]'
+            if (dto.events.startsWith('[') && dto.events.endsWith(']')) {
+                try {
+                    dto.events = JSON.parse(dto.events);
+                } catch (e) {
+                    dto.events = [];
+                }
+            } else {
+                // Твій поточний випадок: 'dep,reg,sub,redep'
+                // Розбиваємо по комі, прибираємо пробіли по краях і фільтруємо пусті
+                dto.events = dto.events.split(',').map((e: string) => e.trim()).filter(Boolean);
+            }
+        } else if (!dto.events) {
+            dto.events = [];
+        }
+
+        // Якщо масив івентів порожній (не передали), ставимо дефолтні
+        if (dto.events.length === 0) {
+            dto.events = ['reg', 'dep', 'sub', 'redep'];
         }
 
         return dto;

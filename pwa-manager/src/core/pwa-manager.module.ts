@@ -12,11 +12,11 @@ import { GrpcAuthModule } from "../../../pwa-shared/src/modules/auth/grpc-auth.m
 import { PixelTokenModule } from "../pixel-token-manager/pixel-token.module";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { join } from "path";
-
-
-const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
 import { IsDomainExists } from "../common/pipes/is-domain-exists.pipe";
 
+
+const AUTH_PROTO_DIR = join(process.cwd(), '..', 'pwa-protos', 'protos');
+const AUTH_PROTO_PATH = join(AUTH_PROTO_DIR, 'auth.proto');
 @Module({
     imports: [PrismaModule, GeneratorPubSubModule, GrpcAuthModule, PixelTokenModule, ClientsModule.register([
         {
@@ -24,7 +24,7 @@ import { IsDomainExists } from "../common/pipes/is-domain-exists.pipe";
             transport: Transport.GRPC,
             options: {
                 package: 'auth.v1',
-                protoPath: AUTH_PROTO_DIR,
+                protoPath: AUTH_PROTO_PATH,
                 url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
                 loader: {
                     includeDirs: [AUTH_PROTO_DIR],

@@ -6,7 +6,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "prisma:generate": "../pwa-prisma/prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema=../pwa-prisma/prisma/schema.prisma",
     "local": "nest build && node ../pwa-manager/dist/pwa-manager/src/main.js",
     "test": "jest",
     "test:watch": "jest --watch",

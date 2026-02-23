@@ -12,7 +12,7 @@ import {
 import { PwaAppStatus } from "../enum/pwa-status.enum";
 import { Type } from 'class-transformer';
 
-export type EventType = "page_view" | "registration" | "deposit";
+export type EventType = "reg" | "dep" | "redep" | "sub";
 
 export class TermDto {
     @ApiProperty({ example: 'Умови використання...' })
