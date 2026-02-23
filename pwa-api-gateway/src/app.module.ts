@@ -29,16 +29,10 @@ import { TeamGrpcClient } from "./org/team/team.grpc.client";
 import { SharingGrpcClient } from "./org/sharing/sharing.grpc.client";
 import { DomainHttpController } from "./domain-manager/domain-manager.http.controller";
 import { DomainGrpcClient } from "./domain-manager/domain-manager.grpc.client";
-import { join } from 'path';
-import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
     imports: [
         ClientsModule.register([authClient, eventHandlerClient, appsManager, pixelTokenManager, orgClient, domainManager]),
-        ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'uploads'),
-            serveRoot: '/uploads',
-        }),
     ],
     controllers: [
         AuthHttpController,

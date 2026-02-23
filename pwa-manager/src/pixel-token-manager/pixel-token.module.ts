@@ -11,8 +11,7 @@ import { join } from "path";
 import { IsPixelTokenExistsInterceptor } from "../common/interceptors/is-pxiel-token-exists.interceptor";
 
 
-const AUTH_PROTO_DIR = join(process.cwd(), '..', 'pwa-protos', 'protos');
-const AUTH_PROTO_PATH = join(AUTH_PROTO_DIR, 'auth.proto');
+const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos', 'auth.proto')
 @Module({
     imports: [
         GrpcAuthModule,
@@ -23,7 +22,7 @@ const AUTH_PROTO_PATH = join(AUTH_PROTO_DIR, 'auth.proto');
                 transport: Transport.GRPC,
                 options: {
                     package: 'auth.v1',
-                    protoPath: AUTH_PROTO_PATH,
+                    protoPath: AUTH_PROTO_DIR,
                     url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
                     loader: {
                         includeDirs: [AUTH_PROTO_DIR],

@@ -237,10 +237,9 @@ func updateTraeficConfig(filePath string, domain string) error {
 	}
 
 	configString := string(content)
-	newConfigString := strings.Replace(configString, "%s", domain, 2)
-
-	domainLabels := strings.Replace(domain, ".", "-", 1)
-	newConfigString = strings.Replace(newConfigString, "%f", strings.Replace(domainLabels, ".", "-", 1), 1)
+	newConfigString := strings.ReplaceAll(configString, "%s", domain)
+	domainLabels := strings.ReplaceAll(domain, ".", "-")
+	newConfigString = strings.ReplaceAll(newConfigString, "%f", domainLabels)
 
 	err = os.WriteFile(filePath, []byte(newConfigString), fileMode)
 	if err != nil {
