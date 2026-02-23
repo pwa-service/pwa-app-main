@@ -23,4 +23,19 @@ export class PwaAppFiltersQueryDto {
     @IsOptional()
     @IsString()
     ownerName?: string;
+
+    @ApiProperty({ required: false, description: 'Filter by campaign name' })
+    @IsOptional()
+    @IsString()
+    campaignName?: string;
+
+    @ApiProperty({ required: false, description: 'Filter by team name' })
+    @IsOptional()
+    @IsString()
+    teamName?: string;
+
+    @ApiProperty({ required: false, description: 'Filter by owner ID' })
+    @IsOptional()
+    @IsString()
+    ownerId?: string;
 }

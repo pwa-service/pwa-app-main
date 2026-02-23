@@ -150,6 +150,8 @@ model UserProfile {
   EventLog         EventLog[]
   GlobalAccessUser GlobalAccessUser[]
 
+  pwaAppsOwned PwaApp[] @relation("PwaAppOwner")
+
   @@map("user_profiles")
 }
 
@@ -412,6 +414,9 @@ model PwaApp {
   creatorTeam     TeamUser?     @relation("TeamPwaCreator", fields: [createdByTeamUserId], references: [id])
 
   pixelToken PixelToken? @relation(fields: [pixelTokenId], references: [id])
+
+  ownerId String?      @map("owner_id")
+  owner   UserProfile? @relation("PwaAppOwner", fields: [ownerId], references: [id])
 
   domains      Domain[]
   details      PwaDetails?

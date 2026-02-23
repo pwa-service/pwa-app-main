@@ -16,9 +16,9 @@ export class PwaManagerController {
         return this.coreService.createApp(data, user);
     }
 
-    @GrpcMethod('PwaAppsManagerService', 'GetAppById')
-    async getAppById(@Payload() data: { app_id: string }) {
-        return this.coreService.getApp(data.app_id);
+    @GrpcMethod('PwaAppsManagerService', 'FindOne')
+    async findOne(@Payload() data: { app_id: string }) {
+        return this.coreService.findOne(data.app_id);
     }
 
     @GrpcMethod('PwaAppsManagerService', 'FindAll')

@@ -11,6 +11,10 @@ const appInclude = {
     comments: true,
     eventsProfile: true,
     campaign: { select: { id: true, name: true } },
+    team: { select: { id: true, name: true } },
+    creatorCampaign: { select: { id: true, userProfileId: true, profile: { select: { username: true } } } },
+    creatorTeam: { select: { id: true, userProfileId: true, profile: { select: { username: true } } } },
+    owner: { select: { id: true, username: true } },
     domains: true
 } satisfies Prisma.PwaAppInclude;
 
@@ -65,6 +69,7 @@ export class PwaManagerRepository {
 
                     iconUrl: data.iconUrl,
                     galleryUrls: data.galleryUrls || [],
+                    owner: { connect: { id: data.ownerId } },
 
                     campaign: { connect: { id: campaignId } },
                     details: { create: { publicName: data.name } },
@@ -99,7 +104,7 @@ export class PwaManagerRepository {
         });
     }
 
-    async getAppById(id: string) {
+    async findOne(id: string) {
         return this.prisma.pwaApp.findUnique({
             where: { id },
             include: appInclude
@@ -133,6 +138,22 @@ export class PwaManagerRepository {
                 ...(where.OR || []),
                 { creatorCampaign: { profile: { username: { contains: filters.ownerName, mode: 'insensitive' } } } },
                 { creatorTeam: { profile: { username: { contains: filters.ownerName, mode: 'insensitive' } } } }
+            ];
+        }
+
+        if (filters?.campaignName) {
+            where.campaign = { name: { contains: filters.campaignName, mode: 'insensitive' } };
+        }
+
+        if (filters?.teamName) {
+            where.team = { name: { contains: filters.teamName, mode: 'insensitive' } };
+        }
+
+        if (filters?.ownerId) {
+            where.OR = [
+                ...(where.OR || []),
+                { creatorCampaign: { userProfileId: filters.ownerId } },
+                { creatorTeam: { userProfileId: filters.ownerId } }
             ];
         }
 

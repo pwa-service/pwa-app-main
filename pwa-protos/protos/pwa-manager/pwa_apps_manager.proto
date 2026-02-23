@@ -6,7 +6,7 @@ import "shared.proto";
 
 service PwaAppsManagerService {
     rpc CreateApp (CreateAppRequest) returns (PwaAppResponse);
-    rpc GetAppById (GetAppByIdRequest) returns (PwaAppResponse);
+    rpc FindOne (FindOneRequest) returns (PwaAppResponse);
     rpc FindAll (ListAppsRequest) returns (ListAppsResponse);
     rpc UpdateApp (UpdateAppRequest) returns (PwaAppResponse);
     rpc DeleteApp (DeleteAppRequest) returns (DeleteAppResponse);
@@ -61,7 +61,7 @@ message CreateAppRequest {
     string product_url = 28;
 }
 
-message GetAppByIdRequest {
+message FindOneRequest {
     string app_id = 1;
 }
 
@@ -75,6 +75,9 @@ message AppFilters {
     optional string status = 2;
     optional string campaign_id = 3;
     optional string owner_name = 4;
+    optional string campaign_name = 5;
+    optional string team_name = 6;
+    optional string owner_id = 7;
 }
 
 message UpdateAppRequest {
@@ -150,6 +153,14 @@ message PwaAppResponse {
     string status = 4;
     string build_url = 5;
     optional PwaConfig config = 6;
+    string campaign_id = 7;
+    string campaign_name = 8;
+    optional string team_id = 9;
+    optional string team_name = 10;
+    string destination_url = 11;
+    string product_url = 12;
+    string owner_id = 13;
+    string owner_name = 14;
 }
 
 message ListAppsResponse {

@@ -9,15 +9,16 @@ import { join, extname } from 'path';
 import {
     CreateAppDto,
     UpdateAppDto,
-    PaginationQueryDto
+    PaginationQueryDto,
+    PwaAppFiltersQueryDto
 } from '../../../../pwa-shared/src';
 
 const pump = promisify(pipeline);
 
 interface PwaAppsManagerService {
     CreateApp(data: CreateAppDto, md?: Metadata): Observable<any>;
-    GetAppById(data: { app_id: string }, md?: Metadata): Observable<any>;
-    FindAll(data: { pagination: PaginationQueryDto }, md?: Metadata): Observable<any>;
+    FindOne(data: { app_id: string }, md?: Metadata): Observable<any>;
+    FindAll(data: { pagination: PaginationQueryDto; filters?: PwaAppFiltersQueryDto }, md?: Metadata): Observable<any>;
     UpdateApp(data: UpdateAppDto & { id: string }, md?: Metadata): Observable<any>;
     DeleteApp(data: { id: string }, md?: Metadata): Observable<any>;
 }
@@ -114,12 +115,12 @@ export class PwaManagerGrpcClient implements OnModuleInit {
         return await lastValueFrom(this.svc.CreateApp(dto, metadata));
     }
 
-    async getAppById(id: string, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.GetAppById({ app_id: id }, metadata));
+    async findOne(id: string, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.FindOne({ app_id: id }, metadata));
     }
 
-    async findAll(pagination: PaginationQueryDto, metadata?: Metadata) {
-        return await lastValueFrom(this.svc.FindAll({ pagination }, metadata));
+    async findAll(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto, metadata?: Metadata) {
+        return await lastValueFrom(this.svc.FindAll({ pagination, filters }, metadata));
     }
 
     async updateApp(id: string, dto: UpdateAppDto, metadata?: Metadata) {

@@ -1,8 +1,8 @@
-import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Get, Put, Delete, Req, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PwaManagerGrpcClient } from './pwa-manager.grpc.client';
 import { buildGrpcMetadata } from '../../common/jwt-to-metadata';
-import { PaginationQueryDto, PwaAppStatus } from '../../../../pwa-shared/src';
+import { PaginationQueryDto, PwaAppStatus, PwaAppFiltersQueryDto } from '../../../../pwa-shared/src';
 import { JwtAuthGuard } from 'pwa-api-gateway/src/common/jwt-auth.guard';
 
 @ApiBearerAuth()
@@ -10,7 +10,7 @@ import { JwtAuthGuard } from 'pwa-api-gateway/src/common/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @ApiTags('Apps Manager')
 export class PwaManagerHttpController {
-    constructor(private readonly client: PwaManagerGrpcClient) {}
+    constructor(private readonly client: PwaManagerGrpcClient) { }
 
     @Post('app')
     @HttpCode(200)
@@ -115,15 +115,19 @@ export class PwaManagerHttpController {
     @Get('app/:id')
     @HttpCode(200)
     @ApiOperation({ summary: 'Retrieves PWA application details by ID.' })
-    async getAppById(@Param('id') id: string, @Req() req: any) {
-        return this.client.getAppById(id, buildGrpcMetadata(req));
+    async findOne(@Param('id') id: string, @Req() req: any) {
+        return this.client.findOne(id, buildGrpcMetadata(req));
     }
 
     @Get('apps')
     @HttpCode(200)
-    @ApiOperation({ summary: 'Retrieves a list of PWA applications with pagination.' })
-    async findAll(@Body() pagination: PaginationQueryDto, @Req() req: any) {
-        return this.client.findAll(pagination, buildGrpcMetadata(req));
+    @ApiOperation({ summary: 'Retrieves a list of PWA applications with pagination and filters.' })
+    async findAll(
+        @Query() pagination: PaginationQueryDto,
+        @Query() filters: PwaAppFiltersQueryDto,
+        @Req() req: any
+    ) {
+        return this.client.findAll(pagination, filters, buildGrpcMetadata(req));
     }
 
     @Delete('app/:id')

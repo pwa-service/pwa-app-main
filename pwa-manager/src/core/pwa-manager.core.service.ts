@@ -58,8 +58,8 @@ export class PwaManagerCoreService {
         return this.mapToResponse(pwaApp);
     }
 
-    async getApp(id: string) {
-        const app = await this.repo.getAppById(id);
+    async findOne(id: string) {
+        const app = await this.repo.findOne(id);
         if (!app) throw new NotFoundException(`App with ID ${id} not found`);
         return this.mapToResponse(app);
     }
@@ -73,7 +73,7 @@ export class PwaManagerCoreService {
     }
 
     async updateApp(id: string, dto: UpdateAppDto) {
-        const app = await this.repo.getAppById(id);
+        const app = await this.repo.findOne(id);
         if (!app) throw new NotFoundException('App not found');
 
         const updated = await this.repo.update(id, dto);
@@ -120,7 +120,7 @@ export class PwaManagerCoreService {
     }
 
     async deleteApp(id: string) {
-        const app = await this.repo.getAppById(id);
+        const app = await this.repo.findOne(id);
         if (!app) throw new NotFoundException('App not found');
 
         const hostname = app.domains?.[0]?.hostname;
@@ -189,7 +189,15 @@ export class PwaManagerCoreService {
             domain: domain,
             status: app.status,
             buildUrl: domain ? `https://${domain}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : '',
-            config: this.mapToConfig(app)
+            config: this.mapToConfig(app),
+            campaignId: app.campaign?.id || '',
+            campaignName: app.campaign?.name || '',
+            teamId: app.team?.id,
+            teamName: app.team?.name,
+            destinationUrl: app.destinationUrl || '',
+            productUrl: app.productUrl || '',
+            ownerId: app.creatorCampaign?.userProfileId || app.creatorTeam?.userProfileId || '',
+            ownerName: app.creatorCampaign?.profile?.username || app.creatorTeam?.profile?.username || ''
         };
     }
 }

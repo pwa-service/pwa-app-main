@@ -53,10 +53,16 @@
             ],
             "cwd": "${workspaceFolder}/pwa-manager",
             "env": {
-                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db",
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db?schema=public",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379",
                 "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "AUTH_SERVICE_GRPC_URL": "localhost:50051",
                 "PWA_MANAGER_GRPC_URL": "localhost:50055",
-                "REDIS_HOST": "localhost"
+                "QUEUE_NAME": "BUILD_QUEUE",
+                "QUEUE_PREFIX": "pwa",
+                "AUTH_ISSUER": "https://pwaservice.space/",
+                "AUTH_AUDIENCE": "api"
             }
         },
         {
