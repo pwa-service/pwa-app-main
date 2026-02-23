@@ -1,6 +1,7 @@
 import type { ImageData } from "../../types/market";
+import placeholder from "../../assets/placeholder.webp";
 
-import { useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 
 import { classNames } from "../../utils/classNames";
 
@@ -11,6 +12,21 @@ interface ExpandedGalleryProps {
   selectedImage: string;
   onClose: () => void;
 }
+
+const ExpandedGalleryImageItem = ({ src, alt }: { src: string; alt: string }) => {
+  const [hasError, setHasError] = useState(false);
+  return (
+    <div className="w-full h-[80%] snap-center flex items-center justify-center shrink-0">
+      <img
+        loading="lazy"
+        src={hasError ? placeholder : src}
+        alt={alt}
+        onError={() => setHasError(true)}
+        className="w-full h-full object-contain p-[5px]"
+      />
+    </div>
+  );
+};
 
 const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -87,17 +103,7 @@ const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProp
         className="w-full h-full flex items-center gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar"
       >
         {images.map((image, index) => (
-          <div
-            key={index}
-            className="w-full h-[80%] snap-center flex items-center justify-center shrink-0"
-          >
-            <img
-              loading="lazy"
-              src={image.src}
-              alt={image.alt}
-              className="w-full h-full object-contain p-[5px]"
-            />
-          </div>
+          <ExpandedGalleryImageItem key={index} src={image.src} alt={image.alt} />
         ))}
       </div>
     </div>
