@@ -142,17 +142,13 @@ export class PwaManagerCoreService {
 
     private mapProfileToEvents(profile: any): string[] {
         if (!profile) return [];
-        const map: Record<string, string> = {
-            viewContent: 'view-content',
-            firstOpen: 'first-open',
-            reg: 'reg',
-            sub: 'sub',
-            dep: 'dep',
-            redep: 'redep',
-        };
-        return Object.entries(map)
-            .filter(([key]) => profile[key] === true)
-            .map(([, value]) => value);
+        const events: string[] = [];
+        for (const [key, value] of Object.entries(profile)) {
+            if (value === true) {
+                events.push(key);
+            }
+        }
+        return events;
     }
 
     private mapToConfig(app: any) {
@@ -165,23 +161,23 @@ export class PwaManagerCoreService {
             terms: app.terms?.map((t: any) => ({ text: t.text })) || [],
             comments: app.comments?.map((c: any) => ({ author: c.author, text: c.text })) || [],
             events: this.mapProfileToEvents(app.eventsProfile),
-            destination_url: app.destinationUrl || '',
-            product_url: app.productUrl || '',
+            destinationUrl: app.destinationUrl || '',
+            productUrl: app.productUrl || '',
             author: app.author || '',
             rating: app.rating || '',
-            ads_text: (app as any).adsText || '',
-            category: (app as any).category || '',
-            category_subtitle: (app as any).categorySubtitle || '',
-            reviews_count: Number((app as any).reviewsCount) || 0,
-            reviews_count_label: (app as any).reviews_count_label || '',
-            app_size: Number((app as any).appSize) || 0,
-            app_size_label: (app as any).appSizeLabel || '',
-            install_count: Number((app as any).installCount) || 0,
-            install_count_label: (app as any).installCountLabel || '',
-            age_limit: Number((app as any).ageLimit) || 0,
-            age_limit_label: (app as any).ageLimitLabel || '',
-            icon_url: (app as any).iconUrl || '',
-            gallery_urls: (app as any).galleryUrls || [],
+            adsText: app.adsText || '',
+            category: app.category || '',
+            categorySubtitle: app.categorySubtitle || '',
+            reviewsCount: Number(app.reviewsCount) || 0,
+            reviewsCountLabel: app.reviewsCountLabel || '',
+            appSize: Number(app.appSize) || 0,
+            appSizeLabel: app.appSizeLabel || '',
+            installCount: Number(app.installCount) || 0,
+            installCountLabel: app.installCountLabel || '',
+            ageLimit: Number(app.ageLimit) || 0,
+            ageLimitLabel: app.ageLimitLabel || '',
+            iconUrl: app.iconUrl || '',
+            galleryUrls: app.galleryUrls || [],
         };
     }
 
@@ -192,7 +188,7 @@ export class PwaManagerCoreService {
             name: app.name,
             domain: domain,
             status: app.status,
-            build_url: domain ? `https://${domain}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : '',
+            buildUrl: domain ? `https://${domain}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : '',
             config: this.mapToConfig(app)
         };
     }

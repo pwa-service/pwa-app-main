@@ -265,8 +265,8 @@ export class PwaManagerRepository {
 
     private mapEventsToProfile(events: string[] = []) {
         return {
-            viewContent: events.includes('view-content'),
-            firstOpen: events.includes('first-open'),
+            viewContent: events.includes('viewContent'),
+            firstOpen: events.includes('firstOpen'),
             reg: events.includes('reg'),
             sub: events.includes('sub'),
             dep: events.includes('dep'),
