@@ -14,7 +14,6 @@ const appInclude = {
     team: { select: { id: true, name: true } },
     creatorCampaign: { select: { id: true, userProfileId: true, profile: { select: { username: true } } } },
     creatorTeam: { select: { id: true, userProfileId: true, profile: { select: { username: true } } } },
-    owner: { select: { id: true, username: true } },
     domains: true
 } satisfies Prisma.PwaAppInclude;
 
@@ -69,7 +68,6 @@ export class PwaManagerRepository {
 
                     iconUrl: data.iconUrl,
                     galleryUrls: data.galleryUrls || [],
-                    owner: { connect: { id: data.ownerId } },
 
                     campaign: { connect: { id: campaignId } },
                     details: { create: { publicName: data.name } },
