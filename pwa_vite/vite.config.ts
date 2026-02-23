@@ -5,6 +5,7 @@ import preload from "vite-plugin-preload";
 import tailwindcss from "@tailwindcss/vite";
 
 import { getPWAData } from "./src/helpers/getPWAData";
+import { isValidIcon } from "./src/utils/isvalidIcons";
 
 import viteCompression from "vite-plugin-compression";
 import { createHtmlPlugin } from "vite-plugin-html";
@@ -12,17 +13,21 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig(async () => {
+  const pwaIcon = getPWAData("iconUrl");
+  const pwaName = getPWAData("name");
+  const pwaDescription = getPWAData("description");
+
   const settings = {
     url: "https://domain.com",
     lang: getPWAData("lang") || "en",
 
-    title: getPWAData("name") || "Default Title",
-    description: getPWAData("description") || "Default Description",
+    title: pwaName || "Default Title",
+    description: pwaDescription || "Default Description",
 
     themeColor: "#1a1a1a",
     backgroundColor: "#000000",
 
-    icon: "/app_icon.webp",
+    icon: isValidIcon(pwaIcon) ? pwaIcon : "/placeholder.webp",
     screenshot: "/screenshot.webp",
     screenshotMobile: "/screenshot-mobile.webp",
   };

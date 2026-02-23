@@ -1,9 +1,37 @@
 import type { ImageData } from "../../../types/market";
 
-import { memo, useRef, Fragment } from "react";
+import { memo, useRef, Fragment, useState } from "react";
 import { classNames } from "../../../utils/classNames";
 
+import placeholder from '../../../assets/placeholder.webp'
+
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+
+const SliderImage = ({ src, alt, onClick, isLast }: { 
+  src: string; 
+  alt: string; 
+  onClick: () => void; 
+  isLast: boolean 
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  
+
+  return (
+    <img
+      src={hasError ? placeholder : src}
+      loading="lazy"
+      sizes="(max-width: 768px) 141px, 254px"
+      alt={alt}
+      onClick={onClick}
+      onError={() => setHasError(true)}  
+      className={classNames(
+        "w-auto h-full rounded-xl object-cover cursor-pointer bg-zinc-100",
+        isLast ? "" : "mr-2"
+      )}
+    />
+  );
+};
 
 interface ImageSliderProps {
   variant?: "google" | "apple";
@@ -39,24 +67,15 @@ const ImageSlider = memo(
     return (
       <div className="relative w-full h-[250px] md:h-[450px] mt-6">
         <div ref={scrollRef} className="flex h-full overflow-x-auto no-scrollbar">
-          {images.map(({ src, alt }, index) => {
-            const isLast = index === images.length - 1;
-
-            return (
-              <img
-                key={index}
-                src={src}
-                loading="lazy"
-                sizes="(max-width: 768px) 141px, 254px"
-                alt={alt || `slide-${index}`}
-                onClick={() => handleSelectImage(src)}
-                className={classNames(
-                  "w-full h-full rounded-xl object-cover",
-                  isLast ? "" : "mr-2"
-                )}
-              />
-            );
-          })}
+          {images.map(({ src, alt }, index) => (
+            <SliderImage
+              key={index}
+              src={src}
+              alt={alt}
+              onClick={() => handleSelectImage(src)}
+              isLast={index === images.length - 1}
+            />
+          ))}
         </div>
 
         {variant === "google" && !showGallery && (

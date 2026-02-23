@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { usePWAInstall } from "../../../hooks/usePWAInstall";
 
@@ -12,13 +12,15 @@ import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 import CircularProgress from "../CircularProgress";
 import PWAInstallContainer from "../../PWAInstallContainer";
 
+import placeholder from '../../../assets/placeholder.webp'
+
 interface DescriptionProps {
   imageSRC: string;
 }
 
 const Description = ({ imageSRC }: DescriptionProps) => {
   const { isInstalling, progress } = usePWAInstall();
-
+  const [hasError, setHasError] = useState<boolean>(false);
   const scale = isInstalling ? 0.5 : 1;
 
   return (
@@ -37,12 +39,13 @@ const Description = ({ imageSRC }: DescriptionProps) => {
               {isInstalling && <CircularProgress progress={progress} />}
 
               <img
-                src={imageSRC}
+                src={hasError ? placeholder : imageSRC}
                 alt="product"
                 width={240}
                 height={240}
                 loading="eager"
                 fetchPriority="high"
+                onError={() => setHasError(true)}
                 style={{ transform: `scale(${scale})` }}
                 className={classNames(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
