@@ -17,7 +17,47 @@ import (
 
 const numCopyWorkers = 10
 const pwaDataSrc = "src/pwa-data.json"
-const productUrl = "https://beton.win"
+
+type Term struct {
+	Text string `json:"text"`
+}
+
+type Tag struct {
+	Text string `json:"text"`
+}
+
+type Comment struct {
+	Author string `json:"author"`
+	Text   string `json:"text"`
+}
+
+type AppConfig struct {
+	Name           string    `json:"name"`
+	Lang           string    `json:"lang"`
+	Description    string    `json:"description,omitempty"`
+	Terms          []Term    `json:"terms"`
+	Tags           []Tag     `json:"tags"`
+	Comments       []Comment `json:"comments"`
+	Events         []string  `json:"events"`
+	DestinationUrl string    `json:"destinationUrl"`
+	ProductUrl     string    `json:"productUrl"`
+	Author         string    `json:"author,omitempty"`
+	Rating         string    `json:"rating,omitempty"`
+
+	AdsText           string   `json:"adsText,omitempty"`
+	Category          string   `json:"category,omitempty"`
+	CategorySubtitle  string   `json:"categorySubtitle,omitempty"`
+	ReviewsCount      int      `json:"reviewsCount,omitempty"`
+	ReviewsCountLabel string   `json:"reviewsCountLabel,omitempty"`
+	AppSize           float64  `json:"appSize,omitempty"`
+	AppSizeLabel      string   `json:"appSizeLabel,omitempty"`
+	InstallCount      int      `json:"installCount,omitempty"`
+	InstallCountLabel string   `json:"installCountLabel,omitempty"`
+	AgeLimit          int      `json:"ageLimit,omitempty"`
+	AgeLimitLabel     string   `json:"ageLimitLabel,omitempty"`
+	IconUrl           string   `json:"iconUrl,omitempty"`
+	GalleryUrls       []string `json:"galleryUrls,omitempty"`
+}
 
 type copyJob struct {
 	srcPath string
@@ -121,7 +161,7 @@ func copyFile(srcPath, dstPath string, baseMode os.FileMode) error {
 	return nil
 }
 
-func updateDestinationURL(filePath string, newURL string) error {
+func updatePWAData(filePath string, config *AppConfig) error {
 	log.Printf("Reading: %s", filePath)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -139,9 +179,38 @@ func updateDestinationURL(filePath string, newURL string) error {
 		return fmt.Errorf("failed to parse JSON (check syntax): %w", err)
 	}
 
-	log.Printf("Setting pwa data variables...")
-	configData["destination_url"] = newURL
-	configData["product_url"] = productUrl
+	if config != nil {
+		configData["destinationUrl"] = config.DestinationUrl
+		configData["productUrl"] = config.ProductUrl
+		configData["name"] = config.Name
+		configData["lang"] = config.Lang
+		if config.Description != "" {
+			configData["description"] = config.Description
+		}
+		configData["terms"] = config.Terms
+		configData["tags"] = config.Tags
+		configData["comments"] = config.Comments
+		configData["events"] = config.Events
+		if config.Author != "" {
+			configData["author"] = config.Author
+		}
+		if config.Rating != "" {
+			configData["rating"] = config.Rating
+		}
+		configData["adsText"] = config.AdsText
+		configData["category"] = config.Category
+		configData["categorySubtitle"] = config.CategorySubtitle
+		configData["reviewsCount"] = config.ReviewsCount
+		configData["reviewsCountLabel"] = config.ReviewsCountLabel
+		configData["appSize"] = config.AppSize
+		configData["appSizeLabel"] = config.AppSizeLabel
+		configData["installCount"] = config.InstallCount
+		configData["installCountLabel"] = config.InstallCountLabel
+		configData["ageLimit"] = config.AgeLimit
+		configData["ageLimitLabel"] = config.AgeLimitLabel
+		configData["iconUrl"] = config.IconUrl
+		configData["galleryUrls"] = config.GalleryUrls
+	}
 
 	updatedData, err := json.MarshalIndent(configData, "", "  ")
 	if err != nil {
@@ -182,7 +251,7 @@ func updateTraeficConfig(filePath string, domain string) error {
 	return nil
 }
 
-func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string, error) {
+func runBuild(reactAppPath string, traeficConfSrc string, domain string, config *AppConfig) (string, error) {
 	localBuildDir := fmt.Sprintf("../builds/pwa_vite_%s", domain)
 	err := copyDir(reactAppPath, localBuildDir)
 	if err != nil {
@@ -194,7 +263,7 @@ func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get absolute path for build dir")
 	}
-	err = updateDestinationURL(path.Join(absLocalBuildDir, pwaDataSrc), fmt.Sprintf("https://%s", "domforpwaalfatest.com/Z2zSjt"))
+	err = updatePWAData(path.Join(absLocalBuildDir, pwaDataSrc), config)
 	if err != nil {
 		return "", err
 	}
@@ -226,12 +295,17 @@ func runBuild(reactAppPath string, traeficConfSrc string, domain string) (string
 	traeficConfDest := path.Join(absLocalBuildDir, "dist/docker-compose.yaml")
 	log.Printf("Copying docker config to %s", absLocalBuildDir)
 
-	srcInfo, err := os.Stat(traeficConfSrc)
+	absTraeficConfSrc, err := filepath.Abs(traeficConfSrc)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stat traeficConfSrc for permissions")
+		return "", errors.Wrap(err, "failed to resolve absolute path for traeficConfSrc")
 	}
 
-	if err := copyFile(traeficConfSrc, traeficConfDest, srcInfo.Mode()); err != nil {
+	srcInfo, err := os.Stat(absTraeficConfSrc)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to stat traeficConfSrc at %s", absTraeficConfSrc)
+	}
+
+	if err := copyFile(absTraeficConfSrc, traeficConfDest, srcInfo.Mode()); err != nil {
 		return "", errors.Wrapf(err, "failed to copy docker-compose.yaml")
 	}
 

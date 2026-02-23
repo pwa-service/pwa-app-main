@@ -11,6 +11,7 @@ service MemberService {
     rpc CreateCampaignMember (CreateCampaignMemberRequest) returns (MemberResponse);
     rpc CreateTeamLead (CreateTeamMemberRequest) returns (MemberResponse);
     rpc CreateTeamMember (CreateTeamMemberRequest) returns (MemberResponse);
+    rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
 }
 
 message MemberResponse {
@@ -21,6 +22,7 @@ message MemberResponse {
     optional string team_id = 5;
     optional string campaign_id = 6;
     string username = 7;
+    optional int32 role_id = 8;
 }
 
 
@@ -55,4 +57,8 @@ message CreateTeamMemberRequest {
     string username = 3;
     string team_id = 5;
     string campaign_id = 6;
+}
+
+message DeleteUserRequest {
+    string user_id = 1;
 }

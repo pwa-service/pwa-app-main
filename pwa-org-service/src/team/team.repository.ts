@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService, TeamUser } from '../../../pwa-prisma/src';
-import {PaginationQueryDto} from "../../../pwa-shared/src";
+import { PaginationQueryDto, ScopeType } from "../../../pwa-shared/src";
 
 @Injectable()
 export class TeamRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async createTeamTransaction(
         teamData: Prisma.TeamUncheckedCreateInput,
@@ -79,9 +79,42 @@ export class TeamRepository {
         });
     }
 
-    async delete(id: string) {
-        return this.prisma.team.delete({
-            where: { id },
+
+    async delete(teamId: string, campaignId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const teamMembers = await tx.teamUser.findMany({
+                where: { teamId },
+                select: { userProfileId: true, roleId: true },
+            });
+
+            if (teamMembers.length > 0) {
+                const defaultRole = await tx.role.findFirst({
+                    where: { scope: ScopeType.CAMPAIGN, campaignId },
+                    select: { id: true },
+                });
+
+                if (defaultRole) {
+                    for (const member of teamMembers) {
+                        await tx.campaignUser.upsert({
+                            where: { userProfileId: member.userProfileId },
+                            create: {
+                                userProfileId: member.userProfileId,
+                                campaignId,
+                                roleId: defaultRole.id,
+                            },
+                            update: {},
+                        });
+                    }
+                }
+            }
+
+            await tx.role.deleteMany({
+                where: { scope: ScopeType.TEAM, teamId },
+            });
+
+            await tx.team.delete({
+                where: { id: teamId },
+            });
         });
     }
 
@@ -101,6 +134,24 @@ export class TeamRepository {
     async removeMember(userId: string) {
         return this.prisma.teamUser.delete({
             where: { userProfileId: userId }
+        });
+    }
+
+    async findUserProfile(userId: string) {
+        return this.prisma.userProfile.findUnique({
+            where: { id: userId },
+        });
+    }
+
+    async findCampaignMember(userId: string, campaignId: string) {
+        return this.prisma.campaignUser.findFirst({
+            where: { userProfileId: userId, campaignId },
+        });
+    }
+
+    async findCampaign(campaignId: string) {
+        return this.prisma.campaign.findUnique({
+            where: { id: campaignId },
         });
     }
 }

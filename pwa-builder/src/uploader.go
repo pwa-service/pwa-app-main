@@ -227,3 +227,42 @@ func (u *SftpUploader) RunDockerCompose(remoteDir string) error {
 	log.Println("SSH: Docker compose redeploy executed successfully.")
 	return nil
 }
+
+func (u *SftpUploader) DestroyApp(remoteDir string) error {
+	if u.sshConn == nil {
+		return errors.New("SSH connection is nil. Cannot run commands.")
+	}
+
+	session, err := u.sshConn.NewSession()
+	if err != nil {
+		return errors.Wrap(err, "failed to create SSH session for docker compose down")
+	}
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	downCmd := fmt.Sprintf("cd %s && docker compose down -v --remove-orphans --rmi local", remoteDir)
+
+	log.Printf("SSH: Executing destroy command: %s", downCmd)
+	if err := session.Run(downCmd); err != nil {
+		session.Close()
+		return errors.Wrapf(err, "failed to run docker compose down in %s", remoteDir)
+	}
+	session.Close()
+
+	session2, err := u.sshConn.NewSession()
+	if err != nil {
+		return errors.Wrap(err, "failed to create SSH session for rm")
+	}
+	defer session2.Close()
+
+	session2.Stdout = os.Stdout
+	session2.Stderr = os.Stderr
+	rmCmd := fmt.Sprintf("rm -rf %s", remoteDir)
+
+	log.Printf("SSH: Removing remote directory: %s", rmCmd)
+	if err := session2.Run(rmCmd); err != nil {
+		return errors.Wrapf(err, "failed to remove remote directory %s", remoteDir)
+	}
+
+	log.Printf("SSH: App destroyed successfully at %s", remoteDir)
+	return nil
+}

@@ -5,7 +5,7 @@ WORKDIR /app/pwa-prisma
 RUN apk add --no-cache bash postgresql15-client openssl
 
 COPY ./pwa-prisma/package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY ./pwa-prisma/prisma ./prisma
 

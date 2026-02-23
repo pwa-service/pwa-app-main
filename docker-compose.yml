@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -132,6 +132,7 @@ services:
       - EVENT_HANDLER_GRPC_URL=event-handler:50053
       - PWA_MANAGER_GRPC_URL=pwa-manager:50055
       - PWA_ORG_SERVICE_GRPC_URL=org-service:50056
+      - PWA_DOMAIN_MANAGER_GRPC_URL=domain-manager:50057
       - AUTH_JWKS_URL=http://auth-service:4040/.well-known/jwks.json
       - AUTH_ISSUER=https://pwaservice.space/
       - AUTH_AUDIENCE=api
@@ -223,7 +224,6 @@ services:
           cpus: "0.3"
           memory: "0.6g"
 
-
   domain-manager:
     build:
       context: .
@@ -292,11 +292,11 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -317,7 +317,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: [ "/bin/sh", "-c" ]
     command:
       - |
         echo "Waiting for database to be ready..."
@@ -359,7 +359,7 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     env_file:
-    - ./.env
+      - ./.env
     ports:
       - "127.0.0.1:9000:80"
     volumes:
@@ -428,7 +428,6 @@ services:
     networks:
       - pwa-network
 
-
 volumes:
   postgres_data:
     driver: local
@@ -438,6 +437,7 @@ volumes:
     name: pwa_app_redis_data
   pgadmin-data:
   grafana-data:
+
 
 networks:
   pwa-network:

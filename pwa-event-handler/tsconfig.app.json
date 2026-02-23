@@ -1,13 +1,24 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
     "outDir": "../../dist/apps/event-handler",
     "target": "ES2019",
     "module": "CommonJS",
-    "types": ["jest", "node"],
-    "strictPropertyInitialization": false
+    "types": [
+      "jest",
+      "node"
+    ],
+    "strictPropertyInitialization": false,
+    "baseUrl": "../"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*spec.ts"
+  ],
 }

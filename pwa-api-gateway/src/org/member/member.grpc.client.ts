@@ -15,13 +15,14 @@ interface IMemberGrpcService {
     CreateCampaignMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
     CreateTeamLead(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
     CreateTeamMember(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
+    DeleteUser(data: { userId: string }, md?: Metadata): Observable<any>;
 }
 
 @Injectable()
 export class MemberGrpcClient implements OnModuleInit {
     private svc!: IMemberGrpcService;
 
-    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
+    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) { }
 
     onModuleInit() {
         this.svc = this.client.getService<IMemberGrpcService>('MemberService');
@@ -45,5 +46,9 @@ export class MemberGrpcClient implements OnModuleInit {
 
     async createTeamMember(dto: CreateTeamMemberDto, metadata?: Metadata) {
         return lastValueFrom(this.svc.CreateTeamMember(dto, metadata));
+    }
+
+    async deleteUser(userId: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.DeleteUser({ userId }, metadata));
     }
 }

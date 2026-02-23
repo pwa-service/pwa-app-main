@@ -1,4 +1,4 @@
-import {ApiProperty, OmitType, PartialType} from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePixelTokenDto {
@@ -15,4 +15,6 @@ export class CreatePixelTokenDto {
     description?: string;
 
     ownerId!: string;
+    campaignId?: string;
+    teamId?: string;
 }

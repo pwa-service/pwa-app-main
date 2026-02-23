@@ -5,8 +5,14 @@
     "outDir": "./dist",
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2021", "DOM"],
-    "types": ["jest", "node"],
+    "lib": [
+      "ES2021",
+      "DOM"
+    ],
+    "types": [
+      "jest",
+      "node"
+    ],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "sourceMap": true,
@@ -15,10 +21,23 @@
     "strictPropertyInitialization": false,
     "baseUrl": "./",
     "paths": {
-      "*": ["node_modules/*"]
+      "@pwa/prisma": [
+        "../pwa-prisma/src"
+      ],
+      "@pwa/prisma/*": [
+        "../pwa-prisma/src/*"
+      ],
+      "*": [
+        "node_modules/*"
+      ]
     },
     "moduleResolution": "node",
     "esModuleInterop": true,
   },
-  "exclude": ["node_modules", "dist", "test", "**/app.spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/app.spec.ts"
+  ]
 }

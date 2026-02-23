@@ -1,0 +1,161 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "gateway",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-api-gateway",
+            "env": {
+                "AUTH_AUDIENCE": "api",
+                "AUTH_ISSUER": "https://auth.local/",
+                "AUTH_JWKS_URL": "http://localhost:4040/.well-known/jwks.json",
+                "AUTH_SERVICE_GRPC_URL": "localhost:50051",
+                "EVENT_HANDLER_GRPC_URL": "localhost:50053",
+                "PORT": "3000",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "org",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-org-service",
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "PWA_ORG_SERVICE_GRPC_URL": "localhost:50056",
+                "REDIS_HOST": "localhost",
+                "AUTH_SERVICE_GRPC_URL": "localhost:50051"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "pwa-manager",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-manager",
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "PWA_MANAGER_GRPC_URL": "localhost:50055",
+                "REDIS_HOST": "localhost"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "auth",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-auth-service",
+            "env": {
+                "AUTH_ACCESS_TTL": "900",
+                "AUTH_REFRESH_TTL": "604800",
+                "AUTH_SERVICE_GRPC_URL": "localhost:50051",
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db?schema=public",
+                "FRONTEND_URL": "http://localhost:3000",
+                "MAIL_HOST": "smtp.gmail.com",
+                "MAIL_PASSWORD": "gfcoyvhdoqvqrbob",
+                "MAIL_PORT": "465",
+                "MAIL_SECURE": "true",
+                "MAIL_USER": "petrotraktorist07@gmail.com",
+                "PORT": "4040",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379",
+                "TELEGRAM_BOT_TOKEN": "5762342430:AAG1Miw9VodQ00y4vvHxeZNmgAWHmriK6VQ"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "event-handler",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-event-handler",
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db?schema=public",
+                "EVENT_HANDLER_GRPC_URL": "localhost:50053",
+                "FB_GRAPH_VERSION": "v21.0",
+                "FB_MOCK": "false",
+                "PORT": "4300",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379",
+                "TRACKER_BASE_URL": "https://tracker.example.com/landing"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "logger",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-logger",
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db?schema=public",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos",
+                "QUEUE_NAME": "PWA_EVENTS_QUEUE",
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379"
+            }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "domain-manager",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "local"
+            ],
+            "cwd": "${workspaceFolder}/pwa-domain-manager",
+            "env": {
+                "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/pwa_db?schema=public",
+                "PROTO_DIR": "${workspaceFolder}/pwa-protos"
+            }
+        },
+        {
+            "name": "pwa-builder",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/pwa-builder/src",
+            "cwd": "${workspaceFolder}/pwa-builder",
+            "dlvFlags": [
+                "--check-go-version=false"
+            ],
+            "env": {
+                "REDIS_HOST": "localhost",
+                "REDIS_PORT": "6379"
+            }
+        }
+    ]
+}

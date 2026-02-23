@@ -18,8 +18,6 @@ export class DomainManagerService {
             return await this.repository.create({
                 hostname: dto.hostname,
                 status: 'active',
-                pwaApp: { connect: { id: dto.pwaAppId } },
-                owner: { connect: { id: dto.ownerId } }
             });
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

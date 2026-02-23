@@ -2,9 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import { PwaManagerModule } from "./core/pwa-manager.module";
+import { useContainer } from 'class-validator';
+import { ValidationPipe } from '@nestjs/common';
+import { StripUserPipe } from '../../pwa-shared/src/common/pipes/strip-user.pipe';
+
+import { existsSync } from 'fs';
 
 async function bootstrap() {
-    const PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
+    const PROTO_DIR = existsSync(join(process.cwd(), 'protos'))
+        ? join(process.cwd(), 'protos')
+        : join(process.cwd(), '..', 'pwa-protos', 'protos');
 
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(
         PwaManagerModule,
@@ -28,6 +35,9 @@ async function bootstrap() {
             },
         },
     );
+    useContainer(app.select(PwaManagerModule), { fallbackOnErrors: true });
+    app.useGlobalPipes(new StripUserPipe());
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     await app.listen();
 }
 bootstrap();

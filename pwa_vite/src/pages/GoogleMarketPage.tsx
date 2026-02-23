@@ -9,6 +9,7 @@ import SectionContainer from "../components/markets/google/SectionContainer";
 import About from "../components/markets/google/About";
 import TagsList from "../components/markets/google/TagsList";
 import DataSafetyList from "../components/markets/google/DataSafetyList";
+import { data } from "../constants/template";
 
 const ImageSlider = lazy(() => import("../components/markets/google/ImageSlider"));
 const ExpandedGallery = lazy(() => import("../components/markets/ExpandedGallery"));
@@ -28,15 +29,24 @@ const GoogleMarketPage = () => {
 
   const handleCloseGallery = useCallback(() => setShowGallery(false), []);
 
+  const iconUrl = getPWAData("iconUrl");
+  const galleryUrls = getPWAData("galleryUrls");
+
+  const displayIcon = iconUrl || data.productImage;
+  const displayImages =
+    galleryUrls && galleryUrls.length > 0
+      ? galleryUrls.map((url, i) => ({ src: url, alt: `gallery-image-${i}` }))
+      : data.images;
+
   if (isPWA) return <Loader />;
 
   return (
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
-      <Description />
+      <Description imageSRC={displayIcon} />
 
       <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
         <ImageSlider
-          images={getPWAData("gallery") || []}
+          images={displayImages}
           handleSelectImage={handleSelectImage}
           showGallery={showGallery}
         />
@@ -45,7 +55,7 @@ const GoogleMarketPage = () => {
       {showGallery && (
         <Suspense fallback={null}>
           <ExpandedGallery
-            images={getPWAData("gallery") || []}
+            images={displayImages}
             selectedImage={selectedImage}
             onClose={handleCloseGallery}
           />

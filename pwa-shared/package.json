@@ -11,7 +11,8 @@
     "class-validator": "^0.14.1",
     "ioredis": "^5.8.2",
     "jose": "^5.9.6",
-    "redis": "^5.10.0"
+    "redis": "^5.10.0",
+    "@pwa/prisma": "file:../pwa-prisma"
   },
   "devDependencies": {
     "@types/node": "^24.7.0",

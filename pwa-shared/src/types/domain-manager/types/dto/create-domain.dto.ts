@@ -11,18 +11,4 @@ export class CreateDomainDto {
         message: 'Invalid hostname format'
     })
     hostname: string;
-
-    @ApiProperty({
-        description: 'ID PWA додатку, до якого прив\'язаний домен',
-        example: '123e4567-e89b-12d3-a456-426614174000'
-    })
-    @IsUUID()
-    pwaAppId: string;
-
-    @ApiProperty({
-        description: 'ID CampaignUser (власника)',
-        example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
-    })
-    @IsUUID()
-    ownerId: string;
 }

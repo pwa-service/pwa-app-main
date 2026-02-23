@@ -2,30 +2,130 @@ syntax = "proto3";
 
 package pwa_apps_manager.v1;
 
+import "shared.proto";
+
 service PwaAppsManagerService {
     rpc CreateApp (CreateAppRequest) returns (PwaAppResponse);
     rpc GetAppById (GetAppByIdRequest) returns (PwaAppResponse);
+    rpc FindAll (ListAppsRequest) returns (ListAppsResponse);
+    rpc UpdateApp (UpdateAppRequest) returns (PwaAppResponse);
+    rpc DeleteApp (DeleteAppRequest) returns (DeleteAppResponse);
 }
+
+
+message PwaTag {
+    string text = 1;
+}
+
+message PwaTerm {
+    string text = 1;
+}
+
+message PwaComment {
+    string author = 1;
+    string text = 2;
+}
+
+// --- Requests ---
 
 message CreateAppRequest {
     string name = 1;
-    string domain = 2;
-    string created_by_user_id = 3;
-    int32 template_id = 4;
-    string description = 5;
-    string app_id = 6;
+    string domain_id = 2;
+    string campaign_id = 3;
+    string owner_id = 4;
+    string status = 5;
+    string lang = 6;
+    string description = 7;
+
+    repeated PwaTag tags = 8;
+    repeated PwaTerm terms = 9;
+    repeated PwaComment comments = 10;
+    repeated string events = 11;
+
+    string ads_text = 12;
+    string category = 13;
+    string category_subtitle = 14;
+    int32 reviews_count = 15;
+    string reviews_count_label = 16;
+    int32 app_size = 17;
+    string app_size_label = 18;
+    int32 install_count = 19;
+    string install_count_label = 20;
+    int32 age_limit = 21;
+    string age_limit_label = 22;
+    string author = 23;
+    string rating = 24;
+    string icon_url = 25;
+    repeated string gallery_urls = 26;
 }
 
 message GetAppByIdRequest {
     string app_id = 1;
 }
 
+message ListAppsRequest {
+    shared.PaginationParams pagination = 1;
+    AppFilters filters = 2;
+}
+
+message AppFilters {
+    optional string search = 1;
+    optional string status = 2;
+    optional string campaign_id = 3;
+    optional string owner_name = 4;
+}
+
+message UpdateAppRequest {
+    string id = 1;
+    string name = 2;
+    string status = 3;
+    string lang = 4;
+    string description = 5;
+    string domain_id = 6;
+
+    // При оновленні списків ми зазвичай перезаписуємо весь список
+    repeated PwaTag tags = 7;
+    repeated PwaTerm terms = 8;
+    repeated PwaComment comments = 9;
+    repeated string events = 10;
+
+    string ads_text = 11;
+    string category = 12;
+    string category_subtitle = 13;
+    int32 reviews_count = 14;
+    string reviews_count_label = 15;
+    int32 app_size = 16;
+    string app_size_label = 17;
+    int32 install_count = 18;
+    string install_count_label = 19;
+    int32 age_limit = 20;
+    string age_limit_label = 21;
+    string author = 22;
+    string rating = 23;
+    string icon_url = 24;
+    repeated string gallery_urls = 25;
+}
+
+message DeleteAppRequest {
+    string id = 1;
+}
+
+// --- Responses ---
+
 message PwaAppResponse {
     string id = 1;
     string name = 2;
     string domain = 3;
-    string description = 4;
-    string created_by_user_id = 5;
-    string status = 6;
-    string build_url = 7;
+    string status = 4;
+    string build_url = 5;
+}
+
+message ListAppsResponse {
+    repeated PwaAppResponse items = 1;
+    int32 total = 2;
+}
+
+message DeleteAppResponse {
+    bool success = 1;
+    string id = 2;
 }

@@ -12,4 +12,14 @@ export class PixelTokenFiltersQueryDto {
     @IsOptional()
     @IsString()
     ownerUsername?: string;
+
+    @ApiProperty({ required: false, description: 'Filter by campaign name' })
+    @IsOptional()
+    @IsString()
+    campaignName?: string;
+
+    @ApiProperty({ required: false, description: 'Filter by team name' })
+    @IsOptional()
+    @IsString()
+    teamName?: string;
 }

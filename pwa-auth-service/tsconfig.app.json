@@ -1,15 +1,21 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
     "outDir": "../../dist/apps/auth-service",
     "target": "ES2019",
     "module": "CommonJS",
-    "types": ["jest", "node"],
-    "baseUrl": "./",
+    "types": [
+      "jest",
+      "node"
+    ],
+    "baseUrl": "../",
     "paths": {
-      "*": [
-        "node_modules/*"
+      "@pwa/prisma": [
+        "pwa-prisma/src"
+      ],
+      "@pwa/prisma/*": [
+        "pwa-prisma/src/*"
       ]
     },
     "strictPropertyInitialization": false
@@ -18,5 +24,10 @@
     "src/**/*",
     "../pwa-shared/src/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*spec.ts"
+  ]
 }

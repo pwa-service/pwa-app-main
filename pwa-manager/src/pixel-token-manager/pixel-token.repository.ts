@@ -1,30 +1,46 @@
 import { Injectable } from '@nestjs/common';
-import {Prisma, PrismaService} from "../../../pwa-prisma/src";
+import { Prisma, PrismaService } from "../../../pwa-prisma/src";
 import {
-    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, UpdatePixelTokenDto
+    CreatePixelTokenDto, PaginationQueryDto, PixelTokenFiltersQueryDto, ScopeType, UpdatePixelTokenDto
 } from "../../../pwa-shared/src";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 @Injectable()
 export class PixelTokenRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async create(data: CreatePixelTokenDto) {
         return this.prisma.pixelToken.create({ data });
     }
 
-    async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, userId?: string) {
+    async findAll(pagination: PaginationQueryDto, filters: PixelTokenFiltersQueryDto, user: UserPayload) {
         const { limit = 10, offset = 0 } = pagination;
         const take = Number(limit);
         const skip = Number(offset);
 
         const where: Prisma.PixelTokenWhereInput = {};
-        if (userId) {
-            where.ownerId = userId;
+
+        if (user.scope === ScopeType.CAMPAIGN) {
+            where.campaignId = user.contextId;
+        } else if (user.scope === ScopeType.TEAM) {
+            where.teamId = user.contextId;
         }
 
         if (filters.ownerUsername) {
             where.owner = {
                 username: { contains: filters.ownerUsername, mode: 'insensitive' }
+            };
+        }
+
+        if (filters.campaignName) {
+            where.campaign = {
+                name: { contains: filters.campaignName, mode: 'insensitive' }
+            };
+        }
+
+        if (filters.teamName) {
+            where.team = {
+                name: { contains: filters.teamName, mode: 'insensitive' }
             };
         }
 
@@ -49,6 +65,12 @@ export class PixelTokenRepository {
                 include: {
                     owner: {
                         select: { username: true, email: true }
+                    },
+                    campaign: {
+                        select: { id: true, name: true }
+                    },
+                    team: {
+                        select: { id: true, name: true }
                     }
                 }
             }),
@@ -82,5 +104,22 @@ export class PixelTokenRepository {
         return this.prisma.pixelToken.delete({
             where: { id }
         });
+    }
+
+    async findUserMembership(userId: string) {
+        const campaignUser = await this.prisma.campaignUser.findFirst({
+            where: { userProfileId: userId },
+            select: { campaignId: true }
+        });
+
+        const teamUser = await this.prisma.teamUser.findFirst({
+            where: { userProfileId: userId },
+            select: { teamId: true }
+        });
+
+        return {
+            campaignId: campaignUser?.campaignId || null,
+            teamId: teamUser?.teamId || null,
+        };
     }
 }

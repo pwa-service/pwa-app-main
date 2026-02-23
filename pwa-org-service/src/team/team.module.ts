@@ -3,14 +3,22 @@ import { TeamGrpcController } from './team.grpc.controller';
 import { TeamService } from './team.service';
 import { TeamRepository } from './team.repository';
 import { PrismaModule } from '../../../pwa-prisma/src';
-import {ClientsModule, Transport} from "@nestjs/microservices";
-import {join} from "path";
+import { RoleModule } from '../roles/role.module';
+import { CampaignModule } from '../campaign/campaign.module';
+import { IsCampaignExists } from '../common/pipes/is-campaign-exists.pipe';
+import { IsTeamExists } from '../common/pipes/is-team-exists.pipe';
+import { IsLeadBelongsToCampaignInterceptor } from '../common/interceptors/is-lead-belongs-to-campaign.interceptor';
+import { IsUserProfileExists } from '../common/pipes/is-user-profile-exists.pipe';
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { join } from "path";
 
 
 const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
 @Module({
     imports: [
         PrismaModule,
+        RoleModule,
+        CampaignModule,
         ClientsModule.register([
             {
                 name: 'AUTH_PACKAGE',
@@ -32,7 +40,14 @@ const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos')
         ]),
     ],
     controllers: [TeamGrpcController],
-    providers: [TeamService, TeamRepository],
+    providers: [
+        TeamService,
+        TeamRepository,
+        IsCampaignExists,
+        IsTeamExists,
+        IsLeadBelongsToCampaignInterceptor,
+        IsUserProfileExists,
+    ],
     exports: [TeamService, TeamRepository],
 })
-export class TeamModule {}
+export class TeamModule { }

@@ -1,10 +1,13 @@
 const path = require('path');
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('./tsconfig.test.json');
 
 module.exports = {
     displayName: 'event-handler',
     preset: 'ts-jest',
     testEnvironment: 'node',
-    rootDir: 'src',
+    rootDir: '.',
+    roots: ['<rootDir>/src'],
     testRegex: '.*\\.spec\\.ts$',
     moduleFileExtensions: ['js', 'json', 'ts'],
 
@@ -16,12 +19,12 @@ module.exports = {
             },
         ],
     },
-    moduleNameMapper: {
-        "^@pwa/shared/(.*)$": "<rootDir>/../pwa-shared/src/$1"
-    },
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+        prefix: '<rootDir>/',
+    }),
 
     transformIgnorePatterns: [
-        "/node_modules/(?!(jose)/)"
+        '/node_modules/(?!(jose)/)'
     ],
     moduleDirectories: ['node_modules', '<rootDir>'],
     coveragePathIgnorePatterns: [

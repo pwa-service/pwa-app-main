@@ -26,20 +26,20 @@ COPY ./pwa-org-service ./pwa-org-service
 COPY ./pwa-prisma       ./pwa-prisma
 COPY ./pwa-shared       ./pwa-shared
 COPY ./pwa-protos       ./pwa-protos
+COPY ./tsconfig.json ./tsconfig.json
 
-WORKDIR /workspace/pwa-shared
-RUN npm ci --legacy-peer-deps
+
 
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 WORKDIR /workspace/pwa-org-service
 RUN mkdir -p ./prisma \
- && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
+    && cp ../pwa-prisma/prisma/schema.prisma ./prisma/schema.prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN mkdir -p ./protos \
- && cp -r ../pwa-protos/protos/* ./protos/
+    && cp -r ../pwa-protos/protos/* ./protos/
 RUN npx nest build -p tsconfig.json
 
 FROM node:22-alpine AS runner

@@ -12,7 +12,11 @@ import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 import CircularProgress from "../CircularProgress";
 import PWAInstallContainer from "../../PWAInstallContainer";
 
-const Description = () => {
+interface DescriptionProps {
+  imageSRC: string;
+}
+
+const Description = ({ imageSRC }: DescriptionProps) => {
   const { isInstalling, progress } = usePWAInstall();
 
   const scale = isInstalling ? 0.5 : 1;
@@ -33,7 +37,7 @@ const Description = () => {
               {isInstalling && <CircularProgress progress={progress} />}
 
               <img
-                src={getPWAData("icon")}
+                src={imageSRC}
                 alt="product"
                 width={240}
                 height={240}

@@ -9,19 +9,20 @@ COPY ./pwa-prisma/package*.json ./pwa-prisma/
 COPY ./pwa-shared/package*.json ./pwa-shared/
 
 WORKDIR /workspace/pwa-logger
-RUN npm ci && npm i -g @nestjs/cli
+RUN npm ci --legacy-peer-deps && npm i -g @nestjs/cli
 
 WORKDIR /workspace/pwa-prisma
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 WORKDIR /workspace/pwa-shared
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 FROM deps AS build
 WORKDIR /workspace
 COPY ./pwa-logger ./pwa-logger
 COPY ./pwa-prisma ./pwa-prisma
 COPY ./pwa-shared ./pwa-shared
+COPY ./tsconfig.json ./tsconfig.json
 
 WORKDIR /workspace/pwa-prisma
 RUN npx prisma generate --schema=./prisma/schema.prisma

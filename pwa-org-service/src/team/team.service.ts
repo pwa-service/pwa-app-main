@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
+import { RoleService } from '../roles/role.service';
 import { Prisma } from '../../../pwa-prisma/src';
 import {
     CreateTeamDto,
@@ -13,26 +14,49 @@ import {
     WorkingObjectType,
     ScopeType,
 } from '../../../pwa-shared/src';
+import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 
 @Injectable()
 export class TeamService {
-    constructor(private readonly repo: TeamRepository) {}
+    constructor(
+        private readonly repo: TeamRepository,
+        private readonly roleService: RoleService,
+    ) { }
 
     async create(dto: CreateTeamDto) {
+
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
                 campaignId: dto.campaignId,
-                teamLeadId: dto.leadId || undefined,
             },
             {
                 type: WorkingObjectType.TEAM,
                 status: 'active',
             }
         );
-        return this.mapToResponse(team);
+
+        if (dto.leadId) {
+            const role = await this.roleService.findByNameAndContext(
+                SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, dto.campaignId
+            );
+            if (!role) throw new BadRequestException('Role Team Lead not found');
+
+            await this.addMemberToTeam({
+                teamId: team.id,
+                userId: dto.leadId,
+                roleId: role.id,
+            });
+            await this.assignTeamLead({
+                teamId: team.id,
+                userId: dto.leadId,
+            });
+        }
+
+        const full = await this.repo.findById(team.id);
+        return this.mapToResponse(full);
     }
 
     async findOne(id: string) {
@@ -57,7 +81,7 @@ export class TeamService {
         const team = await this.repo.findById(id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
-        await this.repo.delete(id);
+        await this.repo.delete(id, team.campaignId);
         return {};
     }
 
@@ -128,11 +152,33 @@ export class TeamService {
         const team = await this.repo.findById(dto.teamId);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
-        const member = await this.repo.findMember(dto.teamId, dto.userId);
-        if (!member) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
+        const newLead = await this.repo.findMember(dto.teamId, dto.userId);
+        if (!newLead) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
+
+        const teamLeadRole = await this.roleService.findByNameAndContext(
+            SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, team.campaignId
+        );
+        if (!teamLeadRole) throw new BadRequestException('Role Team Lead not found');
+
+        const mediaBuyerRole = await this.roleService.findByNameAndContext(
+            SystemRoleName.MEDIA_BUYER, ScopeType.CAMPAIGN, team.campaignId
+        );
+        if (!mediaBuyerRole) throw new BadRequestException('Role Media Buyer not found');
+
+
+        if (team.teamLeadId && team.teamLeadId !== newLead.id) {
+            const oldLead = team.teamLead;
+            if (oldLead) {
+                await this.roleService.updateMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+                await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+            }
+        }
+
+        await this.roleService.updateMemberRole(dto.userId, teamLeadRole.id);
+        await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
 
         const updated = await this.repo.update(dto.teamId, {
-            teamLeadId: member.id
+            teamLeadId: newLead.id
         });
 
         return this.mapToResponse(updated);
@@ -150,8 +196,8 @@ export class TeamService {
                 email: m.profile.email,
                 role: m.role?.name,
                 scope: m.profile.scope,
-                team_id: m.teamId,
-                campaign_id: team.campaignId,
+                teamId: m.teamId,
+                campaignId: team.campaignId,
                 username: m.profile.username,
             })) : []
         };
