@@ -3,7 +3,6 @@ import { useIsPWA } from "../hooks/useIsPWA";
 
 import { isValidIcon } from "../utils/isValidIcon";
 
-import { data } from "../constants/template";
 import placeholder from "../assets/placeholder.webp";
 
 import Loader from "../ui/Loader";
@@ -40,7 +39,10 @@ const GoogleMarketPage = () => {
   const sliderImages =
     galleryURLs && galleryURLs.length > 0
       ? galleryURLs.map((url, i) => ({ src: url, alt: `gallery-image-${i}` }))
-      : data.images;
+      : Array.from({ length: 4 }).map((_, index) => ({
+          src: placeholder,
+          alt: `gallery-image-${index}`,
+        }));
 
   if (isPWA) return <Loader />;
 
