@@ -157,6 +157,8 @@ services:
         limits:
           cpus: "0.25"
           memory: "0.6g"
+    volumes:
+      - ./pwa-api-gateway/uploads:/workspace/pwa-api-gateway/uploads
 
   pwa-manager:
     build:

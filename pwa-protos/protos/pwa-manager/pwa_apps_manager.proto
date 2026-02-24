@@ -88,7 +88,6 @@ message UpdateAppRequest {
     string description = 5;
     string domain_id = 6;
 
-    // При оновленні списків ми зазвичай перезаписуємо весь список
     repeated PwaTag tags = 7;
     repeated PwaTerm terms = 8;
     repeated PwaComment comments = 9;
@@ -161,6 +160,7 @@ message PwaAppResponse {
     string product_url = 12;
     string owner_id = 13;
     string owner_name = 14;
+    string domain_id = 15;
 }
 
 message ListAppsResponse {

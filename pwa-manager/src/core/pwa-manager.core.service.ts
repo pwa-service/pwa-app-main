@@ -77,45 +77,17 @@ export class PwaManagerCoreService {
         if (!app) throw new NotFoundException('App not found');
 
         const updated = await this.repo.update(id, dto);
-
         const hostname = updated.domains?.[0]?.hostname;
         if (hostname) {
-            const content = updated.contents?.find((c: any) => c.locale === updated.mainLocale) || updated.contents?.[0];
-            const rebuildPayload: any = {
+            const builderPayload = {
                 appId: updated.id,
                 domain: hostname,
-                config: {
-                    name: updated.name,
-                    description: content?.description || '',
-                    lang: updated.mainLocale || 'en',
-                    tags: updated.tags?.map((t: any) => ({ text: t.text })) || [],
-                    terms: updated.terms?.map((t: any) => ({ text: t.text })) || [],
-                    comments: updated.comments?.map((c: any) => ({ author: c.author, text: c.text })) || [],
-                    events: this.mapProfileToEvents(updated.eventsProfile),
-                    destinationUrl: updated.destinationUrl || '',
-                    productUrl: updated.productUrl || '',
-                    author: updated.author || '',
-                    rating: updated.rating || '',
-                    adsText: (updated as any).adsText || '',
-                    category: (updated as any).category || '',
-                    categorySubtitle: (updated as any).categorySubtitle || '',
-                    reviewsCount: Number((updated as any).reviewsCount) || 0,
-                    reviewsCountLabel: (updated as any).reviewsCountLabel || '',
-                    appSize: Number((updated as any).appSize) || 0,
-                    appSizeLabel: (updated as any).appSizeLabel || '',
-                    installCount: Number((updated as any).installCount) || 0,
-                    installCountLabel: (updated as any).installCountLabel || '',
-                    ageLimit: Number((updated as any).ageLimit) || 0,
-                    ageLimitLabel: (updated as any).ageLimitLabel || '',
-                    iconUrl: (updated as any).iconUrl || '',
-                    galleryUrls: (updated as any).galleryUrls || [],
-                }
+                config: this.mapToConfig(updated) 
             };
 
             this.logger.log(`Triggering rebuild for app ${id} on domain ${hostname}`);
-            await this.builderPub.rebuildApp(rebuildPayload);
+            await this.builderPub.rebuildApp(builderPayload);
         }
-
         return this.mapToResponse(updated);
     }
 
@@ -182,13 +154,17 @@ export class PwaManagerCoreService {
     }
 
     private mapToResponse(app: any) {
-        const domain = app.domains?.[0]?.hostname || '';
+        const domainObj = app.domains?.[0];
+        const hostname = domainObj?.hostname || '';
+        const domainId = domainObj?.id || '';
+
         return {
             id: app.id,
             name: app.name,
-            domain: domain,
+            domain: hostname,
+            domainId,
             status: app.status,
-            buildUrl: domain ? `https://${domain}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : '',
+            buildUrl: hostname ? `https://${hostname}?pixel_id=<your-pixel-id>&fbclid=<your-fb-clid>&utm_source=facebook&sub1=<your-sub>&offer_id=<your-offer-id>` : '',
             config: this.mapToConfig(app),
             campaignId: app.campaign?.id || '',
             campaignName: app.campaign?.name || '',
