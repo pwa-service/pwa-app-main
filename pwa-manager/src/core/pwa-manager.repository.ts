@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '../../../pwa-prisma/src';
 import { CreateAppDto, UpdateAppDto, PaginationQueryDto, PwaAppStatus, PwaAppFiltersQueryDto } from '../../../pwa-shared/src';
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { ScopeType } from "../../../pwa-shared/src/types/org/roles/enums/scope.enum";
 
 
 const appInclude = {
@@ -69,7 +71,9 @@ export class PwaManagerRepository {
                     iconUrl: data.iconUrl,
                     galleryUrls: data.galleryUrls || [],
 
+                    owner: { connect: { id: data.ownerId } },
                     campaign: { connect: { id: campaignId } },
+
                     details: { create: { publicName: data.name } },
                     contents: {
                         create: {
@@ -109,12 +113,20 @@ export class PwaManagerRepository {
         });
     }
 
-    async findAll(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto) {
+    async findAll(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto, user?: UserPayload) {
         const { limit = 10, offset = 0 } = pagination;
 
         const where: Prisma.PwaAppWhereInput = {
             isDeleted: false,
         };
+
+        if (user) {
+            if (user.scope === ScopeType.CAMPAIGN && user.contextId) {
+                where.campaignId = user.contextId;
+            } else if (user.scope === ScopeType.TEAM && user.contextId) {
+                where.teamId = user.contextId;
+            }
+        }
 
         if (filters?.search) {
             where.OR = [

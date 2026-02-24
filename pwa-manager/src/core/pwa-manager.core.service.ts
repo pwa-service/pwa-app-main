@@ -64,8 +64,8 @@ export class PwaManagerCoreService {
         return this.mapToResponse(app);
     }
 
-    async getAllApps(pagination: PaginationQueryDto, filters?: PwaAppFiltersQueryDto | undefined) {
-        const { items, total } = await this.repo.findAll(pagination, filters);
+    async getAllApps(pagination: PaginationQueryDto, filters: PwaAppFiltersQueryDto | undefined, user: UserPayload) {
+        const { items, total } = await this.repo.findAll(pagination, filters, user);
         return {
             items: items.map(item => this.mapToResponse(item)),
             total

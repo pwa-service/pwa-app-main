@@ -22,8 +22,8 @@ export class PwaManagerController {
     }
 
     @GrpcMethod('PwaAppsManagerService', 'FindAll')
-    async findAll(@Payload() data: { pagination: PaginationQueryDto; filters?: PwaAppFiltersQueryDto }) {
-        return this.coreService.getAllApps(data.pagination, data.filters);
+    async findAll(@Payload() data: { pagination: PaginationQueryDto; filters?: PwaAppFiltersQueryDto }, @GrpcUser() user: UserPayload) {
+        return this.coreService.getAllApps(data.pagination, data.filters, user);
     }
 
     @GrpcMethod('PwaAppsManagerService', 'UpdateApp')
