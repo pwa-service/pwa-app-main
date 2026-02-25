@@ -45,7 +45,10 @@ WORKDIR /workspace/pwa-manager
 
 COPY --from=build /workspace/pwa-manager/dist         ./dist
 COPY --from=build /workspace/pwa-manager/node_modules ./node_modules
-COPY ./pwa-manager/package*.json ./
 COPY --from=build /workspace/pwa-manager/protos ./protos
+COPY ./pwa-manager/package*.json ./
+
+RUN mkdir -p /workspace/pwa-protos && \
+    ln -s /workspace/pwa-manager/protos /workspace/pwa-protos/protos
 
 CMD ["node", "dist/pwa-manager/src/main.js"]
