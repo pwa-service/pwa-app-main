@@ -97,21 +97,12 @@ export class RoleRepository {
         const andConditions: Prisma.RoleWhereInput[] = [];
 
         if (userScope === ScopeType.CAMPAIGN && userContextId) {
-            // Show only system roles + roles belonging to THIS campaign
-            andConditions.push({
-                OR: [
-                    { scope: ScopeType.SYSTEM },
-                    { campaignId: userContextId },
-                ]
-            });
+            // Show only roles belonging to THIS campaign
+            andConditions.push({ campaignId: userContextId });
         } else if (userScope === ScopeType.TEAM && userContextId) {
             andConditions.push({ teamId: userContextId });
         } else if (scope === ScopeType.CAMPAIGN) {
-            andConditions.push({
-                OR: [
-                    { campaignId: contextId },
-                ]
-            });
+            andConditions.push({ campaignId: contextId });
         } else if (scope === ScopeType.TEAM) {
             andConditions.push({ teamId: contextId });
         }

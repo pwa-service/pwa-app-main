@@ -5,6 +5,7 @@ import { RoleService } from '../roles/role.service';
 import { TeamService } from '../team/team.service';
 import { MemberService } from '../member/member.service';
 import { AccessLevel, ScopeType } from '../../../pwa-shared/src';
+import { UserPayload } from '../../../pwa-shared/src/types/auth/dto/user-payload.dto';
 import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { SharingService } from '../sharing/sharing.service';
 import { CampaignRepository } from '../campaign/campaign.repository';
@@ -176,7 +177,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                     userId: memberId,
                     roleId: parseInt(viewerRole.id)
                 },
-                ScopeType.CAMPAIGN
+                { scope: ScopeType.CAMPAIGN, contextId: campaignId } as UserPayload
             );
 
             const updatedMember = await prisma.campaignUser.findFirst({

@@ -87,12 +87,27 @@ export class RoleService implements OnModuleInit {
         return this.toRoleResponse(role);
     }
 
-    async update(dto: UpdateRoleDto, scope: ScopeType) {
+    async update(dto: UpdateRoleDto, user: UserPayload) {
         const roleId = parseInt(dto.id);
         const role = await this.repo.findById(roleId);
-        if (role!.scope !== scope) throw new ForbiddenException('Cannot edit role from different scope');
 
-        if (role!.name === SystemRoleName.PRODUCT_OWNER) {
+        if (!role) throw new NotFoundException('Role not found');
+
+        if (user.scope !== ScopeType.SYSTEM) {
+            if (role.scope === ScopeType.CAMPAIGN) {
+                if (user.scope !== ScopeType.CAMPAIGN || user.contextId !== role.campaignId) {
+                    throw new ForbiddenException('Access to this campaign role is denied');
+                }
+            } else if (role.scope === ScopeType.TEAM) {
+                if (user.scope !== ScopeType.TEAM || user.contextId !== role.teamId) {
+                    throw new ForbiddenException('Access to this team role is denied');
+                }
+            } else {
+                throw new ForbiddenException('Only system users can edit system roles');
+            }
+        }
+
+        if (role.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot edit Root System Role');
         }
 
@@ -107,7 +122,7 @@ export class RoleService implements OnModuleInit {
         const updatedRole = await this.repo.update(
             roleId,
             { name: dto.name, description: dto.description },
-            role!.accessProfile!.accessProfileId,
+            role.accessProfile!.accessProfileId,
             rulesUpdateData
         );
 
@@ -160,39 +175,69 @@ export class RoleService implements OnModuleInit {
         };
     }
 
-    async assignRoleToUser(dto: AssignRoleDto, operatorScope: ScopeType) {
+    async assignRoleToUser(dto: AssignRoleDto, user: UserPayload) {
         const roleId = dto.roleId;
         const targetRole = await this.repo.findById(roleId);
 
-        const operatorLevel = SCOPE_PRIORITY[operatorScope] || 0;
-        const targetRoleLevel = SCOPE_PRIORITY[targetRole!.scope as ScopeType] || 0;
+        if (!targetRole) throw new NotFoundException('Role not found');
+
+        const operatorLevel = SCOPE_PRIORITY[user.scope] || 0;
+        const targetRoleLevel = SCOPE_PRIORITY[targetRole.scope as ScopeType] || 0;
 
         if (targetRoleLevel > operatorLevel) {
             throw new ForbiddenException(
-                `Insufficient privileges: ${operatorScope} scope cannot assign ${targetRole!.scope} roles`
+                `Insufficient privileges: ${user.scope} scope cannot assign ${targetRole.scope} roles`
             );
         }
 
+        // Contextual isolation check
+        if (user.scope !== ScopeType.SYSTEM) {
+            if (targetRole.scope === ScopeType.CAMPAIGN) {
+                if (user.scope !== ScopeType.CAMPAIGN || user.contextId !== targetRole.campaignId) {
+                    throw new ForbiddenException('Cannot assign role from a different campaign');
+                }
+            } else if (targetRole.scope === ScopeType.TEAM) {
+                if (user.scope !== ScopeType.TEAM || user.contextId !== targetRole.teamId) {
+                    throw new ForbiddenException('Cannot assign role from a different team');
+                }
+            }
+        }
+
         let targetContextId: string | undefined;
-        if (targetRole!.scope === ScopeType.CAMPAIGN) targetContextId = targetRole!.campaignId!;
-        if (targetRole!.scope === ScopeType.TEAM) targetContextId = targetRole!.teamId!;
+        if (targetRole.scope === ScopeType.CAMPAIGN) targetContextId = targetRole.campaignId!;
+        if (targetRole.scope === ScopeType.TEAM) targetContextId = targetRole.teamId!;
 
         await this.repo.assignUserToContext(
             dto.userId,
             roleId,
-            targetRole!.scope as ScopeType,
+            targetRole.scope as ScopeType,
             targetContextId
         );
 
         return { status: "OK", userId: dto.userId, roleId };
     }
 
-    async delete(idStr: string, scope: ScopeType): Promise<void> {
+    async delete(idStr: string, user: UserPayload): Promise<void> {
         const id = parseInt(idStr);
         const role = await this.repo.findById(id);
-        if (role!.scope !== scope) throw new ForbiddenException('Access denied');
 
-        if (role!.name === SystemRoleName.PRODUCT_OWNER) {
+        if (!role) throw new NotFoundException('Role not found');
+
+        if (user.scope !== ScopeType.SYSTEM) {
+            if (role.scope === ScopeType.CAMPAIGN) {
+                if (user.scope !== ScopeType.CAMPAIGN || user.contextId !== role.campaignId) {
+                    throw new ForbiddenException('Access to this campaign role is denied');
+                }
+            } else if (role.scope === ScopeType.TEAM) {
+                if (user.scope !== ScopeType.TEAM || user.contextId !== role.teamId) {
+                    throw new ForbiddenException('Access to this team role is denied');
+                }
+            } else {
+                throw new ForbiddenException('Only system users can delete system roles');
+            }
+        }
+
+        if (role.name === SystemRoleName.PRODUCT_OWNER) {
             throw new BadRequestException('Cannot delete System Role');
         }
 

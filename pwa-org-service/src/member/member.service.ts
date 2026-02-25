@@ -119,6 +119,7 @@ export class MemberService implements OnModuleInit {
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
+        dto.campaignId = user.scope == ScopeType.SYSTEM ?  dto.campaignId : user.contextId
         const { user: authUser } = await this.callAuthService({
             ...dto,
             scope: ScopeType.CAMPAIGN,

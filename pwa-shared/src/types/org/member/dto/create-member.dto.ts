@@ -21,11 +21,9 @@ export class CreateCampaignMemberDto {
 
     @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Campaign ID (if applicable)' })
     @IsOptional()
-    @IsUUID()
     campaignId?: string;
 
     @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Role id (if applicable)' })
     @IsOptional()
-    @IsInt()
     roleId?: string;
 }

@@ -5,6 +5,7 @@ import { RoleService } from "../roles/role.service";
 import { SharingService } from "../sharing/sharing.service";
 import { SystemRoleName, RolePriority } from "../../../pwa-shared/src/types/org/roles/enums/role.enums";
 import { AccessLevel, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
+import { UserPayload } from 'pwa-shared/src/types/auth/dto/user-payload.dto';
 
 @Injectable()
 export class CampaignService {
@@ -65,7 +66,7 @@ export class CampaignService {
                 userId: userId,
                 roleId: parseInt(ownerRole.id),
             },
-            ScopeType.SYSTEM
+            { scope: ScopeType.SYSTEM } as UserPayload
         );
 
         if (woLink) {

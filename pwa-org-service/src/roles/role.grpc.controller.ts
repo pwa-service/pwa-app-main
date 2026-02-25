@@ -48,20 +48,20 @@ export class RoleGrpcController {
     @CheckRolePriority('roleId')
     @UseInterceptors(RolePriorityInterceptor)
     async update(@Payload(IsRoleExists) dto: UpdateRoleDto, @GrpcUser() user: UserPayload) {
-        return this.roleService.update(dto, user.scope);
+        return this.roleService.update(dto, user);
     }
 
     @GrpcMethod('RoleService', 'Delete')
     @CheckRolePriority('id')
     @UseInterceptors(RolePriorityInterceptor)
     async delete(@Payload(IsRoleExists) dto: { id: string }, @GrpcUser() user: UserPayload) {
-        return await this.roleService.delete(dto.id, user.scope);
+        return await this.roleService.delete(dto.id, user);
     }
 
     @GrpcMethod('RoleService', 'Assign')
     @CheckRolePriority('roleId')
     @UseInterceptors(RolePriorityInterceptor)
     async assign(@Payload(IsRoleExists, IsUserProfileExists) dto: AssignRoleDto, @GrpcUser() user: UserPayload) {
-        return this.roleService.assignRoleToUser(dto, user.scope);
+        return this.roleService.assignRoleToUser(dto, user);
     }
 }
