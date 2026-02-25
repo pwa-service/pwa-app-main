@@ -195,7 +195,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             const team = await teamService.create({
                 name: 'Alpha Squad',
                 campaignId: campaignId,
-            });
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             expect(team).toBeDefined();
             expect(team.campaignId).toBe(campaignId);
@@ -230,7 +230,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: teamId,
                 userId: memberId,
                 roleId: teamRole!.id
-            });
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             const teamUser = await prisma.teamUser.findUnique({
                 where: { userProfileId: memberId },
@@ -244,7 +244,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
     describe('System Integrity', () => {
         it('should cascade delete', async () => {
-            await campaignService.delete(campaignId);
+            await campaignService.delete(campaignId, { scope: ScopeType.SYSTEM } as UserPayload);
 
             const camp = await prisma.campaign.findUnique({ where: { id: campaignId } });
             expect(camp).toBeNull();

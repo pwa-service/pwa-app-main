@@ -73,13 +73,13 @@ export class MemberService implements OnModuleInit {
             userId: authUser.id,
             roleId: role.id,
             teamId: dto.teamId!,
-        });
+        }, user);
         // Ensure campaign membership exists to avoid duplication in member list
         await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
         await this.teamService.assignTeamLead({
             userId: authUser.id,
             teamId: dto.teamId!
-        });
+        }, user);
         return this.formatResponse({
             ...member,
             scope: ScopeType.TEAM,
@@ -103,7 +103,7 @@ export class MemberService implements OnModuleInit {
             userId: authUser.id,
             teamId: dto.teamId!,
             roleId: role.id
-        });
+        }, user);
         // Ensure campaign membership exists to avoid duplication in member list
         await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
 
@@ -119,7 +119,7 @@ export class MemberService implements OnModuleInit {
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
-        dto.campaignId = user.scope == ScopeType.SYSTEM ?  dto.campaignId : user.contextId
+        dto.campaignId = user.scope == ScopeType.SYSTEM ? dto.campaignId : user.contextId
         const { user: authUser } = await this.callAuthService({
             ...dto,
             scope: ScopeType.CAMPAIGN,

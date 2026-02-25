@@ -8,6 +8,7 @@ export class RoleRepository {
 
     private get roleInclude() {
         return {
+            team: true,
             accessProfile: {
                 include: {
                     accessProfile: {
@@ -97,8 +98,13 @@ export class RoleRepository {
         const andConditions: Prisma.RoleWhereInput[] = [];
 
         if (userScope === ScopeType.CAMPAIGN && userContextId) {
-            // Show only roles belonging to THIS campaign
-            andConditions.push({ campaignId: userContextId });
+            // Show roles belonging to THIS campaign OR roles of teams under THIS campaign
+            andConditions.push({
+                OR: [
+                    { campaignId: userContextId },
+                    { team: { campaignId: userContextId } }
+                ]
+            });
         } else if (userScope === ScopeType.TEAM && userContextId) {
             andConditions.push({ teamId: userContextId });
         } else if (scope === ScopeType.CAMPAIGN) {

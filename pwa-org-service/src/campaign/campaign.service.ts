@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { CampaignRepository } from './campaign.repository';
 import { CreateCampaignDto, PaginationQueryDto, UpdateCampaignDto } from "../../../pwa-shared/src";
 import { RoleService } from "../roles/role.service";
 import { SharingService } from "../sharing/sharing.service";
 import { SystemRoleName, RolePriority } from "../../../pwa-shared/src/types/org/roles/enums/role.enums";
 import { AccessLevel, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
-import { UserPayload } from 'pwa-shared/src/types/auth/dto/user-payload.dto';
+import { UserPayload } from '../../../pwa-shared/src/types/auth/dto/user-payload.dto';
 
 @Injectable()
 export class CampaignService {
@@ -18,6 +18,7 @@ export class CampaignService {
     ) { }
 
     async create(dto: CreateCampaignDto, userId: string) {
+        dto.ownerId = dto.ownerId || userId;
         const campaign = await this.repo.create(dto);
         const woLink = await this.repo.findWorkingObjectLink(campaign.id);
 
@@ -118,7 +119,10 @@ export class CampaignService {
     }
 
 
-    async findOne(id: string) {
+    async findOne(id: string, user: UserPayload) {
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== id) {
+            throw new ForbiddenException('Access to this campaign is denied');
+        }
         return await this.repo.findOne(id);
     }
 
@@ -130,11 +134,17 @@ export class CampaignService {
         };
     }
 
-    async update(data: UpdateCampaignDto) {
+    async update(data: UpdateCampaignDto, user: UserPayload) {
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== data.id) {
+            throw new ForbiddenException('Cannot update another campaign');
+        }
         return await this.repo.update(data);
     }
 
-    async delete(id: string) {
+    async delete(id: string, user: UserPayload) {
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== id) {
+            throw new ForbiddenException('Cannot delete another campaign');
+        }
         return await this.repo.delete(id);
     }
 

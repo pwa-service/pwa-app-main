@@ -99,7 +99,10 @@ export class RoleService implements OnModuleInit {
                     throw new ForbiddenException('Access to this campaign role is denied');
                 }
             } else if (role.scope === ScopeType.TEAM) {
-                if (user.scope !== ScopeType.TEAM || user.contextId !== role.teamId) {
+                const isTeamAdmin = user.scope === ScopeType.TEAM && user.contextId === role.teamId;
+                const isCampaignAdminOfTeam = user.scope === ScopeType.CAMPAIGN && role.team?.campaignId === user.contextId;
+
+                if (!isTeamAdmin && !isCampaignAdminOfTeam) {
                     throw new ForbiddenException('Access to this team role is denied');
                 }
             } else {
@@ -141,7 +144,10 @@ export class RoleService implements OnModuleInit {
                 }
             }
             else if (role.scope === ScopeType.TEAM) {
-                if (user.scope !== ScopeType.TEAM || user.contextId !== role.teamId) {
+                const isTeamAdmin = user.scope === ScopeType.TEAM && user.contextId === role.teamId;
+                const isCampaignAdminOfTeam = user.scope === ScopeType.CAMPAIGN && role.team?.campaignId === user.contextId;
+
+                if (!isTeamAdmin && !isCampaignAdminOfTeam) {
                     throw new ForbiddenException('Access to this team role is denied');
                 }
             }
@@ -229,7 +235,10 @@ export class RoleService implements OnModuleInit {
                     throw new ForbiddenException('Access to this campaign role is denied');
                 }
             } else if (role.scope === ScopeType.TEAM) {
-                if (user.scope !== ScopeType.TEAM || user.contextId !== role.teamId) {
+                const isTeamAdmin = user.scope === ScopeType.TEAM && user.contextId === role.teamId;
+                const isCampaignAdminOfTeam = user.scope === ScopeType.CAMPAIGN && role.team?.campaignId === user.contextId;
+
+                if (!isTeamAdmin && !isCampaignAdminOfTeam) {
                     throw new ForbiddenException('Access to this team role is denied');
                 }
             } else {

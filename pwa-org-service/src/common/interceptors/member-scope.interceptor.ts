@@ -12,7 +12,7 @@ import { ScopeType } from '../../../../pwa-shared/src';
 
 @Injectable()
 export class MemberScopeInterceptor implements NestInterceptor {
-    constructor(private readonly teamService: TeamService) {}
+    constructor(private readonly teamService: TeamService) { }
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const { user, data } = this.getRequestData(context);
@@ -34,7 +34,7 @@ export class MemberScopeInterceptor implements NestInterceptor {
             }
 
             if (targetTeamId) {
-                const team = await this.teamService.findOne(targetTeamId);
+                const team = await this.teamService.findOne(targetTeamId, user);
                 if (!team) {
                     throw new NotFoundException(`Team not found`);
                 }

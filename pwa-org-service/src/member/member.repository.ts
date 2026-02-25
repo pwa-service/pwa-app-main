@@ -7,42 +7,42 @@ import { MemberFilterQueryDto, PaginationQueryDto, ScopeType } from '../../../pw
 export class MemberRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { scope?: ScopeType, contextId?: string, excludeUserId?: string }) {
+    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { userScope?: ScopeType, userContextId?: string, excludeUserId?: string }) {
         const { take, skip } = this.getPaginationParams(pagination);
-        const { search, roleId, teamId, campaignId, scope, contextId, excludeUserId } = filters;
+        const { search, roleId, teamId, campaignId, userScope, userContextId, excludeUserId } = filters;
 
-        const campWhere: Prisma.CampaignUserWhereInput = {};
-        const teamWhere: Prisma.TeamUserWhereInput = {};
+        const campConditions: Prisma.CampaignUserWhereInput[] = [];
+        const teamConditions: Prisma.TeamUserWhereInput[] = [];
 
         let fetchCampaigns = false;
         let fetchTeams = false;
 
-        if (scope === ScopeType.SYSTEM) {
+        if (userScope === ScopeType.SYSTEM) {
             fetchCampaigns = true;
             fetchTeams = true;
         }
-        else if (scope === ScopeType.CAMPAIGN) {
+        else if (userScope === ScopeType.CAMPAIGN) {
             fetchCampaigns = true;
             fetchTeams = true;
-            campWhere.campaignId = contextId;
-            teamWhere.team = { campaignId: contextId };
+            campConditions.push({ campaignId: userContextId });
+            teamConditions.push({ team: { campaignId: userContextId } });
         }
-        else if (scope === ScopeType.TEAM) {
+        else if (userScope === ScopeType.TEAM) {
             fetchTeams = true;
-            teamWhere.teamId = contextId;
+            teamConditions.push({ teamId: userContextId });
         }
 
         if (campaignId) {
-            campWhere.campaignId = campaignId;
+            campConditions.push({ campaignId });
             fetchTeams = false;
         }
         if (teamId) {
-            teamWhere.teamId = teamId;
+            teamConditions.push({ teamId });
             fetchCampaigns = false;
         }
         if (roleId) {
-            campWhere.roleId = roleId;
-            teamWhere.roleId = roleId;
+            campConditions.push({ roleId });
+            teamConditions.push({ roleId });
         }
 
         if (search) {
@@ -52,14 +52,17 @@ export class MemberRepository {
                     { username: { contains: search, mode: 'insensitive' } }
                 ]
             };
-            campWhere.profile = searchObj;
-            teamWhere.profile = searchObj;
+            campConditions.push({ profile: searchObj });
+            teamConditions.push({ profile: searchObj });
         }
 
         if (excludeUserId) {
-            campWhere.NOT = { userProfileId: excludeUserId };
-            teamWhere.NOT = { userProfileId: excludeUserId };
+            campConditions.push({ NOT: { userProfileId: excludeUserId } });
+            teamConditions.push({ NOT: { userProfileId: excludeUserId } });
         }
+
+        const campWhere: Prisma.CampaignUserWhereInput = campConditions.length > 0 ? { AND: campConditions } : {};
+        const teamWhere: Prisma.TeamUserWhereInput = teamConditions.length > 0 ? { AND: teamConditions } : {};
 
         if (fetchCampaigns && !fetchTeams) {
             return this.executeQueries(this.prisma.campaignUser, campWhere, take, skip);

@@ -31,24 +31,24 @@ export class TeamGrpcController {
     @UseInterceptors(ScopeInterceptor, IsLeadBelongsToCampaignInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'Create')
-    async create(@Payload(IsCampaignExists, IsUserProfileExists) data: CreateTeamDto) {
-        return this.service.create(data);
+    async create(@Payload(IsCampaignExists, IsUserProfileExists) data: CreateTeamDto, @GrpcUser() user: UserPayload) {
+        return this.service.create(data, user);
     }
 
     @GrpcMethod('TeamService', 'FindOne')
-    async findOne(@Payload() data: { id: string }) {
-        return this.service.findOne(data.id);
+    async findOne(@Payload() data: { id: string }, @GrpcUser() user: UserPayload) {
+        return this.service.findOne(data.id, user);
     }
 
     @GrpcMethod('TeamService', 'Update')
-    async update(@Payload() data: UpdateTeamDto) {
-        return this.service.update(data);
+    async update(@Payload() data: UpdateTeamDto, @GrpcUser() user: UserPayload) {
+        return this.service.update(data, user);
     }
 
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'Delete')
-    async delete(@Payload() data: { id: string }) {
-        return this.service.delete(data.id);
+    async delete(@Payload() data: { id: string }, @GrpcUser() user: UserPayload) {
+        return this.service.delete(data.id, user);
     }
 
     @GrpcMethod('TeamService', 'FindAll')
@@ -62,19 +62,19 @@ export class TeamGrpcController {
     }
 
     @GrpcMethod('TeamService', 'AddMemberToTeam')
-    async addMember(@Payload(IsTeamExists, IsUserProfileExists) data: AddMemberDto) {
-        return this.service.addMemberToTeam(data);
+    async addMember(@Payload(IsTeamExists, IsUserProfileExists) data: AddMemberDto, @GrpcUser() user: UserPayload) {
+        return this.service.addMemberToTeam(data, user);
     }
 
     @GrpcMethod('TeamService', 'RemoveMember')
-    async removeMember(@Payload(IsTeamExists, IsUserProfileExists) data: RemoveMemberDto) {
-        return this.service.removeMember(data);
+    async removeMember(@Payload(IsTeamExists, IsUserProfileExists) data: RemoveMemberDto, @GrpcUser() user: UserPayload) {
+        return this.service.removeMember(data, user);
     }
 
     @UseInterceptors(ScopeInterceptor)
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'AssignTeamLead')
-    async assignTeamLead(@Payload(IsTeamExists, IsUserProfileExists) data: AssignLeadDto) {
-        return this.service.assignTeamLead(data);
+    async assignTeamLead(@Payload(IsTeamExists, IsUserProfileExists) data: AssignLeadDto, @GrpcUser() user: UserPayload) {
+        return this.service.assignTeamLead(data, user);
     }
 }

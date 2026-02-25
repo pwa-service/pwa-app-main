@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
 import { RoleService } from '../roles/role.service';
@@ -25,7 +25,10 @@ export class TeamService {
         private readonly roleService: RoleService,
     ) { }
 
-    async create(dto: CreateTeamDto) {
+    async create(dto: CreateTeamDto, user: UserPayload) {
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== dto.campaignId) {
+            throw new ForbiddenException('Cannot create team for another campaign');
+        }
 
         const team = await this.repo.createTeamTransaction(
             {
@@ -48,26 +51,41 @@ export class TeamService {
                 teamId: team.id,
                 userId: dto.leadId,
                 roleId: role.id,
-            });
+            }, user);
             await this.assignTeamLead({
                 teamId: team.id,
                 userId: dto.leadId,
-            });
+            }, user);
         }
 
         const full = await this.repo.findById(team.id);
         return this.mapToResponse(full);
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, user: UserPayload) {
         const team = await this.repo.findById(id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+
         return this.mapToResponse(team);
     }
 
-    async update(dto: UpdateTeamDto) {
+    async update(dto: UpdateTeamDto, user: UserPayload) {
         const team = await this.repo.findById(dto.id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
 
         const updated = await this.repo.update(dto.id, {
             name: dto.name,
@@ -77,9 +95,16 @@ export class TeamService {
         return this.mapToResponse(updated);
     }
 
-    async delete(id: string) {
+    async delete(id: string, user: UserPayload) {
         const team = await this.repo.findById(id);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
 
         await this.repo.delete(id, team.campaignId);
         return {};
@@ -123,9 +148,19 @@ export class TeamService {
         };
     }
 
-    async addMemberToTeam(dto: AddMemberDto) {
+    async addMemberToTeam(dto: AddMemberDto, user: UserPayload) {
+        const team = await this.repo.findById(dto.teamId);
+        if (!team) throw new BadRequestException('Team not found');
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+
         const existing = await this.repo.findMember(dto.teamId, dto.userId);
-        if (existing) throw new RpcException({ code: 6, message: 'User already in a team' });
+        if (existing) throw new BadRequestException('User already in a team');
 
         const member = await this.repo.addMember({
             teamId: dto.teamId,
@@ -140,17 +175,34 @@ export class TeamService {
         };
     }
 
-    async removeMember(dto: RemoveMemberDto) {
+    async removeMember(dto: RemoveMemberDto, user: UserPayload) {
+        const team = await this.repo.findById(dto.teamId);
+        if (!team) throw new BadRequestException('Team not found');
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+
         const member = await this.repo.findMember(dto.teamId, dto.userId);
-        if (!member) throw new RpcException({ code: 5, message: 'Member not found in this team' });
+        if (!member) throw new BadRequestException('Member not found in this team');
 
         await this.repo.removeMember(dto.userId);
         return {};
     }
 
-    async assignTeamLead(dto: AssignLeadDto) {
+    async assignTeamLead(dto: AssignLeadDto, user: UserPayload) {
         const team = await this.repo.findById(dto.teamId);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
+
+        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== team.campaignId) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
+        if (user.scope === ScopeType.TEAM && user.contextId !== team.id) {
+            throw new ForbiddenException('Access to this team is denied');
+        }
 
         const newLead = await this.repo.findMember(dto.teamId, dto.userId);
         if (!newLead) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
