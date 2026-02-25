@@ -71,16 +71,42 @@ export class RoleRepository {
         });
     }
 
+    async findByPriorityAndContext(priority: number, scope: ScopeType, contextId?: string) {
+        const where: Prisma.RoleWhereInput = { priority, scope };
+
+        if (scope === ScopeType.CAMPAIGN && contextId) where.campaignId = contextId;
+        else if (scope === ScopeType.TEAM && contextId) where.teamId = contextId;
+        else {
+            where.campaignId = null;
+            where.teamId = null;
+        }
+
+        return this.prisma.role.findFirst({
+            where,
+            include: this.roleInclude
+        });
+    }
+
     async findAll(
         pagination: PaginationQueryDto,
-        filters: RoleFilterQueryDto & { scope?: string; contextId?: string }
+        filters: RoleFilterQueryDto & { scope?: string; contextId?: string; userScope?: string; userContextId?: string }
     ) {
         const { limit = 10, offset = 0 } = pagination;
-        const { campaignId, teamId, search, scope, contextId } = filters;
+        const { campaignId, teamId, search, scope, contextId, userScope, userContextId } = filters;
 
         const andConditions: Prisma.RoleWhereInput[] = [];
 
-        if (scope === ScopeType.CAMPAIGN) {
+        if (userScope === ScopeType.CAMPAIGN && userContextId) {
+            // Show only system roles + roles belonging to THIS campaign
+            andConditions.push({
+                OR: [
+                    { scope: ScopeType.SYSTEM },
+                    { campaignId: userContextId },
+                ]
+            });
+        } else if (userScope === ScopeType.TEAM && userContextId) {
+            andConditions.push({ teamId: userContextId });
+        } else if (scope === ScopeType.CAMPAIGN) {
             andConditions.push({
                 OR: [
                     { campaignId: contextId },

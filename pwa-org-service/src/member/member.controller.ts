@@ -65,7 +65,7 @@ export class MemberGrpcController {
     @GrpcMethod('MemberService', 'DeleteUser')
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
-    async deleteUser(@Payload(IsUserProfileExists) dto: { userId: string }) {
-        return this.service.deleteUser(dto.userId);
+    async deleteUser(@Payload(IsUserProfileExists) dto: { userId: string }, @GrpcUser() user: UserPayload) {
+        return this.service.deleteUser(dto.userId, user);
     }
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
     CreateCampaignMemberDto,
@@ -40,7 +40,8 @@ export class MemberService implements OnModuleInit {
         const filtersWithScope = {
             ...filters,
             userScope: user.scope,
-            userContextId: user.contextId
+            userContextId: user.contextId,
+            excludeUserId: user.id
         };
 
         const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
@@ -60,7 +61,7 @@ export class MemberService implements OnModuleInit {
     }
 
     async createTeamLead(dto: CreateTeamMemberDto, user: UserPayload) {
-        const role = await this.roleService.findByNameAndContext(SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, dto.campaignId!);
+        const role = await this.roleService.findByPriorityAndContext(RolePriority.LEAD, ScopeType.CAMPAIGN, dto.campaignId!);
         if (!role) throw new BadRequestException('Role Team Lead not found');
 
         const { user: authUser } = await this.callAuthService({
@@ -73,6 +74,8 @@ export class MemberService implements OnModuleInit {
             roleId: role.id,
             teamId: dto.teamId!,
         });
+        // Ensure campaign membership exists to avoid duplication in member list
+        await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
         await this.teamService.assignTeamLead({
             userId: authUser.id,
             teamId: dto.teamId!
@@ -89,8 +92,7 @@ export class MemberService implements OnModuleInit {
     }
 
     async createTeamMember(dto: CreateTeamMemberDto, user: UserPayload) {
-        const roleName = SystemRoleName.MEDIA_BUYER;
-        const role = await this.roleService.findByNameAndContext(roleName, ScopeType.CAMPAIGN, dto.campaignId!);
+        const role = await this.roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, dto.campaignId!);
         if (!role) throw new BadRequestException('Role not found');
 
         const { user: authUser } = await this.callAuthService({
@@ -102,6 +104,8 @@ export class MemberService implements OnModuleInit {
             teamId: dto.teamId!,
             roleId: role.id
         });
+        // Ensure campaign membership exists to avoid duplication in member list
+        await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
 
         return this.formatResponse({
             ...member,
@@ -132,7 +136,10 @@ export class MemberService implements OnModuleInit {
         });
     }
 
-    async deleteUser(userId: string) {
+    async deleteUser(userId: string, user: UserPayload) {
+        if (userId === user.id) {
+            throw new BadRequestException('You cannot delete your own account');
+        }
         await this.repo.deleteUser(userId);
         return {};
     }

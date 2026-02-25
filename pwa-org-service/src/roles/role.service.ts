@@ -49,7 +49,7 @@ export class RoleService implements OnModuleInit {
         }
     }
 
-    async create(dto: CreateRoleDto, userScope: ScopeType, contextId?: string) {
+    async create(dto: CreateRoleDto, userScope: ScopeType, contextId?: string, priority?: number) {
         const rulesData = {
             statAccess: dto.globalRules.statAccess ?? AccessLevel.None,
             finAccess: dto.globalRules.finAccess ?? AccessLevel.None,
@@ -58,7 +58,7 @@ export class RoleService implements OnModuleInit {
             sharingAccess: dto.globalRules.sharingAccess ?? AccessLevel.None,
         };
 
-        const newPriority = RolePriority.MEMBER;
+        const newPriority = priority ?? RolePriority.MEMBER;
 
         const roleData: any = {
             name: dto.name,
@@ -137,6 +137,10 @@ export class RoleService implements OnModuleInit {
 
     async findByNameAndContext(name: string, scope: ScopeType, contextId: string) {
         return this.repo.findByNameAndContext(name, scope, contextId);
+    }
+
+    async findByPriorityAndContext(priority: number, scope: ScopeType, contextId: string) {
+        return this.repo.findByPriorityAndContext(priority, scope, contextId);
     }
 
     async findAll(pagination: PaginationQueryDto, filters: RoleFilterQueryDto, user: UserPayload) {

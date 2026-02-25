@@ -3,7 +3,7 @@ import { CampaignRepository } from './campaign.repository';
 import { CreateCampaignDto, PaginationQueryDto, UpdateCampaignDto } from "../../../pwa-shared/src";
 import { RoleService } from "../roles/role.service";
 import { SharingService } from "../sharing/sharing.service";
-import { SystemRoleName } from "../../../pwa-shared/src/types/org/roles/enums/role.enums";
+import { SystemRoleName, RolePriority } from "../../../pwa-shared/src/types/org/roles/enums/role.enums";
 import { AccessLevel, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class CampaignService {
         private readonly repo: CampaignRepository,
         private readonly roleService: RoleService,
         private readonly sharingService: SharingService,
-    ) {}
+    ) { }
 
     async create(dto: CreateCampaignDto, userId: string) {
         const campaign = await this.repo.create(dto);
@@ -39,7 +39,8 @@ export class CampaignService {
                 }
             },
             ScopeType.CAMPAIGN,
-            campaign.id
+            campaign.id,
+            RolePriority.OWNER
         );
 
         await this.roleService.create(
@@ -55,7 +56,8 @@ export class CampaignService {
                 }
             },
             ScopeType.CAMPAIGN,
-            campaign.id
+            campaign.id,
+            RolePriority.MEMBER
         );
 
         await this.roleService.assignRoleToUser(
@@ -90,7 +92,8 @@ export class CampaignService {
                 }
             },
             ScopeType.CAMPAIGN,
-            campaign.id
+            campaign.id,
+            RolePriority.LEAD
         );
 
         await this.roleService.create(
@@ -106,12 +109,13 @@ export class CampaignService {
                 }
             },
             ScopeType.CAMPAIGN,
-            campaign.id
+            campaign.id,
+            RolePriority.MEMBER
         );
-
 
         return campaign;
     }
+
 
     async findOne(id: string) {
         return await this.repo.findOne(id);
@@ -135,5 +139,9 @@ export class CampaignService {
 
     async addMember(userId: string, campaignId: string, roleId: number) {
         return this.repo.addMember(userId, campaignId, roleId);
+    }
+
+    async upsertMember(userId: string, campaignId: string, roleId: number) {
+        return this.repo.upsertMember(userId, campaignId, roleId);
     }
 }

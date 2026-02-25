@@ -14,7 +14,7 @@ import {
     WorkingObjectType,
     ScopeType,
 } from '../../../pwa-shared/src';
-import { SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
 
 
@@ -39,8 +39,8 @@ export class TeamService {
         );
 
         if (dto.leadId) {
-            const role = await this.roleService.findByNameAndContext(
-                SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, dto.campaignId
+            const role = await this.roleService.findByPriorityAndContext(
+                RolePriority.LEAD, ScopeType.CAMPAIGN, dto.campaignId
             );
             if (!role) throw new BadRequestException('Role Team Lead not found');
 
@@ -155,13 +155,13 @@ export class TeamService {
         const newLead = await this.repo.findMember(dto.teamId, dto.userId);
         if (!newLead) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
 
-        const teamLeadRole = await this.roleService.findByNameAndContext(
-            SystemRoleName.TEAM_LEAD, ScopeType.CAMPAIGN, team.campaignId
+        const teamLeadRole = await this.roleService.findByPriorityAndContext(
+            RolePriority.LEAD, ScopeType.CAMPAIGN, team.campaignId
         );
         if (!teamLeadRole) throw new BadRequestException('Role Team Lead not found');
 
-        const mediaBuyerRole = await this.roleService.findByNameAndContext(
-            SystemRoleName.MEDIA_BUYER, ScopeType.CAMPAIGN, team.campaignId
+        const mediaBuyerRole = await this.roleService.findByPriorityAndContext(
+            RolePriority.MEMBER, ScopeType.CAMPAIGN, team.campaignId
         );
         if (!mediaBuyerRole) throw new BadRequestException('Role Media Buyer not found');
 

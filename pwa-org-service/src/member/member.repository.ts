@@ -7,9 +7,9 @@ import { MemberFilterQueryDto, PaginationQueryDto, ScopeType } from '../../../pw
 export class MemberRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { scope?: ScopeType, contextId?: string }) {
+    async findAll(pagination: PaginationQueryDto, filters: MemberFilterQueryDto & { scope?: ScopeType, contextId?: string, excludeUserId?: string }) {
         const { take, skip } = this.getPaginationParams(pagination);
-        const { search, roleId, teamId, campaignId, scope, contextId } = filters;
+        const { search, roleId, teamId, campaignId, scope, contextId, excludeUserId } = filters;
 
         const campWhere: Prisma.CampaignUserWhereInput = {};
         const teamWhere: Prisma.TeamUserWhereInput = {};
@@ -56,6 +56,11 @@ export class MemberRepository {
             teamWhere.profile = searchObj;
         }
 
+        if (excludeUserId) {
+            campWhere.NOT = { userProfileId: excludeUserId };
+            teamWhere.NOT = { userProfileId: excludeUserId };
+        }
+
         if (fetchCampaigns && !fetchTeams) {
             return this.executeQueries(this.prisma.campaignUser, campWhere, take, skip);
         }
@@ -74,9 +79,18 @@ export class MemberRepository {
             (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
         );
 
-        const paginatedItems = allItems.slice(skip, skip + take);
+        // Deduplicate: a user in both campaign + team tables should appear only once
+        // Team entry takes priority over campaign entry (more specific context)
+        const seenIds = new Set<string>();
+        const deduped = allItems.filter((item) => {
+            if (seenIds.has(item.userProfileId)) return false;
+            seenIds.add(item.userProfileId);
+            return true;
+        });
 
-        return { items: paginatedItems, total: campTotal + teamTotal };
+        const paginatedItems = deduped.slice(skip, skip + take);
+
+        return { items: paginatedItems, total: deduped.length };
     }
 
     private getPaginationParams(pagination?: PaginationQueryDto) {

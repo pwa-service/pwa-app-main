@@ -6,7 +6,7 @@ import { Prisma } from "../../../pwa-prisma/src";
 
 @Injectable()
 export class CampaignRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async create(data: CreateCampaignDto) {
         return this.prisma.campaign.create({
@@ -116,6 +116,22 @@ export class CampaignRepository {
                 campaignId: campaignId,
                 roleId: roleId
             },
+            include: {
+                role: true,
+                profile: true
+            }
+        });
+    }
+
+    async upsertMember(userId: string, campaignId: string, roleId: number) {
+        return this.prisma.campaignUser.upsert({
+            where: { userProfileId: userId },
+            create: {
+                userProfileId: userId,
+                campaignId: campaignId,
+                roleId: roleId
+            },
+            update: { roleId },
             include: {
                 role: true,
                 profile: true
