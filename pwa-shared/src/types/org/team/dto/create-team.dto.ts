@@ -16,7 +16,6 @@ export class CreateTeamDto {
         description: 'UUID кампании, к которой будет привязана команда',
         example: 'd290f1ee-6c54-4b01-90e6-d701748f0851'
     })
-    @IsUUID('4')
     campaignId!: string;
 
     @ApiPropertyOptional({
@@ -24,6 +23,5 @@ export class CreateTeamDto {
         example: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
     })
     @IsOptional()
-    @IsUUID('4', { message: 'Invalid Team ID' })
     leadId?: string;
 }
