@@ -17,7 +17,11 @@ async function bootstrap() {
         { cors: false }
     );
 
-    await app.register(multipart);
+    await app.register(multipart, {
+        limits: {
+            fileSize: 50 * 1024 * 1024, // 50MB
+        }
+    });
     app.useStaticAssets({
         root: join(process.cwd(), 'uploads'),
         prefix: '/uploads/',
@@ -34,7 +38,7 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, document, {
         swaggerOptions: { persistAuthorization: true },
     });
-    
+
     app.useGlobalPipes(
         new ValidationPipe({
             transform: true,
@@ -47,7 +51,7 @@ async function bootstrap() {
         credentials: true,
     });
     app.enableShutdownHooks();
-    
+
     await app.listen(3000, '0.0.0.0');
     console.log('🚀 Gateway on http://localhost:3000');
 }
