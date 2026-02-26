@@ -34,12 +34,7 @@ export class TeamGrpcClient implements OnModuleInit {
     }
 
     async create(data: CreateTeamDto, metadata?: Metadata) {
-        const payload = {
-            name: data.name,
-            campaign_id: data.campaignId,
-            lead_id: data.leadId,
-        };
-        return lastValueFrom(this.svc.Create(payload as any, metadata));
+        return lastValueFrom(this.svc.Create(data, metadata));
     }
 
     async findOne(id: string, metadata?: Metadata) {
