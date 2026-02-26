@@ -45,17 +45,25 @@ export class MemberService implements OnModuleInit {
         };
 
         const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
-        const members = items.map((item: any) => ({
-            id: item.userProfileId,
-            userId: item.userProfileId,
-            email: item.profile?.email,
-            username: item.profile?.username,
-            role: item.role?.name,
-            roleId: item.roleId,
-            scope: item.profile.scope,
-            teamId: item.teamId || null,
-            campaignId: item.campaignId || (item.team ? item.team.campaignId : null)
-        }));
+        
+        const members = items.map((profile: any) => {
+            const isTeamUser = !!profile.teamUser;
+            const contextSource = isTeamUser ? profile.teamUser : profile.campaignUser;
+
+            return {
+                id: profile.id,
+                userId: profile.id,
+                email: profile.email,
+                username: profile.username,
+                role: contextSource?.role?.name || 'N/A',
+                roleId: contextSource?.roleId,
+                scope: profile.scope,
+                teamId: profile.teamUser?.teamId || null,
+                teamName: profile.teamUser?.team?.name || null,
+                campaignId: profile.campaignUser?.campaignId || profile.teamUser?.team?.campaignId || null,
+                campaignName: profile.campaignUser?.campaign?.name || null
+            };
+        });
 
         return { members, total };
     }

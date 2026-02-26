@@ -73,7 +73,6 @@ export class MemberRepository {
                 skip,
                 orderBy: { createdAt: 'desc' },
                 include: {
-                    // Підтягуємо дані про зв'язки, щоб знати роль і контекст
                     campaignUser: {
                         include: { role: true, campaign: { select: { id: true, name: true } } }
                     },
