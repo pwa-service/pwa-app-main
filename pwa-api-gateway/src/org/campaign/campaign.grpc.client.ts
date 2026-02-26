@@ -21,7 +21,7 @@ interface ICampaignGrpcService {
 export class CampaignGrpcClient implements OnModuleInit {
     private svc!: ICampaignGrpcService;
 
-    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
+    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) { }
 
     onModuleInit() {
         this.svc = this.client.getService<ICampaignGrpcService>('CampaignService');

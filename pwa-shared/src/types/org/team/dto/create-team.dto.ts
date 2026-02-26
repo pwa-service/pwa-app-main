@@ -1,4 +1,4 @@
-import { IsString, IsUUID, IsOptional, Length } from 'class-validator';
+import { IsString, IsUUID, IsOptional, Length, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTeamDto {
@@ -16,6 +16,8 @@ export class CreateTeamDto {
         description: 'UUID кампании, к которой будет привязана команда',
         example: 'd290f1ee-6c54-4b01-90e6-d701748f0851'
     })
+    @IsString()
+    @IsNotEmpty()
     campaignId!: string;
 
     @ApiPropertyOptional({

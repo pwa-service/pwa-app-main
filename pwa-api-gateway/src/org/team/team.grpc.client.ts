@@ -27,14 +27,19 @@ interface ITeamGrpcService {
 export class TeamGrpcClient implements OnModuleInit {
     private svc!: ITeamGrpcService;
 
-    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) {}
+    constructor(@Inject('ORG_SERVICE_GRPC') private readonly client: ClientGrpc) { }
 
     onModuleInit() {
         this.svc = this.client.getService<ITeamGrpcService>('TeamService');
     }
 
     async create(data: CreateTeamDto, metadata?: Metadata) {
-        return lastValueFrom(this.svc.Create(data, metadata));
+        const payload = {
+            name: data.name,
+            campaign_id: data.campaignId,
+            lead_id: data.leadId,
+        };
+        return lastValueFrom(this.svc.Create(payload as any, metadata));
     }
 
     async findOne(id: string, metadata?: Metadata) {

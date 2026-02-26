@@ -26,17 +26,6 @@ export class TeamService {
     ) { }
 
     async create(dto: CreateTeamDto, user: UserPayload) {
-        if (user.scope === ScopeType.CAMPAIGN) {
-            if (!user.contextId) throw new BadRequestException('User contextId is missing');
-            dto.campaignId = user.contextId!;
-        } else if (user.scope === ScopeType.TEAM) {
-            throw new ForbiddenException('Team users cannot create teams');
-        }
-
-        if (!dto.campaignId) {
-            throw new BadRequestException('campaignId is required');
-        }
-
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
@@ -94,12 +83,21 @@ export class TeamService {
             throw new ForbiddenException('Access to this team is denied');
         }
 
-        const updated = await this.repo.update(dto.id, {
-            name: dto.name,
-            teamLeadId: dto.leadId
+        const currentLeadId = team.teamLead?.userProfileId || team.teamLeadId;
+
+        if (dto.leadId && dto.leadId !== currentLeadId) {
+            await this.assignTeamLead({
+                teamId: dto.id,
+                userId: dto.leadId
+            }, user);
+        }
+
+        await this.repo.update(dto.id, {
+            name: dto.name
         });
 
-        return this.mapToResponse(updated);
+        const fullTeam = await this.repo.findById(dto.id);
+        return this.mapToResponse(fullTeam);
     }
 
     async delete(id: string, user: UserPayload) {
