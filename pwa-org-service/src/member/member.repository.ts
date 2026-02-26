@@ -74,10 +74,20 @@ export class MemberRepository {
                 orderBy: { createdAt: 'desc' },
                 include: {
                     campaignUser: {
-                        include: { role: true, campaign: { select: { id: true, name: true } } }
+                        include: { 
+                            role: true, 
+                            campaign: { select: { id: true, name: true } } 
+                        }
                     },
                     teamUser: {
-                        include: { role: true, team: { select: { id: true, name: true, campaignId: true } } }
+                        include: { 
+                            role: true, 
+                            team: { 
+                                include: {
+                                    campaign: { select: { name: true, id: true } }
+                                } 
+                            } 
+                        }
                     }
                 }
             }),

@@ -26,10 +26,6 @@ export class TeamService {
     ) { }
 
     async create(dto: CreateTeamDto, user: UserPayload) {
-        if (user.scope === ScopeType.CAMPAIGN && user.contextId !== dto.campaignId) {
-            throw new ForbiddenException('Cannot create team for another campaign');
-        }
-
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
