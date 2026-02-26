@@ -17,11 +17,7 @@ async function bootstrap() {
         { cors: false }
     );
 
-    await app.register(multipart, {
-        limits: {
-            fileSize: 50 * 1024 * 1024, // 50MB
-        }
-    });
+    await app.register(multipart);
     app.useStaticAssets({
         root: join(process.cwd(), 'uploads'),
         prefix: '/uploads/',
