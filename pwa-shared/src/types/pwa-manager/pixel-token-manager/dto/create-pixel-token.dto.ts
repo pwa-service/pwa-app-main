@@ -2,6 +2,8 @@ import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePixelTokenDto {
+    @IsString()
+    @IsNotEmpty()
     id!: string;
 
     @ApiProperty({ example: 'EAA...' })

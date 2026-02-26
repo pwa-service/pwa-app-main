@@ -26,6 +26,11 @@ export class TeamService {
     ) { }
 
     async create(dto: CreateTeamDto, user: UserPayload) {
+        const campaignExists = await this.repo.findCampaign(dto.campaignId);
+        if (!campaignExists) {
+            throw new BadRequestException('Campaign not found');
+        }
+
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
