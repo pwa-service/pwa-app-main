@@ -342,7 +342,7 @@ model Domain {
 }
 
 model PixelToken {
-  id          String    @id @default(uuid())
+  id          String    @id
   token       String    @unique
   description String?
   ownerId     String?   @map("owner_id")
