@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '../../../pwa-prisma/src';
 import { MemberFilterQueryDto, PaginationQueryDto, ScopeType } from '../../../pwa-shared/src';
 
-
 @Injectable()
 export class MemberRepository {
     constructor(private readonly prisma: PrismaService) { }
@@ -11,89 +10,82 @@ export class MemberRepository {
         const { take, skip } = this.getPaginationParams(pagination);
         const { search, roleId, teamId, campaignId, userScope, userContextId, excludeUserId } = filters;
 
-        const campConditions: Prisma.CampaignUserWhereInput[] = [];
-        const teamConditions: Prisma.TeamUserWhereInput[] = [];
+        const andConditions: Prisma.UserProfileWhereInput[] = [];
 
-        let fetchCampaigns = false;
-        let fetchTeams = false;
-
-        if (userScope === ScopeType.SYSTEM) {
-            fetchCampaigns = true;
-            fetchTeams = true;
-        }
-        else if (userScope === ScopeType.CAMPAIGN) {
-            fetchCampaigns = true;
-            fetchTeams = true;
-            campConditions.push({ campaignId: userContextId });
-            teamConditions.push({ team: { campaignId: userContextId } });
-        }
-        else if (userScope === ScopeType.TEAM) {
-            fetchTeams = true;
-            teamConditions.push({ teamId: userContextId });
-        }
-
-        if (campaignId) {
-            campConditions.push({ campaignId });
-            fetchTeams = false;
-        }
-        if (teamId) {
-            teamConditions.push({ teamId });
-            fetchCampaigns = false;
-        }
-        if (roleId) {
-            campConditions.push({ roleId });
-            teamConditions.push({ roleId });
+        if (excludeUserId) {
+            andConditions.push({ id: { not: excludeUserId } });
         }
 
         if (search) {
-            const searchObj: Prisma.UserProfileWhereInput = {
+            andConditions.push({
                 OR: [
                     { email: { contains: search, mode: 'insensitive' } },
                     { username: { contains: search, mode: 'insensitive' } }
                 ]
-            };
-            campConditions.push({ profile: searchObj });
-            teamConditions.push({ profile: searchObj });
+            });
         }
 
-        if (excludeUserId) {
-            campConditions.push({ NOT: { userProfileId: excludeUserId } });
-            teamConditions.push({ NOT: { userProfileId: excludeUserId } });
+    
+        if (roleId) {
+            andConditions.push({
+                OR: [
+                    { campaignUser: { roleId: Number(roleId) } },
+                    { teamUser: { roleId: Number(roleId) } }
+                ]
+            });
         }
 
-        const campWhere: Prisma.CampaignUserWhereInput = campConditions.length > 0 ? { AND: campConditions } : {};
-        const teamWhere: Prisma.TeamUserWhereInput = teamConditions.length > 0 ? { AND: teamConditions } : {};
-
-        if (fetchCampaigns && !fetchTeams) {
-            return this.executeQueries(this.prisma.campaignUser, campWhere, take, skip);
+    
+        if (teamId || userScope === ScopeType.TEAM) {
+            const targetTeamId = teamId || userContextId;
+            if (targetTeamId) {
+                andConditions.push({
+                    teamUser: { teamId: targetTeamId }
+                });
+            }
+        } 
+    
+        else if (campaignId || userScope === ScopeType.CAMPAIGN) {
+            const targetCampaignId = campaignId || userContextId;
+            if (targetCampaignId) {
+                andConditions.push({
+                    OR: [
+                        { campaignUser: { campaignId: targetCampaignId } },
+                        { teamUser: { team: { campaignId: targetCampaignId } } }
+                    ]
+                });
+            }
         }
-        if (fetchTeams && !fetchCampaigns) {
-            return this.executeQueries(this.prisma.teamUser, teamWhere, take, skip);
+        else if (userScope === ScopeType.SYSTEM) {
+            andConditions.push({
+                OR: [
+                    { campaignUser: { isNot: null } },
+                    { teamUser: { isNot: null } }
+                ]
+            });
         }
 
-        const [campItems, campTotal, teamItems, teamTotal] = await Promise.all([
-            this.prisma.campaignUser.findMany({ where: campWhere, include: { role: true, profile: true } }),
-            this.prisma.campaignUser.count({ where: campWhere }),
-            this.prisma.teamUser.findMany({ where: teamWhere, include: { role: true, profile: true, team: true } }),
-            this.prisma.teamUser.count({ where: teamWhere })
+        const where: Prisma.UserProfileWhereInput = { AND: andConditions };
+        const [items, total] = await Promise.all([
+            this.prisma.userProfile.findMany({
+                where,
+                take,
+                skip,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    // Підтягуємо дані про зв'язки, щоб знати роль і контекст
+                    campaignUser: {
+                        include: { role: true, campaign: { select: { id: true, name: true } } }
+                    },
+                    teamUser: {
+                        include: { role: true, team: { select: { id: true, name: true, campaignId: true } } }
+                    }
+                }
+            }),
+            this.prisma.userProfile.count({ where })
         ]);
 
-        const allItems = [...campItems, ...teamItems].sort(
-            (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-        );
-
-        // Deduplicate: a user in both campaign + team tables should appear only once
-        // Team entry takes priority over campaign entry (more specific context)
-        const seenIds = new Set<string>();
-        const deduped = allItems.filter((item) => {
-            if (seenIds.has(item.userProfileId)) return false;
-            seenIds.add(item.userProfileId);
-            return true;
-        });
-
-        const paginatedItems = deduped.slice(skip, skip + take);
-
-        return { items: paginatedItems, total: deduped.length };
+        return { items, total };
     }
 
     private getPaginationParams(pagination?: PaginationQueryDto) {
@@ -103,28 +95,10 @@ export class MemberRepository {
         };
     }
 
-    private async executeQueries(model: any, where: any, take: number, skip: number) {
-        const [items, total] = await Promise.all([
-            model.findMany({
-                where,
-                take,
-                skip,
-                include: { role: true, profile: true, team: true },
-                orderBy: { createdAt: 'desc' }
-            }),
-            model.count({ where })
-        ]);
-        return { items, total };
-    }
-
     async deleteUser(userId: string) {
         return this.prisma.$transaction(async (tx) => {
-            await tx.shareUserProfile.deleteMany({
-                where: { createdBy: userId },
-            });
-            await tx.userProfile.delete({
-                where: { id: userId },
-            });
+            await tx.shareUserProfile.deleteMany({ where: { createdBy: userId } });
+            await tx.userProfile.delete({ where: { id: userId } });
         });
     }
 }
