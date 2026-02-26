@@ -26,10 +26,21 @@ export class TeamService {
     ) { }
 
     async create(dto: CreateTeamDto, user: UserPayload) {
+        if (user.scope === ScopeType.CAMPAIGN) {
+            if (!user.contextId) throw new BadRequestException('User contextId is missing');
+            dto.campaignId = user.contextId!;
+        } else if (user.scope === ScopeType.TEAM) {
+            throw new ForbiddenException('Team users cannot create teams');
+        }
+
+        if (!dto.campaignId) {
+            throw new BadRequestException('campaignId is required');
+        }
+
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
-                campaignId: dto.campaignId,
+                campaignId: dto.campaignId!,
             },
             {
                 type: WorkingObjectType.TEAM,
