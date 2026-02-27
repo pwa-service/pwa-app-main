@@ -86,7 +86,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
         teamService = module.get(TeamService);
         memberService = module.get(MemberService);
 
-        // CLEANUP
         await prisma.workingObjectTeamUser.deleteMany();
         await prisma.teamUser.deleteMany();
         await prisma.team.deleteMany();
@@ -189,17 +188,15 @@ describe('Multi-Tenant Isolation Security Tests', () => {
                 campaignId: campaignAId
             }, { scope: ScopeType.SYSTEM } as UserPayload);
 
-            // Add member to campaign first (mandatory for role sync)
             await campaignService.addMember(userA2.id, campaignAId, roleA1Id);
 
-            // Then add to team
             await teamService.addMemberToTeam({
                 teamId: team.id,
                 userId: userA2.id,
                 roleId: roleA1Id
             }, { scope: ScopeType.SYSTEM } as UserPayload);
 
-            // Assign as lead
+
             const updated = await teamService.assignTeamLead({
                 teamId: team.id,
                 userId: userA2.id
@@ -208,7 +205,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             const teamMember = await prisma.teamUser.findFirst({
                 where: { teamId: team.id, userProfileId: userA2.id }
             });
-            expect(updated.leadId).toBe(teamMember!.id);
+            expect(updated).toBe(teamMember!.id);
         });
 
         it('should create roles in different scopes (Campaign vs Team)', async () => {
@@ -285,7 +282,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             await teamService.addMemberToTeam({ teamId: team.id, userId: newUser.id, roleId: memberRole!.id }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             const updated = await teamService.assignTeamLead({ teamId: team.id, userId: newUser.id }, { scope: ScopeType.SYSTEM } as UserPayload);
-            expect(updated.leadId).toBeDefined();
+            expect(updated).toBeDefined();
         });
     });
 

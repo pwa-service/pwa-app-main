@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
+import * as bcrypt from 'bcryptjs';
 import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
@@ -45,7 +46,7 @@ export class MemberService implements OnModuleInit {
         };
 
         const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
-        
+
         const members = items.map((profile: any) => {
             const isTeamUser = !!profile.teamUser;
             const contextSource = isTeamUser ? profile.teamUser : profile.campaignUser;
@@ -151,6 +152,30 @@ export class MemberService implements OnModuleInit {
         }
         await this.repo.deleteUser(userId);
         return {};
+    }
+
+    async updateUser(dto: { id: string, email?: string, password?: string }, user: UserPayload) {
+        const updateData: any = {};
+        if (dto.email) {
+            updateData.email = dto.email;
+        }
+        if (dto.password) {
+            updateData.passwordHash = await bcrypt.hash(dto.password, 10);
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new BadRequestException('No fields to update');
+        }
+
+        const updatedUser = await this.repo.updateUser(dto.id, updateData);
+
+        return this.formatResponse({
+            user_id: updatedUser.id,
+            email: updatedUser.email,
+            username: updatedUser.username,
+            scope: updatedUser.scope,
+            role: 'updated',
+        });
     }
 
     private async callAuthService(dto: any) {

@@ -15,6 +15,7 @@ interface IMemberGrpcService {
     CreateCampaignMember(data: CreateCampaignMemberDto, md?: Metadata): Observable<any>;
     CreateTeamLead(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
     CreateTeamMember(data: CreateTeamMemberDto, md?: Metadata): Observable<any>;
+    UpdateUser(data: { id: string, email?: string, password?: string }, md?: Metadata): Observable<any>;
     DeleteUser(data: { userId: string }, md?: Metadata): Observable<any>;
 }
 
@@ -46,6 +47,10 @@ export class MemberGrpcClient implements OnModuleInit {
 
     async createTeamMember(dto: CreateTeamMemberDto, metadata?: Metadata) {
         return lastValueFrom(this.svc.CreateTeamMember(dto, metadata));
+    }
+
+    async updateUser(id: string, email?: string, password?: string, metadata?: Metadata) {
+        return lastValueFrom(this.svc.UpdateUser({ id, email, password }, metadata));
     }
 
     async deleteUser(userId: string, metadata?: Metadata) {

@@ -53,6 +53,13 @@ export class MemberGrpcController {
         return this.service.createTeamMember(dto, user);
     }
 
+    @GrpcMethod('MemberService', 'UpdateUser')
+    @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN, ScopeType.TEAM)
+    @RequireGlobalAccess(ResourceType.USERS, AccessLevel.Manage)
+    async updateUser(@Payload(IsUserProfileExists) dto: { id: string, email?: string, password?: string }, @GrpcUser() user: UserPayload) {
+        return this.service.updateUser(dto, user);
+    }
+
     @GrpcMethod('MemberService', 'FindAll')
     async findAll(
         @GrpcPagination() pagination: PaginationQueryDto,

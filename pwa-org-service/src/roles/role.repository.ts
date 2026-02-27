@@ -253,9 +253,17 @@ export class RoleRepository {
         }
     }
 
-    async updateMemberRole(userProfileId: string, roleId: number) {
+    async updateMemberRole(userProfileId: string, teamId: string, roleId: number) {
+        // Find the specific TeamUser by matching both userProfileId and teamId.
+        // Even though userProfileId is currently unique, this avoids issues if that changes.
+        const member = await this.prisma.teamUser.findFirst({
+            where: { userProfileId, teamId }
+        });
+
+        if (!member) throw new Error('Member not found in team');
+
         return this.prisma.teamUser.update({
-            where: { userProfileId },
+            where: { id: member.id },
             data: { roleId },
         });
     }

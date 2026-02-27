@@ -75,6 +75,7 @@ export class TeamGrpcController {
     @AllowedScopes(ScopeType.SYSTEM, ScopeType.CAMPAIGN)
     @GrpcMethod('TeamService', 'AssignTeamLead')
     async assignTeamLead(@Payload(IsTeamExists, IsUserProfileExists) data: AssignLeadDto, @GrpcUser() user: UserPayload) {
-        return this.service.assignTeamLead(data, user);
+        const newLeadId = await this.service.assignTeamLead(data, user);
+        return this.service.update({ id: data.teamId, name: undefined as any, leadId: data.userId }, user);
     }
 }

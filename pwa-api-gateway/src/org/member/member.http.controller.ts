@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from "../../common/jwt-auth.guard";
 import { MemberGrpcClient } from './member.grpc.client';
@@ -49,6 +49,12 @@ export class MemberHttpController {
     @ApiOperation({ summary: 'Create a standard Team Member' })
     async createTeamMember(@Body() dto: CreateTeamMemberDto, @Req() req: any) {
         return this.client.createTeamMember(dto, buildGrpcMetadata(req));
+    }
+
+    @Patch(':userId')
+    @ApiOperation({ summary: 'Update a user (email or password)' })
+    async updateUser(@Param('userId') userId: string, @Body() dto: { email?: string, password?: string }, @Req() req: any) {
+        return this.client.updateUser(userId, dto.email, dto.password, buildGrpcMetadata(req));
     }
 
     @Delete(':userId')

@@ -77,7 +77,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
         await prisma.campaign.deleteMany();
         await prisma.userProfile.deleteMany({
-            where: { email: { in: [ownerEmail, memberEmail] } }
+            where: { email: { in: [ownerEmail, memberEmail, 'new_lead@test.com'] } }
         });
 
         const owner = await prisma.userProfile.create({
@@ -248,6 +248,61 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
             expect(teamUser).toBeDefined();
             expect(teamUser?.team.name).toBe('Alpha Squad');
+        });
+
+        it('should update Team Lead and correctly reassign roles', async () => {
+            // 1. Create a second member to become the new lead
+            const newLeadUser = await prisma.userProfile.create({
+                data: { username: 'new_lead_e2e', email: 'new_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            const newLeadId = newLeadUser.id;
+
+            await campaignService.addMember(newLeadId, campaignId, parseInt(customRoleId));
+
+            const memberRole = await roleService.create(
+                {
+                    name: 'Media Buyer',
+                    description: 'Regular member',
+                    globalRules: { statAccess: AccessLevel.View, finAccess: AccessLevel.None, logAccess: AccessLevel.None, usersAccess: AccessLevel.None, sharingAccess: AccessLevel.None }
+                },
+                ScopeType.CAMPAIGN,
+                campaignId
+            );
+
+            await teamService.addMemberToTeam({
+                teamId: teamId,
+                userId: newLeadId,
+                roleId: parseInt(memberRole.id)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Create Campaign Team Lead Role (required by assignTeamLead)
+            await roleService.create(
+                { name: 'Team Lead', description: 'Lead', globalRules: { statAccess: AccessLevel.View, finAccess: AccessLevel.None, logAccess: AccessLevel.None, usersAccess: AccessLevel.Manage, sharingAccess: AccessLevel.None } },
+                ScopeType.CAMPAIGN,
+                campaignId
+            );
+
+            // Assign initial lead (memberId)
+            const updatedTeam = await teamService.update({
+                id: teamId,
+                name: 'Alpha Squad Updated',
+                leadId: memberId
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(updatedTeam.leadId).toBe(memberId);
+
+            // Reassign lead to newLeadId
+            const reassignedTeam = await teamService.update({
+                id: teamId,
+                name: 'Alpha Squad Updated',
+                leadId: newLeadId
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(reassignedTeam.leadId).toBe(newLeadId);
+
+            // Verify DB actually saved the teamLeadId
+            const teamInDb = await prisma.team.findUnique({ where: { id: teamId }, include: { teamLead: true } });
+            expect(teamInDb?.teamLead?.userProfileId).toBe(newLeadId);
         });
     });
 

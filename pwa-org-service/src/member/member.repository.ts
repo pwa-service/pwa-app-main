@@ -25,7 +25,7 @@ export class MemberRepository {
             });
         }
 
-    
+
         if (roleId) {
             andConditions.push({
                 OR: [
@@ -35,7 +35,7 @@ export class MemberRepository {
             });
         }
 
-    
+
         if (teamId || userScope === ScopeType.TEAM) {
             const targetTeamId = teamId || userContextId;
             if (targetTeamId) {
@@ -43,8 +43,8 @@ export class MemberRepository {
                     teamUser: { teamId: targetTeamId }
                 });
             }
-        } 
-    
+        }
+
         else if (campaignId || userScope === ScopeType.CAMPAIGN) {
             const targetCampaignId = campaignId || userContextId;
             if (targetCampaignId) {
@@ -74,19 +74,19 @@ export class MemberRepository {
                 orderBy: { createdAt: 'desc' },
                 include: {
                     campaignUser: {
-                        include: { 
-                            role: true, 
-                            campaign: { select: { id: true, name: true } } 
+                        include: {
+                            role: true,
+                            campaign: { select: { id: true, name: true } }
                         }
                     },
                     teamUser: {
-                        include: { 
-                            role: true, 
-                            team: { 
+                        include: {
+                            role: true,
+                            team: {
                                 include: {
                                     campaign: { select: { name: true, id: true } }
-                                } 
-                            } 
+                                }
+                            }
                         }
                     }
                 }
@@ -108,6 +108,13 @@ export class MemberRepository {
         return this.prisma.$transaction(async (tx) => {
             await tx.shareUserProfile.deleteMany({ where: { createdBy: userId } });
             await tx.userProfile.delete({ where: { id: userId } });
+        });
+    }
+
+    async updateUser(userId: string, data: { email?: string, passwordHash?: string }) {
+        return this.prisma.userProfile.update({
+            where: { id: userId },
+            data,
         });
     }
 }

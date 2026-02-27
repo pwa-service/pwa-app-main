@@ -42,6 +42,7 @@ export class TeamService {
             }
         );
 
+        let teamLeadId: string | null = null;
         if (dto.leadId) {
             const role = await this.roleService.findByPriorityAndContext(
                 RolePriority.LEAD, ScopeType.CAMPAIGN, dto.campaignId
@@ -53,10 +54,15 @@ export class TeamService {
                 userId: dto.leadId,
                 roleId: role.id,
             }, user);
-            await this.assignTeamLead({
+
+            teamLeadId = await this.assignTeamLead({
                 teamId: team.id,
                 userId: dto.leadId,
             }, user);
+
+            await this.repo.update(team.id, {
+                teamLeadId
+            });
         }
 
         const full = await this.repo.findById(team.id);
@@ -88,17 +94,20 @@ export class TeamService {
             throw new RpcException({ code: 5, message: 'Access to this team is denied' });
         }
 
-        const currentLeadId = team.teamLead?.userProfileId || team.teamLeadId;
+        const currentLeadId = team.teamLead?.userProfileId;
+
+        let newTeamLeadId = team.teamLeadId; // By default, keep current TeamUser ID
 
         if (dto.leadId && dto.leadId !== currentLeadId) {
-            await this.assignTeamLead({
+            newTeamLeadId = await this.assignTeamLead({
                 teamId: dto.id,
                 userId: dto.leadId
             }, user);
         }
 
         await this.repo.update(dto.id, {
-            name: dto.name
+            name: dto.name,
+            teamLeadId: newTeamLeadId
         });
 
         const fullTeam = await this.repo.findById(dto.id);
@@ -231,19 +240,15 @@ export class TeamService {
         if (team.teamLeadId && team.teamLeadId !== newLead.id) {
             const oldLead = team.teamLead;
             if (oldLead) {
-                await this.roleService.updateMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+                await this.roleService.updateMemberRole(oldLead.userProfileId, dto.teamId, mediaBuyerRole.id);
                 await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
             }
         }
 
-        await this.roleService.updateMemberRole(dto.userId, teamLeadRole.id);
+        await this.roleService.updateMemberRole(dto.userId, dto.teamId, teamLeadRole.id);
         await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
 
-        const updated = await this.repo.update(dto.teamId, {
-            teamLeadId: newLead.id
-        });
-
-        return this.mapToResponse(updated);
+        return newLead.id;
     }
 
     private mapToResponse(team: any) {
