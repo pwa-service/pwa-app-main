@@ -158,7 +158,7 @@ services:
           cpus: "0.25"
           memory: "0.6g"
     volumes:
-      - ${HOME}/pwa-app/pwa-api-gateway/uploads:/app/uploads
+      - /home/pwa/pwa-app/pwa-api-gateway/uploads:/app/uploads
 
   pwa-manager:
     build:
