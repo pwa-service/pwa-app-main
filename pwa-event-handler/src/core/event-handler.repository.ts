@@ -7,7 +7,7 @@ import { MarkFirstOpenInput, UpsertSessionInput } from '../common/types/reposito
 
 @Injectable()
 export class EventHandlerRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async upsertSession(data: UpsertSessionInput) {
         const pixelToken = await this.prisma.pixelToken.findUnique({
@@ -46,6 +46,19 @@ export class EventHandlerRepository {
     async findPixelTokenId(id: number | bigint | string) {
         return this.prisma.pixelToken.findUnique({
             where: { id: id.toString() }
+        });
+    }
+
+    async getPwaEventProfileByDomain(domainName: string) {
+        return this.prisma.domain.findUnique({
+            where: { hostname: domainName },
+            include: {
+                pwaApp: {
+                    include: {
+                        eventsProfile: true,
+                    },
+                },
+            },
         });
     }
 

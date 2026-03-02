@@ -1,8 +1,8 @@
-import {Injectable, Logger, OnModuleInit} from '@nestjs/common';
-import axios, {AxiosError} from 'axios';
-import {EventType, LogStatus} from '.prisma/client';
-import {EventHandlerRepository} from './event-handler.repository';
-import {EventLogProducer} from "../queues/event-log.producer";
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import axios, { AxiosError } from 'axios';
+import { EventType, LogStatus } from '.prisma/client';
+import { EventHandlerRepository } from './event-handler.repository';
+import { EventLogProducer } from "../queues/event-log.producer";
 import {
   CompleteRegistrationDto,
   FbEventEnum,
@@ -13,12 +13,12 @@ import {
   ViewContentDto,
 } from "../../../pwa-shared/src";
 import * as geo from 'geoip-country'
-import {RpcException} from "@nestjs/microservices";
-import {status} from '@grpc/grpc-js';
-import {FbEventDto} from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
-import {PwaSession} from "@prisma/client";
-import {InjectMetric} from "@willsoto/nestjs-prometheus";
-import {Counter, Histogram} from "prom-client";
+import { RpcException } from "@nestjs/microservices";
+import { status } from '@grpc/grpc-js';
+import { FbEventDto } from "../../../pwa-shared/src/types/event-handler/dto/event.dto";
+import { PwaSession } from "@prisma/client";
+import { InjectMetric } from "@willsoto/nestjs-prometheus";
+import { Counter, Histogram } from "prom-client";
 
 const eventMap = new Map<FbEventEnum, EventType>([
   [FbEventEnum.Dep, EventType.Purchase],
@@ -46,11 +46,11 @@ export class EventHandlerCoreService implements OnModuleInit {
   private readonly baseGraphUrl = process.env.BASE_GRAPH_URL || 'https://graph.facebook.com'
 
   constructor(
-      private readonly repo: EventHandlerRepository,
-      private readonly logs: EventLogProducer,
-      @InjectMetric('fb_capi_events_total') public eventsCounter: Counter<string>,
-      @InjectMetric('fb_capi_duration_seconds') public durationHistogram: Histogram<string>,
-  ) {}
+    private readonly repo: EventHandlerRepository,
+    private readonly logs: EventLogProducer,
+    @InjectMetric('fb_capi_events_total') public eventsCounter: Counter<string>,
+    @InjectMetric('fb_capi_duration_seconds') public durationHistogram: Histogram<string>,
+  ) { }
 
   onModuleInit() {
     this.eventsCounter.labels('Init', 'boot').inc(0);
@@ -58,8 +58,8 @@ export class EventHandlerCoreService implements OnModuleInit {
 
 
   async viewContent(event: ViewContentDto) {
-    this.log.debug({tag: 'viewContent:input', event});
-    const {pixelId, fbclid, offerId, utmSource, clientIp} = event._meta
+    this.log.debug({ tag: 'viewContent:input', event });
+    const { pixelId, fbclid, offerId, utmSource, clientIp } = event._meta
 
     if (!pixelId) {
       this.eventsCounter.labels('ViewContent', 'missing_pixel_id').inc();
@@ -69,7 +69,7 @@ export class EventHandlerCoreService implements OnModuleInit {
       });
     }
 
-    const {id: sessionId} = await this.repo.upsertSession({
+    const { id: sessionId } = await this.repo.upsertSession({
       pwaDomain: event.pwaDomain,
       landingUrl: event.landingUrl ?? null,
       queryStringRaw: event.queryStringRaw ?? null,
@@ -89,16 +89,16 @@ export class EventHandlerCoreService implements OnModuleInit {
       clientIp,
       sessionId,
     });
-    this.log.debug({tag: 'viewContent:payload', payload});
+    this.log.debug({ tag: 'viewContent:payload', payload });
 
     try {
       const fb = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({tag: 'viewContent:fb-response', fb});
-      return {success: true, fb, sessionId};
+      this.log.log({ tag: 'viewContent:fb-response', fb });
+      return { success: true, fb, sessionId };
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
-        this.log.error({tag: 'viewContent:fb-error', error: e.message, fb: e.fb});
-        return {success: false, fb: e.fb, sessionId};
+        this.log.error({ tag: 'viewContent:fb-error', error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb, sessionId };
       }
       throw e;
     }
@@ -106,15 +106,15 @@ export class EventHandlerCoreService implements OnModuleInit {
 
 
   async pwaFirstOpen(event: PwaFirstOpenDto) {
-    this.log.debug({tag: 'pwaFirstOpen:input', event});
+    this.log.debug({ tag: 'pwaFirstOpen:input', event });
 
     const sessionId = event.sessionId
     const sess = await this.repo.getSessionById(sessionId);
-    this.log.debug({tag: 'pwaFirstOpen:session', sess});
+    this.log.debug({ tag: 'pwaFirstOpen:session', sess });
 
     if (!sess) {
       this.eventsCounter.labels('Lead', 'session_not_found').inc();
-      return {success: true, fb: JSON.stringify({message: 'Session not found for first open.'})};
+      return { success: true, fb: JSON.stringify({ message: 'Session not found for first open.' }) };
     }
 
     const pixelId = sess.pixelId;
@@ -137,26 +137,43 @@ export class EventHandlerCoreService implements OnModuleInit {
       sessionId,
     });
 
-    this.log.debug({tag: 'pwaFirstOpen:payload', payload});
+    this.log.debug({ tag: 'pwaFirstOpen:payload', payload });
     let fbResponse: string;
     let success = true;
     try {
       fbResponse = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({tag: 'pwaFirstOpen:fb-response', fb: fbResponse});
+      this.log.log({ tag: 'pwaFirstOpen:fb-response', fb: fbResponse });
     } catch (e: any) {
       success = false;
       if (e instanceof FacebookApiError) {
-        this.log.error({tag: 'pwaFirstOpen:fb-error', error: e.message, fb: e.fb});
+        this.log.error({ tag: 'pwaFirstOpen:fb-error', error: e.message, fb: e.fb });
         fbResponse = e.fb;
       } else {
-        this.log.error({tag: 'pwaFirstOpen:unknown-error', error: e.message});
-        fbResponse = JSON.stringify({error: e.message});
+        this.log.error({ tag: 'pwaFirstOpen:unknown-error', error: e.message });
+        fbResponse = JSON.stringify({ error: e.message });
       }
     }
-    return {success, fb: fbResponse};
+    return { success, fb: fbResponse };
   }
 
   async event(event: FbEventEnum, dto: FbEventDto) {
+    const domainData = await this.repo.getPwaEventProfileByDomain(dto.pwaDomain);
+    const eventsProfile = domainData?.pwaApp?.eventsProfile;
+
+    if (eventsProfile) {
+      let isAllowed = true;
+      switch (event) {
+        case FbEventEnum.Reg: isAllowed = eventsProfile.reg; break;
+        case FbEventEnum.Subscribe: isAllowed = eventsProfile.sub; break;
+        case FbEventEnum.Dep: isAllowed = eventsProfile.dep; break;
+        case FbEventEnum.Redep: isAllowed = eventsProfile.redep; break;
+      }
+      if (!isAllowed) {
+        this.log.debug({ tag: `event:blocked-by-profile`, event, domain: dto.pwaDomain });
+        return { success: true, fb: JSON.stringify({ message: `Event ${event} is disabled for this PWA.` }) };
+      }
+    }
+
     if (event !== FbEventEnum.Redep) {
       const exists = await this.repo.isSessionEventLogExists(dto.sessionId, eventMap.get(event)!);
       if (exists) {
@@ -172,7 +189,7 @@ export class EventHandlerCoreService implements OnModuleInit {
     const sess = await this.repo.getSessionById(sessionId);
     if (!sess) {
       this.eventsCounter.labels(event, 'session_not_found').inc();
-      return {success: false, fb: JSON.stringify({message: 'Session not found for.'})};
+      return { success: false, fb: JSON.stringify({ message: 'Session not found for.' }) };
     }
 
     const pixelId = sess.pixelId;
@@ -215,19 +232,19 @@ export class EventHandlerCoreService implements OnModuleInit {
 
     try {
       const fb = await this.sendToFacebookApi(pixelId, sessionId, eventName, payload);
-      this.log.log({tag: `${event}:fb-response`, fb});
-      return {success: true, fb};
+      this.log.log({ tag: `${event}:fb-response`, fb });
+      return { success: true, fb };
     } catch (e: any) {
       if (e instanceof FacebookApiError) {
-        this.log.error({tag: `${event}:fb-error`, error: e.message, fb: e.fb});
-        return {success: false, fb: e.fb};
+        this.log.error({ tag: `${event}:fb-error`, error: e.message, fb: e.fb });
+        return { success: false, fb: e.fb };
       }
       throw e;
     }
   }
 
   async completeRegistration(event: CompleteRegistrationDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({tag: 'completeRegistration:input', event});
+    this.log.debug({ tag: 'completeRegistration:input', event });
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
       eventName,
@@ -235,12 +252,12 @@ export class EventHandlerCoreService implements OnModuleInit {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({tag: 'completeRegistration:payload', payload});
+    this.log.debug({ tag: 'completeRegistration:payload', payload });
     return payload
   }
 
   async purchase(event: PurchaseDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({tag: 'purchase:input', event});
+    this.log.debug({ tag: 'purchase:input', event });
 
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
@@ -251,12 +268,12 @@ export class EventHandlerCoreService implements OnModuleInit {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({tag: 'purchase:payload', payload});
+    this.log.debug({ tag: 'purchase:payload', payload });
     return payload;
   }
 
   async subscribe(event: SubscribeDto, sess: PwaSession, eventName: EventType, sourceUrl: string) {
-    this.log.debug({tag: 'subscribe:input', event});
+    this.log.debug({ tag: 'subscribe:input', event });
 
     const sessionId = sess.id;
     const payload = this.payloadFbBuilder({
@@ -267,15 +284,15 @@ export class EventHandlerCoreService implements OnModuleInit {
       clientIp: event._meta.clientIp,
       sessionId,
     });
-    this.log.debug({tag: 'subscribe:payload', payload});
+    this.log.debug({ tag: 'subscribe:payload', payload });
     return payload
   }
 
   private async sendToFacebookApi(
-      pixelId: bigint | number | string,
-      sessionId: string,
-      eventType: EventType,
-      payload: unknown,
+    pixelId: bigint | number | string,
+    sessionId: string,
+    eventType: EventType,
+    payload: unknown,
   ) {
     const endTimer = this.durationHistogram.startTimer({ event: eventType });
     const pixelToken = await this.repo.findPixelTokenId(pixelId);
@@ -290,9 +307,9 @@ export class EventHandlerCoreService implements OnModuleInit {
     }
     const fbToken = pixelToken.token
     const eventId =
-        (payload as any)?.data?.[0]?.event_id ??
-        (payload as any)?.data?.[0]?.eventId ??
-        Math.random().toString(36).slice(2, 12);
+      (payload as any)?.data?.[0]?.event_id ??
+      (payload as any)?.data?.[0]?.eventId ??
+      Math.random().toString(36).slice(2, 12);
 
     const clientIp = (payload as any)?.data?.[0]?.user_data?.client_ip_address as string | undefined;
     const userAgent = (payload as any)?.data?.[0]?.user_data?.client_user_agent as string | undefined;
@@ -308,20 +325,20 @@ export class EventHandlerCoreService implements OnModuleInit {
         const mock = {
           events_received: (payload as any)?.data?.length ?? 1,
           fbtrace_id: `MOCK-${Math.random().toString(36).slice(2, 10)}`,
-          echo: {pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion},
+          echo: { pixel_id: pixelId, first_event_id: eventId, version: this.graphVersion },
         };
-        this.log.debug({tag: 'fb-capi:mock', mock});
+        this.log.debug({ tag: 'fb-capi:mock', mock });
         responseData = mock;
         finalResult = JSON.stringify(mock);
         endTimer({ http_status: '200' });
 
       } else {
         url = `${url}?access_token=${fbToken}`;
-        const {data, status: httpStatus} = await axios.post(url, payload, {
-          headers: {'Content-Type': 'application/json'},
+        const { data, status: httpStatus } = await axios.post(url, payload, {
+          headers: { 'Content-Type': 'application/json' },
           timeout: 7000,
         });
-        this.log.log({tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id});
+        this.log.log({ tag: 'fb-capi', status: httpStatus, fbtrace_id: (data as any)?.fbtrace_id });
         responseData = data;
         finalResult = JSON.stringify(data);
 
@@ -335,19 +352,19 @@ export class EventHandlerCoreService implements OnModuleInit {
       let statusCode = 'unknown';
 
       if (err.response) {
-        const {status: httpStatus, data} = err.response;
+        const { status: httpStatus, data } = err.response;
         statusCode = String(httpStatus);
-        this.log.warn({tag: 'fb-capi:response-error', status: httpStatus, body: data});
-        responseData = {error: `FB ${httpStatus}: ${JSON.stringify(data)}`};
+        this.log.warn({ tag: 'fb-capi:response-error', status: httpStatus, body: data });
+        responseData = { error: `FB ${httpStatus}: ${JSON.stringify(data)}` };
         errorMessage = `Facebook API Error ${httpStatus}`;
       } else if (axios.isAxiosError(err)) {
         statusCode = 'timeout_or_network';
-        this.log.error({tag: 'fb-capi:axios-error', stage: 'axios', error: err.message});
-        responseData = {error: `FB request failed: ${err.message}`};
+        this.log.error({ tag: 'fb-capi:axios-error', stage: 'axios', error: err.message });
+        responseData = { error: `FB request failed: ${err.message}` };
         errorMessage = `Request Failed: ${err.message}`;
       } else {
-        this.log.error({tag: 'fb-capi:unknown-error', stage: 'unknown', error: String(e)});
-        responseData = {error: String(e)};
+        this.log.error({ tag: 'fb-capi:unknown-error', stage: 'unknown', error: String(e) });
+        responseData = { error: String(e) };
         errorMessage = `Unknown Error: ${String(e)}`;
       }
 
@@ -385,7 +402,7 @@ export class EventHandlerCoreService implements OnModuleInit {
           region: null,
         });
       } catch (logError) {
-        this.log.error({tag: 'db-logging-error', error: logError});
+        this.log.error({ tag: 'db-logging-error', error: logError });
         this.eventsCounter.labels(eventType, 'db_log_error').inc();
       }
     }
@@ -408,10 +425,10 @@ export class EventHandlerCoreService implements OnModuleInit {
     };
 
     const monetary =
-        'value' in input || 'currency' in input ? {
-          value: (input as any).value,
-          currency: (input as any).currency
-        } : undefined;
+      'value' in input || 'currency' in input ? {
+        value: (input as any).value,
+        currency: (input as any).currency
+      } : undefined;
 
     const event = {
       event_name: (input as any).eventName,
@@ -426,9 +443,9 @@ export class EventHandlerCoreService implements OnModuleInit {
         fbc,
         fbp,
       },
-      custom_data: {...customBase, ...(monetary ?? {})},
+      custom_data: { ...customBase, ...(monetary ?? {}) },
     };
 
-    return {data: [event]};
+    return { data: [event] };
   }
 }

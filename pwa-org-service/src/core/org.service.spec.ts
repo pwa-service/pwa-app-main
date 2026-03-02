@@ -191,15 +191,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
 
     describe('Team Service', () => {
-        it('should throw BadRequestException if campaign does not exist', async () => {
-            const dto = {
-                name: 'Test Team Invalid Campaign',
-                campaignId: 'some-random-uuid-that-does-not-exist',
-            };
-
-            await expect(teamService.create(dto, { scope: ScopeType.SYSTEM } as UserPayload)).rejects.toThrow('Campaign not found');
-        });
-
         it('should create a Team', async () => {
             const team = await teamService.create({
                 name: 'Alpha Squad',

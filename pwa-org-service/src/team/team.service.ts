@@ -26,11 +26,6 @@ export class TeamService {
     ) { }
 
     async create(dto: CreateTeamDto, user: UserPayload) {
-        const campaignExists = await this.repo.findCampaign(dto.campaignId);
-        if (!campaignExists) {
-            throw new RpcException({ code: 5, message: 'Campaign not found' });
-        }
-
         const team = await this.repo.createTeamTransaction(
             {
                 name: dto.name,
