@@ -1,13 +1,10 @@
-import { lazy, Suspense, useState, useCallback } from "react";
+import { lazy, Suspense, useState, useCallback, useMemo } from "react";
 import { useIsPWA } from "../hooks/useIsPWA";
 
-import { isValidIcon } from "../utils/isValidIcon";
-
-import placeholder from "../assets/placeholder.webp";
+import { getPWAData } from "../helpers/getPWAData";
 
 import Loader from "../ui/Loader";
 import Description from "../components/markets/google/Description";
-import { getPWAData } from "../helpers/getPWAData";
 
 import SectionContainer from "../components/markets/google/SectionContainer";
 import About from "../components/markets/google/About";
@@ -20,48 +17,31 @@ const Reviews = lazy(() => import("../components/markets/google/Reviews"));
 const Comments = lazy(() => import("../components/markets/google/Comments"));
 
 const GoogleMarketPage = () => {
-  const [selectedImage, setSelectedImage] = useState<string>("");
-  const [showGallery, setShowGallery] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const images = useMemo(() => getPWAData("galleryUrls") || [], []);
 
   const { isPWA } = useIsPWA();
 
-  const handleSelectImage = useCallback((image: string) => {
+  const handleOpenGallery = useCallback((image: string) => {
     setSelectedImage(image);
-    setShowGallery(true);
   }, []);
 
-  const handleCloseGallery = useCallback(() => setShowGallery(false), []);
-
-  const iconURL = getPWAData("iconUrl");
-  const galleryURLs = getPWAData("galleryUrls");
-
-  const productImage = isValidIcon(iconURL) ? iconURL : placeholder;
-  const sliderImages =
-    galleryURLs && galleryURLs.length > 0
-      ? galleryURLs.map((url, i) => ({ src: url, alt: `gallery-image-${i}` }))
-      : Array.from({ length: 4 }).map((_, index) => ({
-          src: placeholder,
-          alt: `gallery-image-${index}`,
-        }));
+  const handleCloseGallery = useCallback(() => setSelectedImage(null), []);
 
   if (isPWA) return <Loader />;
 
   return (
     <main className="max-w-screen-xl w-full mx-auto p-6 sm:p-10">
-      <Description imageSRC={productImage} />
+      <Description />
 
       <Suspense fallback={<div className="w-full h-[250px] md:h-[450px] mt-6" />}>
-        <ImageSlider
-          images={sliderImages}
-          handleSelectImage={handleSelectImage}
-          showGallery={showGallery}
-        />
+        <ImageSlider images={images} onSelectImage={handleOpenGallery} />
       </Suspense>
 
-      {showGallery && (
+      {selectedImage && (
         <Suspense fallback={null}>
           <ExpandedGallery
-            images={sliderImages}
+            images={images}
             selectedImage={selectedImage}
             onClose={handleCloseGallery}
           />

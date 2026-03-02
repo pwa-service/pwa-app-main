@@ -1,97 +1,98 @@
-import type { ImageData } from "../../types/market";
-
 import ReactDOM from "react-dom";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import { classNames } from "../../utils/classNames";
 
-import placeholder from "../../assets/placeholder.webp";
 import { MdArrowBack, MdChevronLeft, MdChevronRight } from "react-icons/md";
+import SmartImage from "../SmartImage";
 
 interface ExpandedGalleryProps {
-  images: ImageData[];
+  images: string[];
   selectedImage: string;
   onClose: () => void;
 }
 
-const ExpandedGalleryImageItem = ({ src, alt }: { src: string; alt: string }) => {
-  const [hasError, setHasError] = useState(false);
-  return (
-    <div className="w-full h-full flex items-center justify-center shrink-0 snap-center p-4">
-      <img
-        loading="lazy"
-        src={hasError ? placeholder : src}
-        alt={alt}
-        onError={() => setHasError(true)}
-        className="max-w-full max-h-full object-contain rounded-lg"
-      />
-    </div>
-  );
-};
-
 const ExpandedGallery = ({ images, selectedImage, onClose }: ExpandedGalleryProps) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const index = images.indexOf(selectedImage);
 
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    if (containerRef.current && index !== -1) {
+      const width = containerRef.current.offsetWidth;
+      containerRef.current.scrollTo({ left: index * width });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const index = images.findIndex((image) => image.src === selectedImage);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-    if (scrollContainerRef.current && index !== -1) {
-      const slideWidth = scrollContainerRef.current.offsetWidth;
-      scrollContainerRef.current.scrollLeft = index * slideWidth;
-    }
-  }, [images, selectedImage]);
+    return () => {
+      document.body.style.overflow = originalOverflow || "unset";
+    };
+  }, []);
 
-  const handleScroll = (direction: "next" | "prev") => {
-    if (scrollContainerRef.current) {
-      const { offsetWidth } = scrollContainerRef.current;
-      const scrollAmount = direction === "next" ? offsetWidth : -offsetWidth;
+  const handleNext = useCallback(() => {
+    containerRef.current?.scrollBy({ left: containerRef.current.offsetWidth, behavior: "smooth" });
+  }, []);
 
-      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
-  };
+  const handlePrev = useCallback(() => {
+    containerRef.current?.scrollBy({ left: -containerRef.current.offsetWidth, behavior: "smooth" });
+  }, []);
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-black/90 backdrop-blur-md">
       <button
-        aria-label="close gallery"
         onClick={onClose}
-        className="absolute top-6 left-6 z-[10000] p-3 text-white bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-sm"
+        className="absolute top-6 left-6 z-10 p-3 cursor-pointer text-white bg-white/10 rounded-full"
       >
         <MdArrowBack size={32} />
       </button>
 
-      <div className="absolute inset-x-4 top-1/2 flex justify-between -translate-y-1/2 pointer-events-none">
-        <button
-          aria-label="previous image"
-          onClick={() => handleScroll("prev")}
-          className="pointer-events-auto p-3 cursor-pointer bg-white hover:bg-gray-100 rounded-full shadow-xl transition-all"
-        >
-          <MdChevronLeft size={32} />
-        </button>
-
-        <button
-          aria-label="next image"
-          onClick={() => handleScroll("next")}
-          className="pointer-events-auto p-3 cursor-pointer bg-white hover:bg-gray-100 rounded-full shadow-xl transition-all"
-        >
-          <MdChevronRight size={32} />
-        </button>
-      </div>
-
+      {/* MAIN CONTENT */}
       <div
-        ref={scrollContainerRef}
-        className="flex w-full h-[85vh] items-center overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+        ref={containerRef}
+        className="flex w-full h-full items-center overflow-x-auto snap-x snap-mandatory no-scrollbar"
       >
         {images.map((image, index) => (
-          <ExpandedGalleryImageItem key={index} src={image.src} alt={image.alt} />
+          <div
+            key={index}
+            className="w-full h-full flex-shrink-0 flex items-center justify-center snap-center p-4"
+          >
+            <SmartImage src={image} className="max-w-full max-h-full object-contain shadow-2xl" />
+          </div>
         ))}
       </div>
+
+      {/* NAVIGATION */}
+      {images.length > 1 && (
+        <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+          <button
+            onClick={handlePrev}
+            className={classNames(
+              "pointer-events-auto cursor-pointer bg-white/10  text-white",
+              "p-3 rounded-full backdrop-blur-md shadow-lg",
+              "hover:text-black hover:bg-white",
+              "transition-all"
+            )}
+          >
+            <MdChevronLeft size={36} />
+          </button>
+
+          <button
+            onClick={handleNext}
+            className={classNames(
+              "pointer-events-auto cursor-pointer bg-white/10  text-white",
+              "p-3 rounded-full backdrop-blur-md shadow-lg",
+              "hover:text-black hover:bg-white",
+              "transition-all"
+            )}
+          >
+            <MdChevronRight size={36} />
+          </button>
+        </div>
+      )}
     </div>,
     document.body
   );
