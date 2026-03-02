@@ -5,7 +5,7 @@ import preload from "vite-plugin-preload";
 import tailwindcss from "@tailwindcss/vite";
 
 import { getPWAData } from "./src/helpers/getPWAData";
-import { isValidIcon } from "./src/utils/isValidIcon";
+import { isIconAccessible } from "./src/helpers/isIconAccessible";
 
 import viteCompression from "vite-plugin-compression";
 import { createHtmlPlugin } from "vite-plugin-html";
@@ -14,6 +14,10 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vite.dev/config/
 export default defineConfig(async () => {
   const pwaIcon = getPWAData("iconUrl");
+
+  const iconExists = await isIconAccessible(pwaIcon);
+  const finalIcon = iconExists ? (pwaIcon as string) : "/placeholder.webp";
+
   const pwaName = getPWAData("name");
   const pwaDescription = getPWAData("description");
 
@@ -27,7 +31,7 @@ export default defineConfig(async () => {
     themeColor: "#1a1a1a",
     backgroundColor: "#000000",
 
-    icon: isValidIcon(pwaIcon) ? pwaIcon : "/placeholder.webp",
+    icon: finalIcon,
     screenshot: "/screenshot.webp",
     screenshotMobile: "/screenshot-mobile.webp",
   };
