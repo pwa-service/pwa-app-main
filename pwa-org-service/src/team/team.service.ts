@@ -242,7 +242,7 @@ export class TeamService {
 
         await this.roleService.updateMemberRole(dto.userId, dto.teamId, teamLeadRole.id);
         await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
-
+        await this.repo.update(dto.teamId, { teamLeadId: newLead.id });
         return newLead.id;
     }
 

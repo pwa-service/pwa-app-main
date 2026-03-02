@@ -156,9 +156,6 @@ export class RoleService implements OnModuleInit {
         return this.toRoleResponse(role);
     }
 
-    async findByNameAndContext(name: string, scope: ScopeType, contextId: string) {
-        return this.repo.findByNameAndContext(name, scope, contextId);
-    }
 
     async findByPriorityAndContext(priority: number, scope: ScopeType, contextId: string) {
         return this.repo.findByPriorityAndContext(priority, scope, contextId);

@@ -117,4 +117,10 @@ export class MemberRepository {
             data,
         });
     }
+
+    async removeCampaignUser(userId: string) {
+        return this.prisma.campaignUser.delete({
+            where: { userProfileId: userId },
+        });
+    }
 }

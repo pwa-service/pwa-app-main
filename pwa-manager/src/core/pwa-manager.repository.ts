@@ -31,7 +31,7 @@ export class PwaManagerRepository {
 
         const campaignUser = await this.prisma.campaignUser.findUnique({
             where: { userProfileId: data.ownerId },
-            select: { campaignId: true }
+            select: { campaignId: true, id: true }
         });
 
         if (!campaignUser) {
@@ -39,6 +39,12 @@ export class PwaManagerRepository {
         }
 
         const campaignId = campaignUser.campaignId;
+
+        // Also check if user belongs to a team — if so, link the PWA to that team
+        const teamUser = await this.prisma.teamUser.findUnique({
+            where: { userProfileId: data.ownerId },
+            select: { teamId: true, id: true }
+        });
 
         return this.prisma.$transaction(async (tx) => {
             const pwaApp = await tx.pwaApp.create({
@@ -71,8 +77,12 @@ export class PwaManagerRepository {
                     iconUrl: data.iconUrl,
                     galleryUrls: data.galleryUrls || [],
 
-                    owner: { connect: { id: data.ownerId } },
-                    campaign: { connect: { id: campaignId } },
+                    ownerId: data.ownerId,
+                    campaignId: campaignId,
+                    ...(teamUser ? { teamId: teamUser.teamId } : {}),
+
+                    createdByCampaignUserId: campaignUser.id,
+                    ...(teamUser ? { createdByTeamUserId: teamUser.id } : {}),
 
                     details: { create: { publicName: data.name } },
                     contents: {
@@ -124,15 +134,28 @@ export class PwaManagerRepository {
             if (user.scope === ScopeType.CAMPAIGN && user.contextId) {
                 where.campaignId = user.contextId;
             } else if (user.scope === ScopeType.TEAM && user.contextId) {
-                where.teamId = user.contextId;
-            }
-        }
+                const team = await this.prisma.team.findUnique({
+                    where: { id: user.contextId },
+                    select: {
+                        campaignId: true,
+                        teamLead: { select: { userProfileId: true } }
+                    }
+                });
 
-        if (filters?.search) {
-            where.OR = [
-                { name: { contains: filters.search, mode: 'insensitive' } },
-                { contents: { some: { description: { contains: filters.search, mode: 'insensitive' } } } }
-            ];
+                const isTeamLead = team?.teamLead?.userProfileId === user.id;
+
+                if (isTeamLead) {
+                    where.OR = [
+                        { teamId: user.contextId },
+                        ...(team ? [{ campaignId: team.campaignId, teamId: null }] : []),
+                    ];
+                } else {
+                    where.OR = [
+                        { teamId: user.contextId, ownerId: user.id },
+                        ...(team ? [{ campaignId: team.campaignId, teamId: null, ownerId: user.id }] : []),
+                    ];
+                }
+            }
         }
 
         if (filters?.status) {

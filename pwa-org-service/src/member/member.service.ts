@@ -26,7 +26,7 @@ export class MemberService implements OnModuleInit {
     private authService: AuthServiceGrpc;
 
     constructor(
-        private readonly repo: MemberRepository,
+        private readonly memberRepo: MemberRepository,
         private readonly roleService: RoleService,
         private readonly teamService: TeamService,
         private readonly campaignService: CampaignService,
@@ -45,7 +45,7 @@ export class MemberService implements OnModuleInit {
             excludeUserId: user.id
         };
 
-        const { items, total } = await this.repo.findAll(pagination, filtersWithScope);
+        const { items, total } = await this.memberRepo.findAll(pagination, filtersWithScope);
 
         const members = items.map((profile: any) => {
             const isTeamUser = !!profile.teamUser;
@@ -100,19 +100,26 @@ export class MemberService implements OnModuleInit {
     }
 
     async createTeamMember(dto: CreateTeamMemberDto, user: UserPayload) {
-        const role = await this.roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, dto.campaignId!);
-        if (!role) throw new BadRequestException('Role not found');
+        const role = await this.roleService.findByPriorityAndContext(
+            RolePriority.MEMBER,
+            ScopeType.CAMPAIGN,
+            dto.campaignId!
+        );
+        if (!role) throw new BadRequestException('Media Buyer role not found in this campaign');
 
         const { user: authUser } = await this.callAuthService({
             ...dto,
             scope: ScopeType.TEAM,
         });
+
         const member = await this.teamService.addMemberToTeam({
             userId: authUser.id,
             teamId: dto.teamId!,
             roleId: role.id
         }, user);
+
         await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
+        await this.memberRepo.removeCampaignUser(authUser.id);
 
         return this.formatResponse({
             ...member,
@@ -121,7 +128,7 @@ export class MemberService implements OnModuleInit {
             role: role.name,
             roleId: role.id,
             email: dto.email,
-            username: user.username,
+            username: authUser.username,
         });
     }
 
@@ -148,7 +155,7 @@ export class MemberService implements OnModuleInit {
         if (userId === user.id) {
             throw new BadRequestException('You cannot delete your own account');
         }
-        await this.repo.deleteUser(userId);
+        await this.memberRepo.deleteUser(userId);
         return {};
     }
 

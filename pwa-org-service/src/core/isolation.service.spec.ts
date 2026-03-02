@@ -361,4 +361,91 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             expect(emails.length).toBe(1);
         });
     });
+
+    describe('Team Lead vs Member Access', () => {
+        let leadProfile: any;
+        let memberProfile: any;
+        let teamForLeadTest: any;
+        let teamLeadUser: UserPayload;
+        let teamMemberUser: UserPayload;
+
+        beforeAll(async () => {
+            leadProfile = await prisma.userProfile.upsert({
+                where: { username: 'leaduser' },
+                create: { username: 'leaduser', email: 'lead@test.com', scope: ScopeType.TEAM, passwordHash: 'hash' },
+                update: {},
+            });
+            memberProfile = await prisma.userProfile.upsert({
+                where: { username: 'newowner' },
+                create: { username: 'newowner', email: 'newowner@test.com', scope: ScopeType.TEAM, passwordHash: 'hash' },
+                update: {},
+            });
+
+            teamForLeadTest = await teamService.create(
+                { name: 'Lead Visibility Team', campaignId: campaignAId },
+                { scope: ScopeType.SYSTEM } as UserPayload
+            );
+
+            const leadRole = await roleService.findByPriorityAndContext(RolePriority.LEAD, ScopeType.CAMPAIGN, campaignAId);
+            const memberRole = await roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, campaignAId);
+
+            await campaignService.upsertMember(leadProfile.id, campaignAId, leadRole!.id);
+            await prisma.teamUser.deleteMany({ where: { userProfileId: leadProfile.id } });
+            await teamService.addMemberToTeam(
+                { teamId: teamForLeadTest.id, userId: leadProfile.id, roleId: leadRole!.id },
+                { scope: ScopeType.SYSTEM } as UserPayload
+            );
+            await teamService.assignTeamLead(
+                { teamId: teamForLeadTest.id, userId: leadProfile.id },
+                { scope: ScopeType.SYSTEM } as UserPayload
+            );
+
+            await campaignService.upsertMember(memberProfile.id, campaignAId, memberRole!.id);
+            await prisma.teamUser.deleteMany({ where: { userProfileId: memberProfile.id } });
+            await teamService.addMemberToTeam(
+                { teamId: teamForLeadTest.id, userId: memberProfile.id, roleId: memberRole!.id },
+                { scope: ScopeType.SYSTEM } as UserPayload
+            );
+
+            teamLeadUser = {
+                id: leadProfile.id,
+                email: leadProfile.email!,
+                username: leadProfile.username,
+                scope: ScopeType.TEAM,
+                contextId: teamForLeadTest.id,
+                access: { statAccess: 1, finAccess: 1, logAccess: 1, usersAccess: 1, sharingAccess: 1 }
+            } as any;
+
+            teamMemberUser = {
+                id: memberProfile.id,
+                email: memberProfile.email!,
+                username: memberProfile.username,
+                scope: ScopeType.TEAM,
+                contextId: teamForLeadTest.id,
+                access: { statAccess: 1, finAccess: 1, logAccess: 1, usersAccess: 1, sharingAccess: 1 }
+            } as any;
+        });
+
+        it('team lead should be set on the team after assignTeamLead', async () => {
+            const team = await prisma.team.findUnique({
+                where: { id: teamForLeadTest.id },
+                include: { teamLead: true }
+            });
+            expect(team?.teamLead?.userProfileId).toBe(leadProfile.id);
+        });
+
+        it('team lead user has teamUser record pointing to the team', async () => {
+            const tu = await prisma.teamUser.findFirst({
+                where: { teamId: teamForLeadTest.id, userProfileId: leadProfile.id }
+            });
+            expect(tu).not.toBeNull();
+        });
+
+        it('team lead and regular member both have team membership', async () => {
+            const leadTu = await prisma.teamUser.findFirst({ where: { teamId: teamForLeadTest.id, userProfileId: leadProfile.id } });
+            const memberTu = await prisma.teamUser.findFirst({ where: { teamId: teamForLeadTest.id, userProfileId: memberProfile.id } });
+            expect(leadTu).not.toBeNull();
+            expect(memberTu).not.toBeNull();
+        });
+    });
 });
