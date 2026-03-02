@@ -158,7 +158,7 @@ services:
           cpus: "0.25"
           memory: "0.6g"
     volumes:
-      - ./pwa-api-gateway/uploads:/workspace/pwa-api-gateway/uploads
+      - api_gateway_uploads:/workspace/pwa-api-gateway/uploads
 
   pwa-manager:
     build:
@@ -441,7 +441,9 @@ volumes:
     name: pwa_app_redis_data
   pgadmin-data:
   grafana-data:
-
+  api_gateway_uploads:
+    driver: local
+    name: pwa_app_api_gateway_uploads
 
 networks:
   pwa-network:

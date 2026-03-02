@@ -17,6 +17,7 @@ service AuthService {
   rpc ConfirmEmail          (ConfirmEmailRequest)           returns (AuthResponse);
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
   rpc ValidateToken         (ValidateTokenRequest)          returns (User);
+  rpc UpdateCreds           (UpdateCredsRequest)            returns (UpdateCredsResponse);
 }
 
 message User {
@@ -87,4 +88,15 @@ message TelegramAuthRequest {
   string photo_url = 5;
   int64  auth_date = 6;
   string hash = 7;
+}
+
+message UpdateCredsRequest {
+  string user_id  = 1;
+  optional string email    = 2;
+  optional string password = 3;
+}
+
+message UpdateCredsResponse {
+  string user_id = 1;
+  string email   = 2;
 }

@@ -10,17 +10,17 @@ import {
   ConfirmEmailDto,
   RequestRestorePasswordDto
 } from "../../../pwa-shared/src";
-import {AllowAnonymous} from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
-import {GrpcUser} from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
-import {TelegramAuthDto} from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
-import {LocalAuthInterceptor} from "../common/interceptors/auth.interceptor";
-import {UserPayload} from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
-import {SignUpOrgDto} from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
+import { AllowAnonymous } from "../../../pwa-shared/src/modules/auth/decorators/allow-anon.decorator";
+import { GrpcUser } from "../../../pwa-shared/src/modules/auth/decorators/grpc-user.decorator";
+import { TelegramAuthDto } from "../../../pwa-shared/src/types/auth/dto/telegram-auth.dto";
+import { LocalAuthInterceptor } from "../common/interceptors/auth.interceptor";
+import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
+import { SignUpOrgDto } from "../../../pwa-shared/src/types/auth/dto/sing-up-org.dto";
 
 @Controller()
 @UseInterceptors(LocalAuthInterceptor)
 export class AuthGrpcController {
-  constructor(private readonly auth: AuthCoreService) {}
+  constructor(private readonly auth: AuthCoreService) { }
 
   @AllowAnonymous()
   @GrpcMethod('AuthService', 'SignUp')
@@ -85,5 +85,10 @@ export class AuthGrpcController {
   @GrpcMethod('AuthService', 'Me')
   async me(_empty: {}, md: Metadata, @GrpcUser() user: UserPayload | null) {
     return user;
+  }
+
+  @GrpcMethod('AuthService', 'UpdateCreds')
+  async updateCreds(dto: { userId: string; email?: string; password?: string }) {
+    return this.auth.updateCreds(dto);
   }
 }

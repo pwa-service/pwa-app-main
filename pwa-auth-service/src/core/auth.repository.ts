@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Status } from '@prisma/client';
 import { PrismaService } from '../../../pwa-prisma/src/prisma.service';
-import {CreateUserDto} from "../common/types/dto/create-user.dto";
+import { CreateUserDto } from "../common/types/dto/create-user.dto";
 
 
 @Injectable()
 export class AuthRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
 
     private get userIncludes() {
@@ -105,6 +105,13 @@ export class AuthRepository {
         return this.prisma.userProfile.update({
             where: { id: userProfileId },
             data: { passwordHash },
+        });
+    }
+
+    async updateCreds(userId: string, data: { email?: string; passwordHash?: string }) {
+        return this.prisma.userProfile.update({
+            where: { id: userId },
+            data,
         });
     }
 

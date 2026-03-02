@@ -1,6 +1,5 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import * as bcrypt from 'bcryptjs';
 import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
@@ -19,6 +18,7 @@ import { SignUpOrgDto } from "../../../pwa-shared/src/types/auth/dto/sing-up-org
 
 interface AuthServiceGrpc {
     OrgSignUp(data: SignUpOrgDto): Observable<{ id: string, email: string, user: UserPayload }>;
+    UpdateCreds(data: { userId: string; email?: string; password?: string }): Observable<{ userId: string; email: string }>;
 }
 
 @Injectable()
@@ -83,7 +83,6 @@ export class MemberService implements OnModuleInit {
             roleId: role.id,
             teamId: dto.teamId!,
         }, user);
-        // Ensure campaign membership exists to avoid duplication in member list
         await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
         await this.teamService.assignTeamLead({
             userId: authUser.id,
@@ -113,7 +112,6 @@ export class MemberService implements OnModuleInit {
             teamId: dto.teamId!,
             roleId: role.id
         }, user);
-        // Ensure campaign membership exists to avoid duplication in member list
         await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
 
         return this.formatResponse({
@@ -155,25 +153,19 @@ export class MemberService implements OnModuleInit {
     }
 
     async updateUser(dto: { id: string, email?: string, password?: string }, user: UserPayload) {
-        const updateData: any = {};
-        if (dto.email) {
-            updateData.email = dto.email;
-        }
-        if (dto.password) {
-            updateData.passwordHash = await bcrypt.hash(dto.password, 10);
-        }
-
-        if (Object.keys(updateData).length === 0) {
-            throw new BadRequestException('No fields to update');
-        }
-
-        const updatedUser = await this.repo.updateUser(dto.id, updateData);
+        const result = await firstValueFrom(
+            this.authService.UpdateCreds({
+                userId: dto.id,
+                email: dto.email,
+                password: dto.password,
+            })
+        );
 
         return this.formatResponse({
-            user_id: updatedUser.id,
-            email: updatedUser.email,
-            username: updatedUser.username,
-            scope: updatedUser.scope,
+            user_id: result.userId,
+            email: result.email,
+            username: user.username,
+            scope: user.scope,
             role: 'updated',
         });
     }

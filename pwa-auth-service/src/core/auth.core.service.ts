@@ -275,6 +275,32 @@ export class AuthCoreService implements OnModuleInit {
         await this.store.revoke(id)
     }
 
+    async updateCreds(dto: { userId: string; email?: string; password?: string }) {
+        const user = await this.repo.findById(dto.userId);
+        if (!user) throw new RpcException({ code: status.NOT_FOUND, message: 'User not found' });
+
+        const updateData: { email?: string; passwordHash?: string } = {};
+
+        if (dto.email) {
+            const existing = await this.repo.findByEmail(dto.email);
+            if (existing && existing.id !== dto.userId) {
+                throw new RpcException({ code: status.ALREADY_EXISTS, message: 'Email already in use' });
+            }
+            updateData.email = dto.email;
+        }
+
+        if (dto.password) {
+            updateData.passwordHash = await bcrypt.hash(dto.password, 10);
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new RpcException({ code: status.INVALID_ARGUMENT, message: 'No fields to update' });
+        }
+
+        const updated = await this.repo.updateCreds(dto.userId, updateData);
+        return { userId: updated.id, email: updated.email ?? '' };
+    }
+
     async restorePassword(input: RestorePasswordDto) {
         const { email, newPassword, token } = input;
         const user = await this.repo.findByEmail(email);

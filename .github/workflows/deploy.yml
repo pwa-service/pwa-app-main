@@ -71,6 +71,7 @@ jobs:
           rsync -avz --delete \
             --exclude='.git' \
             --exclude='.env' \
+            --exclude='pwa-api-gateway/uploads' \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
             $DEPLOY_USER@$DEPLOY_HOST:/home/$DEPLOY_USER/pwa-app/
