@@ -4,7 +4,6 @@ export enum SystemRoleName {
     PRODUCT_FIN = 'Фин Продукта',
     CAMPAIGN_OWNER = 'Владелец Кампании',
     CAMPAIGN_TECH = 'Тех Кампании',
-    CAMPAIGN_MEMBER = 'Учасник Кампании',
     CAMPAIGN_FIN = 'Фин Кампании',
     TEAM_LEAD = 'Тимлид',
     MEDIA_BUYER = 'Медиабаер',

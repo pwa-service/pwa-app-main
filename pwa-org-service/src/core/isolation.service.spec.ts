@@ -447,5 +447,229 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             expect(leadTu).not.toBeNull();
             expect(memberTu).not.toBeNull();
         });
+
+        it('regular team member sees ONLY other members of their own team (not lead-only members)', async () => {
+            const { members } = await memberService.findAll({}, {}, teamMemberUser);
+            const ids = members.map((m: any) => m.userId);
+
+            // Regular member should see others in the same team
+            expect(ids).toContain(leadProfile.id);
+            expect(ids).not.toContain('u-team-a');
+        });
+
+        it('regular team member role has MEMBER priority', async () => {
+            const tu = await prisma.teamUser.findFirst({
+                where: { teamId: teamForLeadTest.id, userProfileId: memberProfile.id },
+                include: { role: true }
+            });
+            expect(tu?.role?.priority).toBe(50);
+        });
+
+        it('team lead role has LEAD priority', async () => {
+            const tu = await prisma.teamUser.findFirst({
+                where: { teamId: teamForLeadTest.id, userProfileId: leadProfile.id },
+                include: { role: true }
+            });
+            expect(tu?.role?.priority).toBe(40);
+        });
+    });
+
+    describe('Cross-Campaign Isolation', () => {
+        let campaignAUser: UserPayload;
+        let campaignBUser: UserPayload;
+
+        beforeAll(() => {
+            campaignAUser = {
+                id: userA.id,
+                email: userA.email,
+                username: userA.username,
+                scope: ScopeType.CAMPAIGN,
+                contextId: campaignAId,
+                access: { statAccess: 1, finAccess: 1, logAccess: 1, usersAccess: 1, sharingAccess: 1 }
+            } as any;
+
+            campaignBUser = {
+                id: userB.id,
+                email: userB.email,
+                username: userB.username,
+                scope: ScopeType.CAMPAIGN,
+                contextId: campaignBId,
+                access: { statAccess: 1, finAccess: 1, logAccess: 1, usersAccess: 1, sharingAccess: 1 }
+            } as any;
+        });
+
+        it('Campaign A user cannot see Campaign B roles', async () => {
+            const { roles } = await roleService.findAll({}, {}, campaignAUser);
+            const campaignIds = roles.map((r: any) => r.campaignId).filter(Boolean);
+            const hasLeakage = campaignIds.some((id: string) => id === campaignBId);
+            expect(hasLeakage).toBe(false);
+        });
+
+        it('Campaign B user cannot see Campaign A roles', async () => {
+            const { roles } = await roleService.findAll({}, {}, campaignBUser);
+            const campaignIds = roles.map((r: any) => r.campaignId).filter(Boolean);
+            const hasLeakage = campaignIds.some((id: string) => id === campaignAId);
+            expect(hasLeakage).toBe(false);
+        });
+
+        it('Campaign A user cannot see Campaign B members', async () => {
+            const { members } = await memberService.findAll({}, {}, campaignAUser);
+            const campIds = members
+                .map((m: any) => m.campaignId)
+                .filter(Boolean);
+            const hasLeakage = campIds.some((id: string) => id === campaignBId);
+            expect(hasLeakage).toBe(false);
+        });
+
+        it('Campaign A user cannot access Campaign B team directly', async () => {
+            const teamB = await prisma.team.findFirst({ where: { campaignId: campaignBId } });
+            if (!teamB) return;
+
+            await expect(
+                teamService.findOne(teamB.id, campaignAUser)
+            ).rejects.toThrow();
+        });
+    });
+
+    describe('Duplicate Member Prevention', () => {
+        it('cannot add the same user to a team twice', async () => {
+            const dupUser = await prisma.userProfile.upsert({
+                where: { username: 'dupuser' },
+                create: { username: 'dupuser', email: 'dup@test.com', scope: ScopeType.TEAM, passwordHash: 'hash' },
+                update: {},
+            });
+
+            const team = await prisma.team.findFirst({ where: { campaignId: campaignAId } });
+            const role = await roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, campaignAId);
+
+            // Clean slate for this user
+            await prisma.teamUser.deleteMany({ where: { userProfileId: dupUser.id } });
+
+            // First add — should succeed
+            await teamService.addMemberToTeam(
+                { teamId: team!.id, userId: dupUser.id, roleId: role!.id },
+                { scope: ScopeType.SYSTEM } as UserPayload
+            );
+
+            // Second add — should throw
+            await expect(
+                teamService.addMemberToTeam(
+                    { teamId: team!.id, userId: dupUser.id, roleId: role!.id },
+                    { scope: ScopeType.SYSTEM } as UserPayload
+                )
+            ).rejects.toThrow('User already in a team');
+        });
+
+        it('cannot add the same user to a campaign twice', async () => {
+            const dupUser = await prisma.userProfile.upsert({
+                where: { username: 'dupcamp' },
+                create: { username: 'dupcamp', email: 'dupcamp@test.com', scope: ScopeType.CAMPAIGN, passwordHash: 'hash' },
+                update: {},
+            });
+
+            const role = await roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, campaignAId);
+            await prisma.campaignUser.deleteMany({ where: { userProfileId: dupUser.id } });
+            // First add
+            await campaignService.addMember(dupUser.id, campaignAId, role!.id);
+
+            // Second add — should throw (unique constraint)
+            await expect(
+                campaignService.addMember(dupUser.id, campaignAId, role!.id)
+            ).rejects.toThrow();
+        });
+    });
+
+    describe('Permission-Based Access Control', () => {
+        let restrictedUser: UserPayload;
+        let restrictedRoleId: number;
+
+        beforeAll(async () => {
+            const restrictedProfile = await prisma.userProfile.upsert({
+                where: { username: 'restricted_user' },
+                create: { username: 'restricted_user', email: 'restricted@test.com', scope: ScopeType.CAMPAIGN, passwordHash: 'hash' },
+                update: {},
+            });
+
+            // Create a role with no permissions
+            const noPermRole = await roleService.create({
+                name: 'Read Only Role',
+                description: 'No write access',
+                globalRules: {
+                    statAccess: AccessLevel.None,
+                    finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None,
+                    usersAccess: AccessLevel.None,  // <-- cannot manage users
+                    sharingAccess: AccessLevel.None,
+                }
+            }, ScopeType.CAMPAIGN, campaignAId);
+
+            restrictedRoleId = parseInt(noPermRole.id);
+
+            await campaignService.upsertMember(restrictedProfile.id, campaignAId, restrictedRoleId);
+
+            restrictedUser = {
+                id: restrictedProfile.id,
+                email: restrictedProfile.email!,
+                username: restrictedProfile.username,
+                scope: ScopeType.CAMPAIGN,
+                contextId: campaignAId,
+                access: {
+                    statAccess: AccessLevel.None,
+                    finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None,
+                    usersAccess: AccessLevel.None,
+                    sharingAccess: AccessLevel.None,
+                }
+            } as any;
+        });
+
+        it('Campaign A user cannot assign a role that belongs to Campaign B', async () => {
+            // roleBForDeletion is a Campaign B role — restrictedUser is Campaign A user
+            const roleBTest = await roleService.create({
+                name: 'Cross Camp Role',
+                description: 'test',
+                globalRules: {
+                    statAccess: AccessLevel.None, finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None, usersAccess: AccessLevel.None, sharingAccess: AccessLevel.None
+                }
+            }, ScopeType.CAMPAIGN, campaignBId);
+
+            const someUser = await prisma.userProfile.upsert({
+                where: { username: 'target_user' },
+                create: { username: 'target_user', email: 'target@test.com', scope: ScopeType.CAMPAIGN, passwordHash: 'hash' },
+                update: {},
+            });
+
+            await expect(
+                roleService.assignRoleToUser(
+                    { userId: someUser.id, roleId: parseInt(roleBTest.id) },
+                    restrictedUser
+                )
+            ).rejects.toThrow(ForbiddenException);
+        });
+
+        it('user with usersAccess=None cannot delete a role from another campaign', async () => {
+            const roleBForDeletion = await roleService.create({
+                name: 'Role to Delete',
+                description: 'test',
+                globalRules: {
+                    statAccess: AccessLevel.None, finAccess: AccessLevel.None,
+                    logAccess: AccessLevel.None, usersAccess: AccessLevel.None, sharingAccess: AccessLevel.None
+                }
+            }, ScopeType.CAMPAIGN, campaignBId);
+
+            await expect(
+                roleService.delete(roleBForDeletion.id, restrictedUser)
+            ).rejects.toThrow(ForbiddenException);
+        });
+
+        it('CAMPAIGN scope user cannot delete a SYSTEM role', async () => {
+            const systemRole = await prisma.role.findFirst({ where: { scope: ScopeType.SYSTEM } });
+            if (!systemRole) return;
+
+            await expect(
+                roleService.delete(String(systemRole.id), restrictedUser)
+            ).rejects.toThrow(ForbiddenException);
+        });
     });
 });

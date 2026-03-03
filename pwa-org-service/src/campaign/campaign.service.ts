@@ -45,22 +45,7 @@ export class CampaignService {
             RolePriority.OWNER
         );
 
-        await this.roleService.create(
-            {
-                name: SystemRoleName.CAMPAIGN_MEMBER,
-                description: 'Campaign member',
-                globalRules: {
-                    statAccess: AccessLevel.None,
-                    finAccess: AccessLevel.None,
-                    logAccess: AccessLevel.None,
-                    usersAccess: AccessLevel.None,
-                    sharingAccess: AccessLevel.None,
-                }
-            },
-            ScopeType.CAMPAIGN,
-            campaign.id,
-            RolePriority.MEMBER
-        );
+    
 
         await this.roleService.assignRoleToUser(
             {
