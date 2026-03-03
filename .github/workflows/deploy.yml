@@ -55,7 +55,7 @@ jobs:
           # Check each exit code separately
           FAILED=0
           for svc in auth-tests event-handler-tests org-service-tests; do
-            CODE=$(docker compose -f docker-compose.ci.yml ps -q $svc | xargs docker inspect --format='{{.State.ExitCode}}' 2>/dev/null || echo "1")
+            CODE=$(docker compose -f docker-compose.ci.yml ps --all -q $svc | xargs docker inspect --format='{{.State.ExitCode}}' 2>/dev/null || echo "1")
             echo "$svc exit code: $CODE"
             [ "$CODE" != "0" ] && FAILED=1
           done
