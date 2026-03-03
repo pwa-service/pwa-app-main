@@ -27,7 +27,7 @@ export class RoleGrpcController {
     @GrpcMethod('RoleService', 'Create')
     @UseInterceptors(RolePriorityInterceptor)
     async create(@Payload() dto: CreateRoleDto, @GrpcUser() user: UserPayload) {
-        return this.roleService.create({ ...dto }, user.scope, user.contextId);
+        return this.roleService.create({ ...dto }, user.scope, user.contextId, undefined, user);
     }
 
     @GrpcMethod('RoleService', 'FindOne')

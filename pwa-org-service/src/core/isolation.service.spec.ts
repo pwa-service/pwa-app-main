@@ -542,16 +542,11 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             const team = await prisma.team.findFirst({ where: { campaignId: campaignAId } });
             const role = await roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, campaignAId);
 
-            // Clean slate for this user
             await prisma.teamUser.deleteMany({ where: { userProfileId: dupUser.id } });
-
-            // First add — should succeed
             await teamService.addMemberToTeam(
                 { teamId: team!.id, userId: dupUser.id, roleId: role!.id },
                 { scope: ScopeType.SYSTEM } as UserPayload
             );
-
-            // Second add — should throw
             await expect(
                 teamService.addMemberToTeam(
                     { teamId: team!.id, userId: dupUser.id, roleId: role!.id },
@@ -624,7 +619,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
         });
 
         it('Campaign A user cannot assign a role that belongs to Campaign B', async () => {
-            // roleBForDeletion is a Campaign B role — restrictedUser is Campaign A user
             const roleBTest = await roleService.create({
                 name: 'Cross Camp Role',
                 description: 'test',
@@ -670,6 +664,59 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             await expect(
                 roleService.delete(String(systemRole.id), restrictedUser)
             ).rejects.toThrow(ForbiddenException);
+        });
+    });
+
+    describe('Role Privilege Escalation Prevention', () => {
+        let memberScopeUser: UserPayload;
+        let ownerRoleId: number;
+        let memberRoleId: number;
+
+        beforeAll(async () => {
+            const memberProfile = await prisma.userProfile.upsert({
+                where: { username: 'priv_check_member' },
+                create: { username: 'priv_check_member', email: 'privmember@test.com', scope: ScopeType.CAMPAIGN, passwordHash: 'hash' },
+                update: {},
+            });
+
+            const allCampaignRoles = await prisma.role.findMany({
+                where: { campaignId: campaignAId },
+                orderBy: { priority: 'asc' }
+            });
+            const highestPrivRole = allCampaignRoles[0];
+            const lowestPrivRole = allCampaignRoles[allCampaignRoles.length - 1];
+
+            ownerRoleId = highestPrivRole.id;
+            memberRoleId = lowestPrivRole.id;
+
+            await campaignService.upsertMember(memberProfile.id, campaignAId, memberRoleId);
+
+            memberScopeUser = {
+                id: memberProfile.id,
+                email: memberProfile.email!,
+                username: memberProfile.username,
+                scope: ScopeType.CAMPAIGN,
+                contextId: campaignAId,
+                access: { statAccess: 1, finAccess: 1, logAccess: 1, usersAccess: 1, sharingAccess: 1 },
+            } as any;
+        });
+
+        it('MEMBER cannot assign OWNER role to a new campaign member', async () => {
+            await expect(
+                memberService.createCampaignMember(
+                    { email: 'newguy@test.com', username: 'newguy', password: 'Password1', scope: ScopeType.CAMPAIGN, roleId: String(ownerRoleId), campaignId: campaignAId },
+                    memberScopeUser
+                )
+            ).rejects.toThrow(ForbiddenException);
+        });
+
+        it('MEMBER can assign same-level MEMBER role (privilege check passes, auth may fail)', async () => {
+            await expect(
+                memberService.createCampaignMember(
+                    { email: 'samelvl@test.com', username: 'samelvl', password: 'Password1', scope: ScopeType.CAMPAIGN, roleId: String(memberRoleId), campaignId: campaignAId },
+                    memberScopeUser
+                )
+            ).rejects.not.toThrow(ForbiddenException);
         });
     });
 });

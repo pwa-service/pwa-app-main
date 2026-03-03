@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -133,7 +133,16 @@ export class MemberService implements OnModuleInit {
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
-        dto.campaignId = user.scope == ScopeType.SYSTEM ? dto.campaignId : user.contextId
+        dto.campaignId = user.scope == ScopeType.SYSTEM ? dto.campaignId : user.contextId;
+
+        if (user.scope !== ScopeType.SYSTEM && dto.roleId && dto.campaignId) {
+            const actorPriority = await this.memberRepo.getActorCampaignRolePriority(user.id, dto.campaignId);
+            const targetPriority = await this.memberRepo.getRolePriorityById(parseInt(dto.roleId));
+            if (targetPriority < actorPriority) {
+                throw new ForbiddenException('Cannot assign a role with higher privilege than your own');
+            }
+        }
+
         const { user: authUser } = await this.callAuthService({
             ...dto,
             scope: ScopeType.CAMPAIGN,

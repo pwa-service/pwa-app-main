@@ -98,7 +98,6 @@ export class RoleRepository {
         const andConditions: Prisma.RoleWhereInput[] = [];
 
         if (userScope === ScopeType.CAMPAIGN && userContextId) {
-            // Show roles belonging to THIS campaign OR roles of teams under THIS campaign
             andConditions.push({
                 OR: [
                     { campaignId: userContextId },
@@ -254,8 +253,6 @@ export class RoleRepository {
     }
 
     async updateMemberRole(userProfileId: string, teamId: string, roleId: number) {
-        // Find the specific TeamUser by matching both userProfileId and teamId.
-        // Even though userProfileId is currently unique, this avoids issues if that changes.
         const member = await this.prisma.teamUser.findFirst({
             where: { userProfileId, teamId }
         });
@@ -273,5 +270,20 @@ export class RoleRepository {
             where: { userProfileId },
             data: { roleId },
         });
+    }
+
+    async isTeamLead(userId: string, teamId: string): Promise<boolean> {
+        const team = await this.prisma.team.findUnique({
+            where: { id: teamId },
+            select: { teamLead: { select: { userProfileId: true } } }
+        });
+        return team?.teamLead?.userProfileId === userId;
+    }
+
+    async isCampaignOwner(userId: string, campaignId: string): Promise<boolean> {
+        const membership = await this.prisma.campaignUser.findFirst({
+            where: { userProfileId: userId, campaignId, role: { priority: 10 } }
+        });
+        return !!membership;
     }
 }

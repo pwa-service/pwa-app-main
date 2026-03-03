@@ -24,7 +24,9 @@ import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload
 export class RoleService implements OnModuleInit {
     private readonly logger = new Logger(RoleService.name);
 
-    constructor(private repo: RoleRepository) { }
+    constructor(
+        private repo: RoleRepository,
+    ) { }
 
     async onModuleInit() {
         const rootRole = await this.repo.findByNameAndContext(SystemRoleName.PRODUCT_OWNER, ScopeType.SYSTEM);
@@ -49,7 +51,21 @@ export class RoleService implements OnModuleInit {
         }
     }
 
-    async create(dto: CreateRoleDto, userScope: ScopeType, contextId?: string, priority?: number) {
+    async create(dto: CreateRoleDto, userScope: ScopeType, contextId?: string, priority?: number, user?: UserPayload) {
+        if (user && user.scope !== ScopeType.SYSTEM) {
+            if (userScope === ScopeType.TEAM && contextId) {
+                const isLead = await this.repo.isTeamLead(user.id, contextId);
+                if (!isLead) {
+                    throw new ForbiddenException('Only the team lead can create roles for this team');
+                }
+            } else if (userScope === ScopeType.CAMPAIGN && contextId) {
+                const isOwner = await this.repo.isCampaignOwner(user.id, contextId);
+                if (!isOwner) {
+                    throw new ForbiddenException('Only the campaign owner can create roles for this campaign');
+                }
+            }
+        }
+
         const rulesData = {
             statAccess: dto.globalRules.statAccess ?? AccessLevel.None,
             finAccess: dto.globalRules.finAccess ?? AccessLevel.None,
@@ -193,7 +209,6 @@ export class RoleService implements OnModuleInit {
             );
         }
 
-        // Contextual isolation check
         if (user.scope !== ScopeType.SYSTEM) {
             if (targetRole.scope === ScopeType.CAMPAIGN) {
                 if (user.scope !== ScopeType.CAMPAIGN || user.contextId !== targetRole.campaignId) {

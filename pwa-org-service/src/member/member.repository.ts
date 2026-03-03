@@ -123,4 +123,20 @@ export class MemberRepository {
             where: { userProfileId: userId },
         });
     }
+
+    async getActorCampaignRolePriority(userId: string, campaignId: string): Promise<number> {
+        const cu = await this.prisma.campaignUser.findFirst({
+            where: { userProfileId: userId, campaignId },
+            select: { role: { select: { priority: true } } }
+        });
+        return cu?.role?.priority ?? 999;
+    }
+
+    async getRolePriorityById(roleId: number): Promise<number> {
+        const role = await this.prisma.role.findUnique({
+            where: { id: roleId },
+            select: { priority: true }
+        });
+        return role?.priority ?? 999;
+    }
 }
