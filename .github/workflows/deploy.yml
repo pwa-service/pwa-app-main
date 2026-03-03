@@ -46,11 +46,22 @@ jobs:
             docker compose -f docker-compose.ci.yml build --parallel
           docker compose -f docker-compose.ci.yml up -d postgres-test redis-test
           docker compose -f docker-compose.ci.yml up --abort-on-container-exit prisma-migrator-test
+
+          # Run all test suites in parallel, wait for all to finish
           docker compose -f docker-compose.ci.yml up \
-            --abort-on-container-exit \
-            --exit-code-from org-service-tests \
+            --no-color \
             auth-tests event-handler-tests org-service-tests
+
+          # Check each exit code separately
+          FAILED=0
+          for svc in auth-tests event-handler-tests org-service-tests; do
+            CODE=$(docker compose -f docker-compose.ci.yml ps -q $svc | xargs docker inspect --format='{{.State.ExitCode}}' 2>/dev/null || echo "1")
+            echo "$svc exit code: $CODE"
+            [ "$CODE" != "0" ] && FAILED=1
+          done
+
           docker compose -f docker-compose.ci.yml down -v
+          exit $FAILED
 
 
 
