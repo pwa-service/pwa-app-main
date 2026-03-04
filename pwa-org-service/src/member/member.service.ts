@@ -181,6 +181,17 @@ export class MemberService implements OnModuleInit {
         if (userId === user.id) {
             throw new BadRequestException('You cannot delete your own account');
         }
+
+        const ownedCampaign = await this.memberRepo.findOwnedCampaign(userId);
+        if (ownedCampaign) {
+            throw new BadRequestException(`Cannot delete user: they are the owner of campaign "${ownedCampaign.name}". Transfer ownership first.`);
+        }
+
+        const ledTeam = await this.memberRepo.findLedTeam(userId);
+        if (ledTeam) {
+            throw new BadRequestException(`Cannot delete user: they are the team lead of "${ledTeam.name}". Reassign team lead first.`);
+        }
+
         await this.memberRepo.deleteUser(userId);
         return {};
     }

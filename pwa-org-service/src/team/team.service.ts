@@ -91,7 +91,7 @@ export class TeamService {
 
         const currentLeadId = team.teamLead?.userProfileId;
 
-        let newTeamLeadId = team.teamLeadId; // By default, keep current TeamUser ID
+        let newTeamLeadId = team.teamLeadId;
 
         if (dto.leadId && dto.leadId !== currentLeadId) {
             newTeamLeadId = await this.assignTeamLead({
@@ -100,10 +100,15 @@ export class TeamService {
             }, user);
         }
 
-        await this.repo.update(dto.id, {
-            name: dto.name,
-            teamLeadId: newTeamLeadId
-        });
+        const updateData: any = {};
+        if (dto.name && dto.name.trim() !== '') {
+            updateData.name = dto.name;
+        }
+        if (newTeamLeadId !== undefined) {
+            updateData.teamLeadId = newTeamLeadId;
+        }
+
+        await this.repo.update(dto.id, updateData);
 
         const fullTeam = await this.repo.findById(dto.id);
         return this.mapToResponse(fullTeam);
@@ -203,6 +208,10 @@ export class TeamService {
         const member = await this.repo.findMember(dto.teamId, dto.userId);
         if (!member) throw new BadRequestException('Member not found in this team');
 
+        if (team.teamLeadId === member.id) {
+            await this.repo.update(dto.teamId, { teamLeadId: null });
+        }
+
         await this.repo.removeMember(dto.userId);
         return {};
     }
@@ -231,18 +240,23 @@ export class TeamService {
         );
         if (!mediaBuyerRole) throw new RpcException({ code: 5, message: 'Role Media Buyer not found' });
 
-
+        // Demote old lead if exists
         if (team.teamLeadId && team.teamLeadId !== newLead.id) {
             const oldLead = team.teamLead;
             if (oldLead) {
                 await this.roleService.updateMemberRole(oldLead.userProfileId, dto.teamId, mediaBuyerRole.id);
-                await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id);
+                await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id, team.campaignId);
             }
         }
 
+        // Promote new lead
         await this.roleService.updateMemberRole(dto.userId, dto.teamId, teamLeadRole.id);
-        await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id);
+        await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id, team.campaignId);
         await this.repo.update(dto.teamId, { teamLeadId: newLead.id });
+
+        // Transfer working object ownership to new lead
+        await this.repo.transferWorkingObjectOwnership(dto.teamId, newLead.id);
+
         return newLead.id;
     }
 

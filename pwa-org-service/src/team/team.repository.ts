@@ -154,4 +154,26 @@ export class TeamRepository {
             where: { id: campaignId },
         });
     }
+
+    async transferWorkingObjectOwnership(teamId: string, newTeamUserId: string) {
+        const woTeam = await this.prisma.workingObjectTeam.findUnique({
+            where: { teamId },
+        });
+        if (!woTeam) return;
+
+        await this.prisma.workingObjectTeamUser.deleteMany({
+            where: {
+                workingObjectId: woTeam.workingObjectId,
+                relation: 'Owner',
+            },
+        });
+
+        await this.prisma.workingObjectTeamUser.create({
+            data: {
+                workingObjectId: woTeam.workingObjectId,
+                teamUserId: newTeamUserId,
+                relation: 'Owner',
+            },
+        });
+    }
 }

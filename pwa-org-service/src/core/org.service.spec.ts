@@ -97,7 +97,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
         await prisma.campaign.deleteMany();
         await prisma.userProfile.deleteMany({
-            where: { email: { in: [ownerEmail, memberEmail, 'new_lead@test.com', 'leadcre@test.com', 'leadupd@test.com'] } }
+            where: { email: { in: [ownerEmail, memberEmail, 'new_lead@test.com', 'leadcre@test.com', 'leadupd@test.com', 'guard_lead@test.com', 'team_only_lead@test.com', 'both_scope_lead@test.com', 'auto_lead@test.com', 'regular_member@test.com', 'wo_lead@test.com', 'wo_new_lead@test.com', 'del_lead_guard@test.com'] } }
         });
 
         const owner = await prisma.userProfile.create({
@@ -261,6 +261,33 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             expect(teamUser?.team.name).toBe('Alpha Squad');
         });
 
+        it('should update Team name only', async () => {
+            const updated = await teamService.update({
+                id: teamId,
+                name: 'Alpha Squad Renamed',
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(updated.name).toBe('Alpha Squad Renamed');
+
+            const teamInDb = await prisma.team.findUnique({ where: { id: teamId } });
+            expect(teamInDb?.name).toBe('Alpha Squad Renamed');
+        });
+
+        it('should preserve Team name when updating only leadId', async () => {
+            const teamBeforeUpdate = await prisma.team.findUnique({ where: { id: teamId } });
+            expect(teamBeforeUpdate?.name).toBe('Alpha Squad Renamed');
+
+            const updated = await teamService.update({
+                id: teamId,
+                leadId: memberId,
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(updated.name).toBe('Alpha Squad Renamed');
+
+            const teamAfterUpdate = await prisma.team.findUnique({ where: { id: teamId } });
+            expect(teamAfterUpdate?.name).toBe('Alpha Squad Renamed');
+        });
+
         it('should update Team Lead and correctly reassign roles', async () => {
             const newLeadUser = await prisma.userProfile.create({
                 data: { username: 'new_lead_e2e', email: 'new_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
@@ -347,6 +374,200 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             expect(updatedTeam.members).toBeDefined();
             expect(updatedTeam.members.length).toBeGreaterThan(0);
             expect(updatedTeam.members.some((m: any) => m.id === reassignedLeadUser.id)).toBe(true);
+        });
+
+        it('should assign team lead for user connected via teamUser only (no campaignUser)', async () => {
+            const teamOnlyUser = await prisma.userProfile.create({
+                data: { username: 'team_only_lead', email: 'team_only_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+
+            const scopeTeam = await teamService.create({
+                name: 'Scope Test Team',
+                campaignId: campaignId,
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            await teamService.addMemberToTeam({
+                teamId: scopeTeam.id,
+                userId: teamOnlyUser.id,
+                roleId: parseInt(customRoleId)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Verify: user has teamUser but NO campaignUser
+            const cuBefore = await prisma.campaignUser.findUnique({ where: { userProfileId: teamOnlyUser.id } });
+            expect(cuBefore).toBeNull();
+
+            // assignTeamLead should upsert campaignUser automatically
+            await teamService.assignTeamLead({
+                teamId: scopeTeam.id,
+                userId: teamOnlyUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            const teamAfter = await prisma.team.findUnique({ where: { id: scopeTeam.id }, include: { teamLead: true } });
+            expect(teamAfter?.teamLead?.userProfileId).toBe(teamOnlyUser.id);
+
+            // campaignUser should now exist (created by upsert)
+            const cuAfter = await prisma.campaignUser.findUnique({ where: { userProfileId: teamOnlyUser.id } });
+            expect(cuAfter).toBeDefined();
+            expect(cuAfter?.campaignId).toBe(campaignId);
+        });
+
+        it('should assign team lead for user connected via both campaignUser and teamUser', async () => {
+            const bothScopeUser = await prisma.userProfile.create({
+                data: { username: 'both_scope_lead', email: 'both_scope_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+
+            // Add as campaignUser first
+            await campaignService.addMember(bothScopeUser.id, campaignId, parseInt(customRoleId));
+
+            const bothTeam = await teamService.create({
+                name: 'Both Scope Team',
+                campaignId: campaignId,
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            await teamService.addMemberToTeam({
+                teamId: bothTeam.id,
+                userId: bothScopeUser.id,
+                roleId: parseInt(customRoleId)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Verify: user has BOTH campaignUser and teamUser
+            const cuBefore = await prisma.campaignUser.findUnique({ where: { userProfileId: bothScopeUser.id } });
+            expect(cuBefore).toBeDefined();
+            const tuBefore = await prisma.teamUser.findUnique({ where: { userProfileId: bothScopeUser.id } });
+            expect(tuBefore).toBeDefined();
+
+            await teamService.assignTeamLead({
+                teamId: bothTeam.id,
+                userId: bothScopeUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            const teamAfter = await prisma.team.findUnique({ where: { id: bothTeam.id }, include: { teamLead: true } });
+            expect(teamAfter?.teamLead?.userProfileId).toBe(bothScopeUser.id);
+        });
+    });
+
+    describe('Deletion Guards', () => {
+        it('should allow removing a team lead and leave team without a lead', async () => {
+            const leadUser = await prisma.userProfile.create({
+                data: { username: 'guard_lead', email: 'guard_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(leadUser.id, campaignId, parseInt(customRoleId));
+
+            const guardTeam = await teamService.create({
+                name: 'Guard Team',
+                campaignId: campaignId,
+                leadId: leadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Remove the team lead
+            await teamService.removeMember({
+                teamId: guardTeam.id,
+                userId: leadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Team should now have no lead
+            const teamAfter = await prisma.team.findUnique({ where: { id: guardTeam.id } });
+            expect(teamAfter?.teamLeadId).toBeNull();
+        });
+
+        it('should NOT auto-promote a regular member to team lead when lead is removed', async () => {
+            const autoLeadUser = await prisma.userProfile.create({
+                data: { username: 'auto_lead', email: 'auto_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            const regularUser = await prisma.userProfile.create({
+                data: { username: 'regular_member', email: 'regular_member@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(autoLeadUser.id, campaignId, parseInt(customRoleId));
+            await campaignService.addMember(regularUser.id, campaignId, parseInt(customRoleId));
+
+            const autoTeam = await teamService.create({
+                name: 'Auto Promote Test',
+                campaignId: campaignId,
+                leadId: autoLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            await teamService.addMemberToTeam({
+                teamId: autoTeam.id,
+                userId: regularUser.id,
+                roleId: parseInt(customRoleId)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Remove existing team lead
+            await teamService.removeMember({
+                teamId: autoTeam.id,
+                userId: autoLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Team should have NO lead, the regular member should NOT be promoted
+            const teamAfter = await prisma.team.findUnique({ where: { id: autoTeam.id } });
+            expect(teamAfter?.teamLeadId).toBeNull();
+        });
+
+        it('should transfer working object ownership when reassigning team lead', async () => {
+            const woLeadUser = await prisma.userProfile.create({
+                data: { username: 'wo_lead', email: 'wo_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            const woNewLeadUser = await prisma.userProfile.create({
+                data: { username: 'wo_new_lead', email: 'wo_new_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(woLeadUser.id, campaignId, parseInt(customRoleId));
+            await campaignService.addMember(woNewLeadUser.id, campaignId, parseInt(customRoleId));
+
+            const woTeam = await teamService.create({
+                name: 'WO Transfer Team',
+                campaignId: campaignId,
+                leadId: woLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Add second member
+            await teamService.addMemberToTeam({
+                teamId: woTeam.id,
+                userId: woNewLeadUser.id,
+                roleId: parseInt(customRoleId)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Reassign team lead
+            await teamService.assignTeamLead({
+                teamId: woTeam.id,
+                userId: woNewLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            // Verify WO ownership transferred to new lead
+            const woTeamLink = await prisma.workingObjectTeam.findUnique({ where: { teamId: woTeam.id } });
+            expect(woTeamLink).toBeDefined();
+
+            const newLeadTeamUser = await prisma.teamUser.findUnique({ where: { userProfileId: woNewLeadUser.id } });
+            const woOwnership = await prisma.workingObjectTeamUser.findFirst({
+                where: {
+                    workingObjectId: woTeamLink!.workingObjectId,
+                    relation: 'Owner'
+                }
+            });
+            expect(woOwnership).toBeDefined();
+            expect(woOwnership?.teamUserId).toBe(newLeadTeamUser?.id);
+        });
+
+        it('should NOT allow deleting a user who is a campaign owner', async () => {
+            await expect(
+                memberService.deleteUser(ownerId, { id: 'someone-else', scope: ScopeType.SYSTEM } as UserPayload)
+            ).rejects.toThrow('Cannot delete user');
+        });
+
+        it('should NOT allow deleting a user who is a team lead', async () => {
+            const delLeadUser = await prisma.userProfile.create({
+                data: { username: 'del_lead_guard', email: 'del_lead_guard@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(delLeadUser.id, campaignId, parseInt(customRoleId));
+
+            await teamService.create({
+                name: 'Delete Lead Guard Team',
+                campaignId: campaignId,
+                leadId: delLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            await expect(
+                memberService.deleteUser(delLeadUser.id, { id: 'someone-else', scope: ScopeType.SYSTEM } as UserPayload)
+            ).rejects.toThrow('Cannot delete user');
         });
     });
 

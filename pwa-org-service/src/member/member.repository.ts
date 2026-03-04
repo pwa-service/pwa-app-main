@@ -139,4 +139,18 @@ export class MemberRepository {
         });
         return role?.priority ?? 999;
     }
+
+    async findOwnedCampaign(userId: string) {
+        return this.prisma.campaign.findFirst({
+            where: { legalOwnerId: userId },
+            select: { id: true, name: true }
+        });
+    }
+
+    async findLedTeam(userId: string) {
+        return this.prisma.team.findFirst({
+            where: { teamLead: { userProfileId: userId } },
+            select: { id: true, name: true }
+        });
+    }
 }

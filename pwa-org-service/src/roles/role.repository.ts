@@ -265,10 +265,11 @@ export class RoleRepository {
         });
     }
 
-    async updateCampaignMemberRole(userProfileId: string, roleId: number) {
-        return this.prisma.campaignUser.update({
+    async updateCampaignMemberRole(userProfileId: string, roleId: number, campaignId: string) {
+        return this.prisma.campaignUser.upsert({
             where: { userProfileId },
-            data: { roleId },
+            update: { roleId },
+            create: { userProfileId, campaignId, roleId },
         });
     }
 

@@ -269,8 +269,8 @@ export class RoleService implements OnModuleInit {
         return this.repo.updateMemberRole(userId, teamId, roleId);
     }
 
-    async updateCampaignMemberRole(userId: string, roleId: number) {
-        return this.repo.updateCampaignMemberRole(userId, roleId);
+    async updateCampaignMemberRole(userId: string, roleId: number, campaignId: string) {
+        return this.repo.updateCampaignMemberRole(userId, roleId, campaignId);
     }
 
     private toRoleResponse(role: any) {
