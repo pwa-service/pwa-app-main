@@ -477,4 +477,10 @@ export class AuthCoreService implements OnModuleInit {
             }
         };
     }
+
+    async deleteUser(userId: string): Promise<void> {
+        const user = await this.repo.findById(userId);
+        if (!user) return;
+        await this.repo.deleteUser(userId);
+    }
 }

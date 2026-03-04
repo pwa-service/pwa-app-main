@@ -121,4 +121,8 @@ export class AuthRepository {
             data: { status: Status.active },
         });
     }
+
+    async deleteUser(userId: string): Promise<void> {
+        await this.prisma.userProfile.delete({ where: { id: userId } });
+    }
 }

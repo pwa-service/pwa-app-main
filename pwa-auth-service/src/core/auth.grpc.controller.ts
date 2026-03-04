@@ -91,4 +91,11 @@ export class AuthGrpcController {
   async updateCreds(dto: { userId: string; email?: string; password?: string }) {
     return this.auth.updateCreds(dto);
   }
+
+  @AllowAnonymous()
+  @GrpcMethod('AuthService', 'DeleteUser')
+  async deleteUser(dto: { userId: string }) {
+    await this.auth.deleteUser(dto.userId);
+    return {};
+  }
 }

@@ -18,6 +18,7 @@ service AuthService {
   rpc TelegramAuth          (TelegramAuthRequest)           returns (AuthResponse);
   rpc ValidateToken         (ValidateTokenRequest)          returns (User);
   rpc UpdateCreds           (UpdateCredsRequest)            returns (UpdateCredsResponse);
+  rpc DeleteUser            (DeleteUserRequest)              returns (google.protobuf.Empty);
 }
 
 message User {
@@ -99,4 +100,8 @@ message UpdateCredsRequest {
 message UpdateCredsResponse {
   string user_id = 1;
   string email   = 2;
+}
+
+message DeleteUserRequest {
+  string user_id = 1;
 }

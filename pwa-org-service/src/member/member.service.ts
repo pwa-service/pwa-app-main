@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
+import { ClientGrpc, RpcException } from '@nestjs/microservices';
 import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
@@ -19,6 +19,7 @@ import { SignUpOrgDto } from "../../../pwa-shared/src/types/auth/dto/sing-up-org
 interface AuthServiceGrpc {
     OrgSignUp(data: SignUpOrgDto): Observable<{ id: string, email: string, user: UserPayload }>;
     UpdateCreds(data: { userId: string; email?: string; password?: string }): Observable<{ userId: string; email: string }>;
+    DeleteUser(data: { userId: string }): Observable<{}>;
 }
 
 @Injectable()
@@ -77,26 +78,32 @@ export class MemberService implements OnModuleInit {
             ...dto,
             scope: ScopeType.TEAM,
         });
-        const member = await this.teamService.addMemberToTeam({
-            ...dto,
-            userId: authUser.id,
-            roleId: role.id,
-            teamId: dto.teamId!,
-        }, user);
-        await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
-        await this.teamService.assignTeamLead({
-            userId: authUser.id,
-            teamId: dto.teamId!
-        }, user);
-        return this.formatResponse({
-            ...member,
-            scope: ScopeType.TEAM,
-            team_id: dto.teamId,
-            role: role.name,
-            roleId: role.id,
-            email: dto.email,
-            username: user.username,
-        });
+
+        try {
+            const member = await this.teamService.addMemberToTeam({
+                ...dto,
+                userId: authUser.id,
+                roleId: role.id,
+                teamId: dto.teamId!,
+            }, user);
+            await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
+            await this.teamService.assignTeamLead({
+                userId: authUser.id,
+                teamId: dto.teamId!
+            }, user);
+            return this.formatResponse({
+                ...member,
+                scope: ScopeType.TEAM,
+                team_id: dto.teamId,
+                role: role.name,
+                roleId: role.id,
+                email: dto.email,
+                username: user.username,
+            });
+        } catch (e) {
+            await this.rollbackAuthUser(authUser.id);
+            throw e;
+        }
     }
 
     async createTeamMember(dto: CreateTeamMemberDto, user: UserPayload) {
@@ -112,24 +119,29 @@ export class MemberService implements OnModuleInit {
             scope: ScopeType.TEAM,
         });
 
-        const member = await this.teamService.addMemberToTeam({
-            userId: authUser.id,
-            teamId: dto.teamId!,
-            roleId: role.id
-        }, user);
+        try {
+            const member = await this.teamService.addMemberToTeam({
+                userId: authUser.id,
+                teamId: dto.teamId!,
+                roleId: role.id
+            }, user);
 
-        await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
-        await this.memberRepo.removeCampaignUser(authUser.id);
+            await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
+            await this.memberRepo.removeCampaignUser(authUser.id);
 
-        return this.formatResponse({
-            ...member,
-            scope: ScopeType.TEAM,
-            team_id: dto.teamId,
-            role: role.name,
-            roleId: role.id,
-            email: dto.email,
-            username: authUser.username,
-        });
+            return this.formatResponse({
+                ...member,
+                scope: ScopeType.TEAM,
+                team_id: dto.teamId,
+                role: role.name,
+                roleId: role.id,
+                email: dto.email,
+                username: authUser.username,
+            });
+        } catch (e) {
+            await this.rollbackAuthUser(authUser.id);
+            throw e;
+        }
     }
 
     async createCampaignMember(dto: CreateCampaignMemberDto, user: UserPayload) {
@@ -147,17 +159,22 @@ export class MemberService implements OnModuleInit {
             ...dto,
             scope: ScopeType.CAMPAIGN,
         });
-        const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, parseInt(dto.roleId!));
 
-        return this.formatResponse({
-            ...member,
-            user_id: user.id,
-            scope: ScopeType.CAMPAIGN,
-            role: dto.roleId,
-            roleId: dto.roleId,
-            email: dto.email,
-            username: user.username,
-        });
+        try {
+            const member = await this.campaignService.addMember(authUser.id, dto.campaignId!, parseInt(dto.roleId!));
+            return this.formatResponse({
+                ...member,
+                user_id: user.id,
+                scope: ScopeType.CAMPAIGN,
+                role: dto.roleId,
+                roleId: dto.roleId,
+                email: dto.email,
+                username: user.username,
+            });
+        } catch (e) {
+            await this.rollbackAuthUser(authUser.id);
+            throw e;
+        }
     }
 
     async deleteUser(userId: string, user: UserPayload) {
@@ -190,7 +207,15 @@ export class MemberService implements OnModuleInit {
         try {
             return await firstValueFrom(this.authService.OrgSignUp(dto));
         } catch (e) {
-            throw new BadRequestException(`Auth failed: ${e}`);
+            throw new RpcException(`Auth failed: ${e}`);
+        }
+    }
+
+    private async rollbackAuthUser(userId: string): Promise<void> {
+        try {
+            await firstValueFrom(this.authService.DeleteUser({ userId }));
+        } catch (e) {
+            throw new RpcException(`Rollback failed: ${e}`);
         }
     }
 

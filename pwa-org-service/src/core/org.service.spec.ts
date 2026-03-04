@@ -13,16 +13,13 @@ import { RoleRepository } from '../roles/role.repository';
 import { TeamRepository } from '../team/team.repository';
 import { MemberRepository } from '../member/member.repository';
 import { SharingRepository } from '../sharing/sharing.repository';
-import { of } from 'rxjs';
 
-const mockAuthService = {
-    OrgSignUp: jest.fn().mockReturnValue(of({ id: 'mock_auth_id', email: 'mock@test.com' })),
-};
-const mockAuthPackage = {
-    getService: jest.fn().mockReturnValue(mockAuthService),
-};
+import { join } from 'path';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
+    jest.setTimeout(30000);
+
     let prisma: PrismaService;
     let campaignService: CampaignService;
     let roleService: RoleService;
@@ -39,7 +36,29 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
     let teamId: string;
 
     beforeAll(async () => {
+        const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
         const module: TestingModule = await Test.createTestingModule({
+            imports: [
+                ClientsModule.register([
+                    {
+                        name: 'AUTH_PACKAGE',
+                        transport: Transport.GRPC,
+                        options: {
+                            package: 'auth.v1',
+                            protoPath: join(AUTH_PROTO_DIR, 'auth.proto'),
+                            url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
+                            loader: {
+                                includeDirs: [AUTH_PROTO_DIR],
+                                keepCase: false,
+                                longs: String,
+                                enums: String,
+                                defaults: true,
+                                oneofs: true,
+                            },
+                        },
+                    },
+                ]),
+            ],
             providers: [
                 PrismaService,
                 CampaignService,
@@ -52,9 +71,10 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 TeamRepository,
                 MemberRepository,
                 SharingRepository,
-                { provide: 'AUTH_PACKAGE', useValue: mockAuthPackage },
             ],
         }).compile();
+
+        await module.init();
 
         prisma = module.get(PrismaService);
         campaignService = module.get(CampaignService);
@@ -77,7 +97,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
         await prisma.campaign.deleteMany();
         await prisma.userProfile.deleteMany({
-            where: { email: { in: [ownerEmail, memberEmail, 'new_lead@test.com'] } }
+            where: { email: { in: [ownerEmail, memberEmail, 'new_lead@test.com', 'leadcre@test.com', 'leadupd@test.com'] } }
         });
 
         const owner = await prisma.userProfile.create({
@@ -266,14 +286,12 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 roleId: parseInt(memberRole.id)
             }, { scope: ScopeType.SYSTEM } as UserPayload);
 
-            // Create Campaign Team Lead Role (required by assignTeamLead)
             await roleService.create(
                 { name: 'Team Lead', description: 'Lead', globalRules: { statAccess: AccessLevel.View, finAccess: AccessLevel.None, logAccess: AccessLevel.None, usersAccess: AccessLevel.Manage, sharingAccess: AccessLevel.None } },
                 ScopeType.CAMPAIGN,
                 campaignId
             );
 
-            // Assign initial lead (memberId)
             const updatedTeam = await teamService.update({
                 id: teamId,
                 name: 'Alpha Squad Updated',
@@ -282,7 +300,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
             expect(updatedTeam.leadId).toBe(memberId);
 
-            // Reassign lead to newLeadId
             const reassignedTeam = await teamService.update({
                 id: teamId,
                 name: 'Alpha Squad Updated',
@@ -291,9 +308,47 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
             expect(reassignedTeam.leadId).toBe(newLeadId);
 
-            // Verify DB actually saved the teamLeadId
             const teamInDb = await prisma.team.findUnique({ where: { id: teamId }, include: { teamLead: true } });
             expect(teamInDb?.teamLead?.userProfileId).toBe(newLeadId);
+        });
+
+        it('should ensure members list is not empty when assigning or reassigning a team lead', async () => {
+            const newTeamLeadUser = await prisma.userProfile.create({
+                data: { username: 'lead_on_create', email: 'leadcre@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(newTeamLeadUser.id, campaignId, parseInt(customRoleId));
+
+            const newTeam = await teamService.create({
+                name: 'Team With Lead',
+                campaignId: campaignId,
+                leadId: newTeamLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(newTeam.leadId).toBe(newTeamLeadUser.id);
+            expect(newTeam.members).toBeDefined();
+            expect(newTeam.members.length).toBeGreaterThan(0);
+            expect(newTeam.members.some((m: any) => m.id === newTeamLeadUser.id)).toBe(true);
+
+            // 2. Reassign on update
+            const reassignedLeadUser = await prisma.userProfile.create({
+                data: { username: 'lead_on_update', email: 'leadupd@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
+            });
+            await campaignService.addMember(reassignedLeadUser.id, campaignId, parseInt(customRoleId));
+            await teamService.addMemberToTeam({
+                teamId: newTeam.id,
+                userId: reassignedLeadUser.id,
+                roleId: parseInt(customRoleId)
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            const updatedTeam = await teamService.update({
+                id: newTeam.id,
+                leadId: reassignedLeadUser.id
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
+
+            expect(updatedTeam.leadId).toBe(reassignedLeadUser.id);
+            expect(updatedTeam.members).toBeDefined();
+            expect(updatedTeam.members.length).toBeGreaterThan(0);
+            expect(updatedTeam.members.some((m: any) => m.id === reassignedLeadUser.id)).toBe(true);
         });
     });
 
@@ -308,4 +363,49 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             expect(team).toBeNull();
         });
     });
-});
+
+    describe('Member Creation Rollback', () => {
+        let rollbackCampaignId: string;
+
+        beforeAll(async () => {
+            const owner = await prisma.userProfile.upsert({
+                where: { username: 'rollback_owner' },
+                create: { username: 'rollback_owner', email: 'rollback_owner@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' },
+                update: {},
+            });
+            const camp = await campaignService.create(
+                { name: 'Rollback Test Campaign', description: 'rollback' },
+                owner.id
+            );
+            rollbackCampaignId = camp.id;
+        });
+
+        it('should call DeleteUser when org addMember fails, and really delete the user from DB', async () => {
+            const spy = jest.spyOn(campaignService, 'addMember').mockRejectedValueOnce(
+                new Error('DB error: simulated failure')
+            );
+
+            const ownerRole = await prisma.role.findFirst({
+                where: { campaignId: rollbackCampaignId },
+                orderBy: { priority: 'asc' },
+            });
+
+            await expect(
+                memberService.createCampaignMember(
+                    {
+                        email: 'rb_real@test.com', username: 'rb_real', password: 'Pass1234', scope: ScopeType.SYSTEM,
+                        roleId: String(ownerRole!.id), campaignId: rollbackCampaignId,
+                    },
+                    { id: 'system', scope: ScopeType.SYSTEM } as UserPayload
+                )
+            ).rejects.toThrow('DB error: simulated failure');
+            await new Promise(r => setTimeout(r, 500));
+            const dbUser = await prisma.userProfile.findFirst({
+                where: { email: 'rb_real@test.com' }
+            });
+            expect(dbUser).toBeNull();
+
+            spy.mockRestore();
+        });
+    });
+})

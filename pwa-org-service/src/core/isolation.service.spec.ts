@@ -7,23 +7,25 @@ import { MemberService } from '../member/member.service';
 import { AccessLevel, ScopeType } from '../../../pwa-shared/src';
 import { UserPayload } from '../../../pwa-shared/src/types/auth/dto/user-payload.dto';
 import { RolePriority, SystemRoleName } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
+import { ForbiddenException } from '@nestjs/common';
+import { MemberModule } from '../member/member.module';
+import { CampaignModule } from '../campaign/campaign.module';
+import { RoleModule } from '../roles/role.module';
+import { TeamModule } from '../team/team.module';
+import { SharingModule } from '../sharing/sharing.module';
+import { join } from 'path';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { SharingService } from '../sharing/sharing.service';
 import { CampaignRepository } from '../campaign/campaign.repository';
 import { RoleRepository } from '../roles/role.repository';
 import { TeamRepository } from '../team/team.repository';
 import { MemberRepository } from '../member/member.repository';
 import { SharingRepository } from '../sharing/sharing.repository';
-import { of } from 'rxjs';
-import { ForbiddenException } from '@nestjs/common';
 
-const mockAuthService = {
-    OrgSignUp: jest.fn().mockReturnValue(of({ id: 'mock_auth_id', email: 'mock@test.com' })),
-};
-const mockAuthPackage = {
-    getService: jest.fn().mockReturnValue(mockAuthService),
-};
 
 describe('Multi-Tenant Isolation Security Tests', () => {
+    jest.setTimeout(30000);
+
     let prisma: PrismaService;
     let campaignService: CampaignService;
     let roleService: RoleService;
@@ -63,7 +65,29 @@ describe('Multi-Tenant Isolation Security Tests', () => {
     } as any;
 
     beforeAll(async () => {
+        const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
         const module: TestingModule = await Test.createTestingModule({
+            imports: [
+                ClientsModule.register([
+                    {
+                        name: 'AUTH_PACKAGE',
+                        transport: Transport.GRPC,
+                        options: {
+                            package: 'auth.v1',
+                            protoPath: join(AUTH_PROTO_DIR, 'auth.proto'),
+                            url: process.env.AUTH_SERVICE_GRPC_URL || 'localhost:50051',
+                            loader: {
+                                includeDirs: [AUTH_PROTO_DIR],
+                                keepCase: false,
+                                longs: String,
+                                enums: String,
+                                defaults: true,
+                                oneofs: true,
+                            },
+                        },
+                    },
+                ]),
+            ],
             providers: [
                 PrismaService,
                 CampaignService,
@@ -76,9 +100,10 @@ describe('Multi-Tenant Isolation Security Tests', () => {
                 TeamRepository,
                 MemberRepository,
                 SharingRepository,
-                { provide: 'AUTH_PACKAGE', useValue: mockAuthPackage },
             ],
         }).compile();
+
+        await module.init();
 
         prisma = module.get(PrismaService);
         campaignService = module.get(CampaignService);
@@ -252,8 +277,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             });
 
             const newCamp = await campaignService.create({ name: 'Auto Init Campaign' }, newUser.id);
-
-            // Verify roles created
             const roles = await prisma.role.findMany({ where: { campaignId: newCamp.id } });
             const priorities = roles.map(r => r.priority);
 
@@ -264,7 +287,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             const ownerRole = roles.find(r => r.priority === RolePriority.OWNER);
             expect(ownerRole?.name).toBe(SystemRoleName.CAMPAIGN_OWNER);
 
-            // Verify owner assignment
             const member = await prisma.campaignUser.findFirst({ where: { campaignId: newCamp.id, userProfileId: newUser.id } });
             expect(member).toBeDefined();
             expect(member?.roleId).toBe(ownerRole?.id);
@@ -452,7 +474,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             const { members } = await memberService.findAll({}, {}, teamMemberUser);
             const ids = members.map((m: any) => m.userId);
 
-            // Regular member should see others in the same team
             expect(ids).toContain(leadProfile.id);
             expect(ids).not.toContain('u-team-a');
         });
@@ -585,7 +606,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
                 update: {},
             });
 
-            // Create a role with no permissions
+
             const noPermRole = await roleService.create({
                 name: 'Read Only Role',
                 description: 'No write access',
@@ -593,7 +614,7 @@ describe('Multi-Tenant Isolation Security Tests', () => {
                     statAccess: AccessLevel.None,
                     finAccess: AccessLevel.None,
                     logAccess: AccessLevel.None,
-                    usersAccess: AccessLevel.None,  // <-- cannot manage users
+                    usersAccess: AccessLevel.None,
                     sharingAccess: AccessLevel.None,
                 }
             }, ScopeType.CAMPAIGN, campaignAId);
@@ -710,13 +731,16 @@ describe('Multi-Tenant Isolation Security Tests', () => {
             ).rejects.toThrow(ForbiddenException);
         });
 
-        it('MEMBER can assign same-level MEMBER role (privilege check passes, auth may fail)', async () => {
-            await expect(
-                memberService.createCampaignMember(
+        it('MEMBER can assign same-level MEMBER role (privilege check passes)', async () => {
+            try {
+                const res = await memberService.createCampaignMember(
                     { email: 'samelvl@test.com', username: 'samelvl', password: 'Password1', scope: ScopeType.CAMPAIGN, roleId: String(memberRoleId), campaignId: campaignAId },
                     memberScopeUser
-                )
-            ).rejects.not.toThrow(ForbiddenException);
+                );
+                expect(res).toBeDefined();
+            } catch (e) {
+                expect(e).not.toBeInstanceOf(ForbiddenException);
+            }
         });
     });
 });
