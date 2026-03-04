@@ -8,7 +8,7 @@ RUN go mod download
 COPY pwa-builder/src/ ./src/
 RUN go build -o /app/worker ./src/
 
-FROM node:20-alpine
+FROM node:20-alpine3.20
 WORKDIR /app
 
 RUN apk add --no-cache openssh-client libc6-compat
