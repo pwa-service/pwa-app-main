@@ -262,7 +262,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
         });
 
         it('should update Team Lead and correctly reassign roles', async () => {
-            // 1. Create a second member to become the new lead
             const newLeadUser = await prisma.userProfile.create({
                 data: { username: 'new_lead_e2e', email: 'new_lead@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
             });
@@ -329,7 +328,6 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             expect(newTeam.members.length).toBeGreaterThan(0);
             expect(newTeam.members.some((m: any) => m.id === newTeamLeadUser.id)).toBe(true);
 
-            // 2. Reassign on update
             const reassignedLeadUser = await prisma.userProfile.create({
                 data: { username: 'lead_on_update', email: 'leadupd@test.com', scope: ScopeType.SYSTEM, passwordHash: 'hash' }
             });
