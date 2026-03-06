@@ -226,7 +226,7 @@ export class TeamService {
         return {};
     }
 
-    async assignTeamLead(dto: AssignLeadDto, user: UserPayload) {
+    async assignTeamLead(dto: AssignLeadDto, user: UserPayload, isCreation: boolean = false) {
         const team = await this.repo.findById(dto.teamId);
         if (!team) throw new RpcException({ code: 5, message: 'Team not found' });
 
@@ -238,7 +238,7 @@ export class TeamService {
         }
 
         const hasAlreadyLead = await this.repo.hasLead(dto.teamId);
-        if (hasAlreadyLead) {
+        if (isCreation && hasAlreadyLead) {
             throw new RpcException({ code: 9, message: 'Team already has a lead' });
         }
 

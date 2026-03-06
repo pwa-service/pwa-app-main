@@ -36,7 +36,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
     let teamId: string;
 
     beforeAll(async () => {
-        const AUTH_PROTO_DIR = join(process.env.PROTO_DIR || process.cwd(), 'protos');
+        const AUTH_PROTO_DIR = join(process.cwd(), '../pwa-protos/protos');
         const module: TestingModule = await Test.createTestingModule({
             imports: [
                 ClientsModule.register([

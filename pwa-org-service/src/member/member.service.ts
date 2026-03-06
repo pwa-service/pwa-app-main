@@ -89,7 +89,7 @@ export class MemberService implements OnModuleInit {
             await this.teamService.assignTeamLead({
                 userId: authUser.id,
                 teamId: dto.teamId!
-            }, user);
+            }, user, true);
             return this.formatResponse({
                 ...member,
                 scope: ScopeType.TEAM,
@@ -124,7 +124,7 @@ export class MemberService implements OnModuleInit {
                 teamId: dto.teamId!,
                 roleId: role.id
             }, user);
-            
+
             return this.formatResponse({
                 ...member,
                 scope: ScopeType.TEAM,
