@@ -237,7 +237,8 @@ export class TeamService {
             throw new RpcException({ code: 5, message: 'Access to this team is denied' });
         }
 
-        if (team.teamLeadId && team.teamLead?.userProfileId !== dto.userId) {
+        const hasAlreadyLead = await this.repo.hasLead(dto.teamId);
+        if (hasAlreadyLead) {
             throw new RpcException({ code: 9, message: 'Team already has a lead' });
         }
 

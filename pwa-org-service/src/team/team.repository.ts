@@ -155,6 +155,14 @@ export class TeamRepository {
         });
     }
 
+    async hasLead(teamId: string): Promise<boolean> {
+        const team = await this.prisma.team.findUnique({
+            where: { id: teamId },
+            select: { teamLeadId: true }
+        });
+        return !!team?.teamLeadId;
+    }
+
     async removeMember(userId: string) {
         return this.prisma.$transaction(async (tx) => {
             const teamMember = await tx.teamUser.findFirst({
