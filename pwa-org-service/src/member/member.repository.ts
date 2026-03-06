@@ -106,7 +106,13 @@ export class MemberRepository {
 
     async deleteUser(userId: string) {
         return this.prisma.$transaction(async (tx) => {
-            await tx.shareUserProfile.deleteMany({ where: { createdBy: userId } });
+            await tx.systemUser.deleteMany({ where: { userProfileId: userId } });
+            await tx.campaignUser.deleteMany({ where: { userProfileId: userId } });
+            await tx.teamUser.deleteMany({ where: { userProfileId: userId } });
+            await tx.globalAccessUser.deleteMany({ where: { userId } });
+            await tx.shareUserProfile.deleteMany({
+                where: { OR: [{ createdBy: userId }, { userProfileId: userId }] }
+            });
             await tx.userProfile.delete({ where: { id: userId } });
         });
     }

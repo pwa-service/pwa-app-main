@@ -22,6 +22,7 @@ import { IsTeamExists } from '../common/pipes/is-team-exists.pipe';
 import { IsRoleExists } from '../common/pipes/is-role-exists.pipe';
 import { IsUserProfileExists } from '../common/pipes/is-user-profile-exists.pipe';
 
+
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor, ScopeInterceptor)
 export class MemberGrpcController {

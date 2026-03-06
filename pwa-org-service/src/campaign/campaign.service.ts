@@ -136,8 +136,4 @@ export class CampaignService {
     async addMember(userId: string, campaignId: string, roleId: number) {
         return this.repo.addMember(userId, campaignId, roleId);
     }
-
-    async upsertMember(userId: string, campaignId: string, roleId: number) {
-        return this.repo.upsertMember(userId, campaignId, roleId);
-    }
 }

@@ -86,7 +86,6 @@ export class MemberService implements OnModuleInit {
                 roleId: role.id,
                 teamId: dto.teamId!,
             }, user);
-            await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
             await this.teamService.assignTeamLead({
                 userId: authUser.id,
                 teamId: dto.teamId!
@@ -126,9 +125,8 @@ export class MemberService implements OnModuleInit {
                 roleId: role.id
             }, user);
 
-            await this.campaignService.upsertMember(authUser.id, dto.campaignId!, role.id);
+    
             await this.memberRepo.removeCampaignUser(authUser.id);
-
             return this.formatResponse({
                 ...member,
                 scope: ScopeType.TEAM,
