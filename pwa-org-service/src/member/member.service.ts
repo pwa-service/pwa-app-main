@@ -124,9 +124,7 @@ export class MemberService implements OnModuleInit {
                 teamId: dto.teamId!,
                 roleId: role.id
             }, user);
-
-    
-            await this.memberRepo.removeCampaignUser(authUser.id);
+            
             return this.formatResponse({
                 ...member,
                 scope: ScopeType.TEAM,

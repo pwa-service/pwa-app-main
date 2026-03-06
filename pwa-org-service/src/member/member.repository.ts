@@ -124,12 +124,6 @@ export class MemberRepository {
         });
     }
 
-    async removeCampaignUser(userId: string) {
-        return this.prisma.campaignUser.delete({
-            where: { userProfileId: userId },
-        });
-    }
-
     async getActorCampaignRolePriority(userId: string, campaignId: string): Promise<number> {
         const cu = await this.prisma.campaignUser.findFirst({
             where: { userProfileId: userId, campaignId },
