@@ -585,7 +585,6 @@ describe('Multi-Tenant Isolation Security Tests', () => {
 
             const role = await roleService.findByPriorityAndContext(RolePriority.MEMBER, ScopeType.CAMPAIGN, campaignAId);
             await prisma.campaignUser.deleteMany({ where: { userProfileId: dupUser.id } });
-            // First add
             await campaignService.addMember(dupUser.id, campaignAId, role!.id);
 
             // Second add — should throw (unique constraint)

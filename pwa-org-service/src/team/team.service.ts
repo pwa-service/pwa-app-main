@@ -179,7 +179,7 @@ export class TeamService {
         }
 
         const existing = await this.repo.findMember(dto.teamId, dto.userId);
-        if (existing) throw new BadRequestException('User already in this team');
+        if (existing) throw new BadRequestException('User already in a team');
 
         let roleId = dto.roleId;
         if (!roleId) {
