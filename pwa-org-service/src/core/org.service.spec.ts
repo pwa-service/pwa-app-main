@@ -250,7 +250,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: teamId,
                 userId: memberId,
                 roleId: teamRole!.id,
-            }, {scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.TEAM, contextId: teamId } as UserPayload);
 
             const teamUser = await prisma.teamUser.findUnique({
                 where: { userProfileId: memberId },
@@ -310,7 +310,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: teamId,
                 userId: newLeadId,
                 roleId: parseInt(memberRole.id),
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             await roleService.create(
                 { name: 'Team Lead', description: 'Lead', globalRules: { statAccess: AccessLevel.View, finAccess: AccessLevel.None, logAccess: AccessLevel.None, usersAccess: AccessLevel.Manage, sharingAccess: AccessLevel.None } },
@@ -318,6 +318,8 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 campaignId
             );
 
+            // Ensure user is in campaign or team before lead assignment
+            try { await campaignService.addMember(memberId, campaignId, parseInt(customRoleId)); } catch (e) { }
             const updatedTeam = await teamService.update({
                 id: teamId,
                 name: 'Alpha Squad Updated',
@@ -326,6 +328,8 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
 
             expect(updatedTeam.leadId).toBe(memberId);
 
+            // First remove lead to avoid "Team already has lead" error
+            await prisma.team.update({ where: { id: teamId }, data: { teamLeadId: null } });
             const reassignedTeam = await teamService.update({
                 id: teamId,
                 name: 'Alpha Squad Updated',
@@ -363,12 +367,14 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: newTeam.id,
                 userId: reassignedLeadUser.id,
                 roleId: parseInt(customRoleId),
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
+            // First remove lead to avoid "Team already has lead" error
+            await prisma.team.update({ where: { id: newTeam.id }, data: { teamLeadId: null } });
             const updatedTeam = await teamService.update({
                 id: newTeam.id,
                 leadId: reassignedLeadUser.id
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             expect(updatedTeam.leadId).toBe(reassignedLeadUser.id);
             expect(updatedTeam.members).toBeDefined();
@@ -390,15 +396,15 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: scopeTeam.id,
                 userId: teamOnlyUser.id,
                 roleId: parseInt(customRoleId),
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
-    
+
             const cuBefore = await prisma.campaignUser.findUnique({ where: { userProfileId: teamOnlyUser.id } });
             expect(cuBefore).toBeNull();
             await teamService.assignTeamLead({
                 teamId: scopeTeam.id,
                 userId: teamOnlyUser.id
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             const teamAfter = await prisma.team.findUnique({ where: { id: scopeTeam.id }, include: { teamLead: true } });
             expect(teamAfter?.teamLead?.userProfileId).toBe(teamOnlyUser.id);
@@ -424,7 +430,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: bothTeam.id,
                 userId: bothScopeUser.id,
                 roleId: parseInt(customRoleId),
-            }, { scope:  ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             // Verify: user has BOTH campaignUser and teamUser
             const cuBefore = await prisma.campaignUser.findUnique({ where: { userProfileId: bothScopeUser.id } });
@@ -435,7 +441,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
             await teamService.assignTeamLead({
                 teamId: bothTeam.id,
                 userId: bothScopeUser.id
-            }, { scope: ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             const teamAfter = await prisma.team.findUnique({ where: { id: bothTeam.id }, include: { teamLead: true } });
             expect(teamAfter?.teamLead?.userProfileId).toBe(bothScopeUser.id);
@@ -486,7 +492,7 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: autoTeam.id,
                 userId: regularUser.id,
                 roleId: parseInt(customRoleId),
-            }, { scope:  ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
             // Remove existing team lead
             await teamService.removeMember({
@@ -518,8 +524,10 @@ describe('Org System Integration Test (Campaign, Role, Team, Member)', () => {
                 teamId: woTeam.id,
                 userId: woNewLeadUser.id,
                 roleId: parseInt(customRoleId),
-            }, { scope:  ScopeType.TEAM } as UserPayload);
+            }, { scope: ScopeType.SYSTEM } as UserPayload);
 
+            // First remove lead to avoid "Team already has lead" error
+            await prisma.team.update({ where: { id: woTeam.id }, data: { teamLeadId: null } });
             await teamService.assignTeamLead({
                 teamId: woTeam.id,
                 userId: woNewLeadUser.id
