@@ -243,7 +243,7 @@ export class TeamService {
 
         let newLead = await this.repo.findMember(dto.teamId, dto.userId);
         if (!newLead) {
-            const campaignMember = await this.repo.findCampaignMember(dto.userId, team.campaignId);
+            const campaignMember = await this.repo.findCampaignMember(team.campaignId, dto.userId);
             if (!campaignMember) {
                 throw new RpcException({ code: 9, message: 'User must be a member of the campaign or team to become a lead' });
             }
