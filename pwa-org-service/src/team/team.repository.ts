@@ -87,26 +87,28 @@ export class TeamRepository {
                 select: { userProfileId: true, roleId: true },
             });
 
-            if (teamMembers.length > 0) {
-                const defaultRole = await tx.role.findFirst({
-                    where: { scope: ScopeType.CAMPAIGN, campaignId },
-                    select: { id: true },
+            for (const member of teamMembers) {
+                await tx.campaignUser.upsert({
+                    where: { userProfileId: member.userProfileId },
+                    create: {
+                        userProfileId: member.userProfileId,
+                        campaignId,
+                        roleId: member.roleId,
+                    },
+                    update: {
+                        roleId: member.roleId
+                    },
                 });
 
-                if (defaultRole) {
-                    for (const member of teamMembers) {
-                        await tx.campaignUser.upsert({
-                            where: { userProfileId: member.userProfileId },
-                            create: {
-                                userProfileId: member.userProfileId,
-                                campaignId,
-                                roleId: defaultRole.id,
-                            },
-                            update: {},
-                        });
-                    }
-                }
+                await tx.userProfile.update({
+                    where: { id: member.userProfileId },
+                    data: { scope: ScopeType.CAMPAIGN }
+                });
             }
+
+            await tx.teamUser.deleteMany({
+                where: { teamId }
+            });
 
             await tx.role.deleteMany({
                 where: { scope: ScopeType.TEAM, teamId },
@@ -118,10 +120,32 @@ export class TeamRepository {
         });
     }
 
-    async addMember(data: Prisma.TeamUserUncheckedCreateInput): Promise<TeamUser> {
-        return this.prisma.teamUser.create({
-            data,
-            include: { profile: true, role: true },
+    async addMember(data: Prisma.TeamUserUncheckedCreateInput, scope: ScopeType): Promise<any> {
+        return this.prisma.$transaction(async (tx) => {
+            const userId = data.userProfileId;
+
+            if (scope === ScopeType.CAMPAIGN) {
+                await tx.campaignUser.deleteMany({
+                    where: { userProfileId: userId }
+                });
+            }
+
+            const result = await tx.teamUser.upsert({
+                where: { userProfileId: userId },
+                update: {
+                    roleId: data.roleId,
+                    teamId: data.teamId
+                },
+                create: data,
+                include: { profile: true, role: true },
+            });
+
+            await tx.userProfile.update({
+                where: { id: userId },
+                data: { scope }
+            });
+
+            return result;
         });
     }
 
@@ -132,26 +156,43 @@ export class TeamRepository {
     }
 
     async removeMember(userId: string) {
-        return this.prisma.teamUser.delete({
-            where: { userProfileId: userId }
+        return this.prisma.$transaction(async (tx) => {
+            const teamMember = await tx.teamUser.findFirst({
+                where: { userProfileId: userId },
+                include: { team: true }
+            });
+
+            if (teamMember) {
+                const campaignId = teamMember.team.campaignId;
+
+                await tx.campaignUser.upsert({
+                    where: { userProfileId: userId },
+                    create: {
+                        userProfileId: userId,
+                        campaignId,
+                        roleId: teamMember.roleId,
+                    },
+                    update: {
+                        roleId: teamMember.roleId
+                    },
+                });
+
+                await tx.teamUser.delete({
+                    where: { id: teamMember.id }
+                });
+
+                await tx.userProfile.update({
+                    where: { id: userId },
+                    data: { scope: ScopeType.CAMPAIGN }
+                });
+            }
         });
     }
 
-    async findUserProfile(userId: string) {
-        return this.prisma.userProfile.findUnique({
-            where: { id: userId },
-        });
-    }
 
-    async findCampaignMember(userId: string, campaignId: string) {
+    async findCampaignMember(campaignId: string, userId: string) {
         return this.prisma.campaignUser.findFirst({
-            where: { userProfileId: userId, campaignId },
-        });
-    }
-
-    async findCampaign(campaignId: string) {
-        return this.prisma.campaign.findUnique({
-            where: { id: campaignId },
+            where: { campaignId, userProfileId: userId },
         });
     }
 

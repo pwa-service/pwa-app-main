@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma, PrismaService } from '../../../pwa-prisma/src';
-import { PaginationQueryDto, RoleFilterQueryDto, ScopeType } from '../../../pwa-shared/src';
+import {Injectable} from '@nestjs/common';
+import {Prisma, PrismaService} from '../../../pwa-prisma/src';
+import {PaginationQueryDto, RoleFilterQueryDto, ScopeType} from '../../../pwa-shared/src';
 
 @Injectable()
 export class RoleRepository {
@@ -252,14 +252,19 @@ export class RoleRepository {
         }
     }
 
-    async updateMemberRole(userProfileId: string, teamId: string, roleId: number) {
-        const member = await this.prisma.teamUser.findFirst({
+    async updateMemberRole(userProfileId: string, teamId: string, campaignId: string, roleId: number, scope: ScopeType) {
+        const member = scope === ScopeType.TEAM ? await this.prisma.teamUser.findFirst({
             where: { userProfileId, teamId }
+        }) : await this.prisma.campaignUser.findFirst({
+            where: { userProfileId, campaignId }
         });
 
         if (!member) throw new Error('Member not found in team');
 
-        return this.prisma.teamUser.update({
+        return scope === ScopeType.TEAM ? await this.prisma.teamUser.update({
+            where: { id: member.id },
+            data: { roleId },
+        }) : await this.prisma.campaignUser.update({
             where: { id: member.id },
             data: { roleId },
         });

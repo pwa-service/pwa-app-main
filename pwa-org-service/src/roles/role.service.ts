@@ -265,8 +265,8 @@ export class RoleService implements OnModuleInit {
         await this.repo.delete(id);
     }
 
-    async updateMemberRole(userId: string, teamId: string, roleId: number) {
-        return this.repo.updateMemberRole(userId, teamId, roleId);
+    async updateMemberRole(userId: string, teamId: string, campaignId: string, roleId: number, scope: ScopeType) {
+        return this.repo.updateMemberRole(userId, teamId, campaignId, roleId, scope);
     }
 
     async updateCampaignMemberRole(userId: string, roleId: number, campaignId: string) {

@@ -1,18 +1,18 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { TeamRepository } from './team.repository';
 import { RoleService } from '../roles/role.service';
 import { Prisma } from '../../../pwa-prisma/src';
 import {
-    CreateTeamDto,
-    UpdateTeamDto,
     AddMemberDto,
-    RemoveMemberDto,
     AssignLeadDto,
-    TeamFilterQueryDto,
+    CreateTeamDto,
     PaginationQueryDto,
-    WorkingObjectType,
+    RemoveMemberDto,
     ScopeType,
+    TeamFilterQueryDto,
+    UpdateTeamDto,
+    WorkingObjectType,
 } from '../../../pwa-shared/src';
 import { RolePriority } from '../../../pwa-shared/src/types/org/roles/enums/role.enums';
 import { UserPayload } from "../../../pwa-shared/src/types/auth/dto/user-payload.dto";
@@ -179,18 +179,28 @@ export class TeamService {
         }
 
         const existing = await this.repo.findMember(dto.teamId, dto.userId);
-        if (existing) throw new BadRequestException('User already in a team');
+        if (existing) throw new BadRequestException('User already in this team');
+
+        let roleId = dto.roleId;
+        if (!roleId) {
+            const role = await this.roleService.findByPriorityAndContext(
+                RolePriority.MEMBER, ScopeType.CAMPAIGN, team.campaignId
+            );
+            if (!role) throw new BadRequestException('Default Media Buyer role not found');
+            roleId = role.id;
+        }
 
         const member = await this.repo.addMember({
             teamId: dto.teamId,
             userProfileId: dto.userId,
-            roleId: dto.roleId
-        });
+            roleId: roleId
+        }, user.scope);
 
         return {
             id: member.userProfileId,
-            user_id: member.userProfileId,
-            team_id: member.teamId
+            scope: user.scope,
+            email: user.email,
+            username: user.username,
         };
     }
 
@@ -227,8 +237,26 @@ export class TeamService {
             throw new RpcException({ code: 5, message: 'Access to this team is denied' });
         }
 
-        const newLead = await this.repo.findMember(dto.teamId, dto.userId);
-        if (!newLead) throw new RpcException({ code: 9, message: 'User must be a member of the team to become a lead' });
+        if (team.teamLeadId && team.teamLead?.userProfileId !== dto.userId) {
+            throw new RpcException({ code: 9, message: 'Team already has a lead' });
+        }
+
+        let newLead = await this.repo.findMember(dto.teamId, dto.userId);
+        if (!newLead) {
+            const campaignMember = await this.repo.findCampaignMember(dto.userId, team.campaignId);
+            if (!campaignMember) {
+                throw new RpcException({ code: 9, message: 'User must be a member of the campaign or team to become a lead' });
+            }
+
+            newLead = await this.repo.addMember({
+                teamId: dto.teamId,
+                userProfileId: dto.userId,
+                roleId: campaignMember.roleId
+            }, user.scope);
+        }
+
+        if (!newLead) throw new RpcException({ code: 13, message: 'Internal error: lead member not found' });
+
 
         const teamLeadRole = await this.roleService.findByPriorityAndContext(
             RolePriority.LEAD, ScopeType.CAMPAIGN, team.campaignId
@@ -240,21 +268,18 @@ export class TeamService {
         );
         if (!mediaBuyerRole) throw new RpcException({ code: 5, message: 'Role Media Buyer not found' });
 
-        // Demote old lead if exists
         if (team.teamLeadId && team.teamLeadId !== newLead.id) {
             const oldLead = team.teamLead;
             if (oldLead) {
-                await this.roleService.updateMemberRole(oldLead.userProfileId, dto.teamId, mediaBuyerRole.id);
+                await this.roleService.updateMemberRole(oldLead.userProfileId, dto.teamId, team.campaignId, mediaBuyerRole.id, ScopeType.TEAM);
                 await this.roleService.updateCampaignMemberRole(oldLead.userProfileId, mediaBuyerRole.id, team.campaignId);
             }
         }
 
-        // Promote new lead
-        await this.roleService.updateMemberRole(dto.userId, dto.teamId, teamLeadRole.id);
+
+        await this.roleService.updateMemberRole(dto.userId, dto.teamId, team.campaignId, teamLeadRole.id, ScopeType.TEAM);
         await this.roleService.updateCampaignMemberRole(dto.userId, teamLeadRole.id, team.campaignId);
         await this.repo.update(dto.teamId, { teamLeadId: newLead.id });
-
-        // Transfer working object ownership to new lead
         await this.repo.transferWorkingObjectOwnership(dto.teamId, newLead.id);
 
         return newLead.id;
