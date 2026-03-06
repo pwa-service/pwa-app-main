@@ -21,6 +21,7 @@ message RoleResponse {
     shared.GlobalRules global_rules = 4;
     bool is_system = 5;
     string scope = 6;
+    int32 priority = 7;
 }
 
 message CreateRoleRequest {

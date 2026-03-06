@@ -294,6 +294,7 @@ export class RoleService implements OnModuleInit {
                 usersAccess: globalRules.usersAccess,
                 sharingAccess: globalRules.sharingAccess,
             },
+            priority: role.priority,
             isSystem: role.scope === ScopeType.SYSTEM
         };
     }
