@@ -142,7 +142,7 @@ export class TeamRepository {
 
             await tx.userProfile.update({
                 where: { id: userId },
-                data: { scope }
+                data: { scope: ScopeType.TEAM }
             });
 
             return result;
