@@ -185,7 +185,6 @@ export class RoleService implements OnModuleInit {
         };
 
         const result = await this.repo.findAll(pagination, filtersWithScope);
-
         const mappedRoles = result.items.map((role: any) => this.toRoleResponse(role));
 
         return {

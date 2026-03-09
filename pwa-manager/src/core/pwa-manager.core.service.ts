@@ -19,7 +19,7 @@ export class PwaManagerCoreService {
         const pwaApp = await this.repo.createApp({
             ...data,
             ownerId: user.id,
-        });
+        }, user.scope);
 
         const hostname = pwaApp.domains?.[0]?.hostname;
         const builderPayload = {

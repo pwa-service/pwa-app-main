@@ -26,25 +26,36 @@ export type PwaAppWithRelations = Prisma.PwaAppGetPayload<{ include: typeof appI
 export class PwaManagerRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async createApp(data: CreateAppDto) {
+    async createApp(data: CreateAppDto, scope: ScopeType) {
         const eventsConfig = this.mapEventsToProfile(data.events);
 
-        const campaignUser = await this.prisma.campaignUser.findUnique({
-            where: { userProfileId: data.ownerId },
-            select: { campaignId: true, id: true }
-        });
+        let campaignId: string;
+        let campaignUserId: string | null = null;
+        let teamUserId: string | null = null;
+        let teamId: string | null = null;
 
-        if (!campaignUser) {
-            throw new Error('User is not linked to any campaign');
+        if (scope === ScopeType.TEAM) {
+            const teamUser = await this.prisma.teamUser.findUnique({
+                where: { userProfileId: data.ownerId },
+                include: { team: { select: { campaignId: true } } }
+            });
+            if (!teamUser) {
+                throw new Error('User is not linked to any team');
+            }
+            campaignId = teamUser.team.campaignId;
+            teamId = teamUser.teamId;
+            teamUserId = teamUser.id;
+        } else {
+            const campaignUser = await this.prisma.campaignUser.findUnique({
+                where: { userProfileId: data.ownerId },
+                select: { campaignId: true, id: true }
+            });
+            if (!campaignUser) {
+                throw new Error('User is not linked to any campaign');
+            }
+            campaignId = campaignUser.campaignId;
+            campaignUserId = campaignUser.id;
         }
-
-        const campaignId = campaignUser.campaignId;
-
-        // Also check if user belongs to a team — if so, link the PWA to that team
-        const teamUser = await this.prisma.teamUser.findUnique({
-            where: { userProfileId: data.ownerId },
-            select: { teamId: true, id: true }
-        });
 
         return this.prisma.$transaction(async (tx) => {
             const pwaApp = await tx.pwaApp.create({
@@ -79,10 +90,10 @@ export class PwaManagerRepository {
 
                     ownerId: data.ownerId,
                     campaignId: campaignId,
-                    ...(teamUser ? { teamId: teamUser.teamId } : {}),
+                    ...(teamId ? { teamId } : {}),
 
-                    createdByCampaignUserId: campaignUser.id,
-                    ...(teamUser ? { createdByTeamUserId: teamUser.id } : {}),
+                    ...(campaignUserId ? { createdByCampaignUserId: campaignUserId } : {}),
+                    ...(teamUserId ? { createdByTeamUserId: teamUserId } : {}),
 
                     details: { create: { publicName: data.name } },
                     contents: {
