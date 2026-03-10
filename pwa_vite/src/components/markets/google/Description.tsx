@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { usePWAInstall } from "../../../hooks/usePWAInstall";
+import { usePWAInstallContext } from "../../../context/pwa-install/PWAInstallContext";
 
 import { classNames } from "../../../utils/classNames";
 import { getPWAData } from "../../../helpers/getPWAData";
@@ -14,7 +14,7 @@ import SmartImage from "../../SmartImage";
 import PWAInstallContainer from "../../PWAInstallContainer";
 
 const Description = () => {
-  const { isInstalling, progress } = usePWAInstall();
+  const { isInstalling, progress } = usePWAInstallContext();
 
   const scale = isInstalling ? 0.5 : 1;
 
