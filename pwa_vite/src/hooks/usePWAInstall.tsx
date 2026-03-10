@@ -39,13 +39,29 @@ export const usePWAInstall = () => {
       localStorage.setItem(PWA_INSTALLED_KEY, "true");
     };
 
+    const checkInstallation = async () => {
+      if ("getInstalledRelatedApps" in navigator) {
+        try {
+          // @ts-expect-error - Standard PWA API not yet in TS types
+          const relatedApps = await navigator.getInstalledRelatedApps();
+
+          if (relatedApps.length > 0) {
+            handleAppInstalled();
+          }
+        } catch (error) {
+          console.error("Error checking installed apps:", error);
+        }
+      }
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
     window.addEventListener("appinstalled", handleAppInstalled);
     window.addEventListener("pwa-prompt-ready", handleCustomReady);
 
+    checkInstallation();
+
     if (window.matchMedia("(display-mode: standalone)").matches) {
-      setIsInstalled(true);
-      localStorage.setItem(PWA_INSTALLED_KEY, "true");
+      handleAppInstalled();
     }
 
     return () => {

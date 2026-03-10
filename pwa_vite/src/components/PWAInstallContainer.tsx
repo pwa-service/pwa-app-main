@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useIsWebView } from "../hooks/useIsWebView";
 import { usePWAInstall } from "../hooks/usePWAInstall";
 
@@ -9,8 +10,18 @@ import { classNames } from "../utils/classNames";
 import InstallButton from "./markets/InstallButton";
 
 const PWAInstallContainer = () => {
-  const { canInstall, promptInstall, isInstalling, isPrompting, isInstalled } = usePWAInstall();
+  const { canInstall, promptInstall, isInstalling, isInstalled } = usePWAInstall();
   const { isWebView } = useIsWebView();
+  const [appUrl, setAppUrl] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUrl = async () => {
+      const queryTail = await getQueryTail();
+      setAppUrl(`${window.location.origin}/${queryTail}&data=from-browser`);
+    };
+
+    fetchUrl();
+  }, []);
 
   const handleInstall = () => {
     if (isWebView) {
@@ -21,13 +32,13 @@ const PWAInstallContainer = () => {
     promptInstall();
   };
 
-  const handleOpenPWA = async () => {
-    const queryTail = await getQueryTail();
-    const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-    window.open(url, "_blank", "noopener");
+  const handleOpenPWA = () => {
+    if (appUrl) {
+      window.open(appUrl, "_blank", "noopener");
+    }
   };
 
-  if (isInstalling || isPrompting) {
+  if (isInstalling) {
     return (
       <div
         className={classNames(
