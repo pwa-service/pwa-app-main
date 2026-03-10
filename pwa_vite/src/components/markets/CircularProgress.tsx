@@ -17,7 +17,7 @@ const CircularProgress = ({
   const offset = circumference * (1 - clamped / 100);
 
   return (
-    <div className="inline-flex items-center justify-center">
+    <div className="absolute inset-0 inline-flex items-center justify-center z-[20]">
       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
         <defs>
           <linearGradient id="grad" x1="0%" x2="100%">

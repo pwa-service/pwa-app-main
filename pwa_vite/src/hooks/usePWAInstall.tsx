@@ -17,6 +17,7 @@ export const usePWAInstall = () => {
     window.deferredPrompt || null
   );
 
+  const [isPrompting, setIsPrompting] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(getIsInstalled());
 
   const { isInstalling, progress, startProgress } = useInstallProgress();
@@ -33,15 +34,23 @@ export const usePWAInstall = () => {
       }
     };
 
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
     window.addEventListener("pwa-prompt-ready", handleCustomReady);
 
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
       window.removeEventListener("pwa-prompt-ready", handleCustomReady);
     };
   }, []);
@@ -55,6 +64,7 @@ export const usePWAInstall = () => {
     }
 
     try {
+      setIsPrompting(true);
       await promptEvent.prompt();
       const { outcome } = await promptEvent.userChoice;
 
@@ -67,6 +77,8 @@ export const usePWAInstall = () => {
       }
     } catch (error) {
       console.error("Error when calling the setup window:", error);
+    } finally {
+      setIsPrompting(false);
     }
 
     return false;
@@ -76,6 +88,7 @@ export const usePWAInstall = () => {
     canInstall: !!deferredPrompt,
     promptInstall,
     isInstalling,
+    isPrompting,
     progress,
     isInstalled,
   };
