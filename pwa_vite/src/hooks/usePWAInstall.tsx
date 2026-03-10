@@ -34,15 +34,23 @@ export const usePWAInstall = () => {
       }
     };
 
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
     window.addEventListener("pwa-prompt-ready", handleCustomReady);
 
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
+      localStorage.setItem(PWA_INSTALLED_KEY, "true");
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
       window.removeEventListener("pwa-prompt-ready", handleCustomReady);
     };
   }, []);
