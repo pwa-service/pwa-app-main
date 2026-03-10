@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useIsWebView } from "../hooks/useIsWebView";
-import { usePWAInstall } from "../hooks/usePWAInstall";
+import { usePWAInstallContext } from "../context/pwa-install/PWAInstallContext";
 
 import { redirectFromWebView } from "../helpers/redirectFromWebView";
 import { getQueryTail } from "../helpers/getQueryTail";
@@ -8,7 +8,7 @@ import { getQueryTail } from "../helpers/getQueryTail";
 import InstallButton from "./markets/InstallButton";
 
 const PWAInstallContainer = () => {
-  const { promptInstall, isInstalling, isInstalled } = usePWAInstall();
+  const { promptInstall, isInstalling, isInstalled } = usePWAInstallContext();
   const { isWebView } = useIsWebView();
   const [appUrl, setAppUrl] = useState<string>("");
 

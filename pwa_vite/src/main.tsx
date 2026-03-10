@@ -5,7 +5,8 @@ import { BrowserRouter } from "react-router";
 import type { BeforeInstallPromptEvent } from "./types/global";
 import { redirectOnLaunch } from "./helpers/redirectOnLaunch.ts";
 
-import TrackerContextProvider from "./components/TrackerContextProvider.tsx";
+import EventTrackerContextProvider from "./context/event-tracking/EventTrackerContextProvider.tsx";
+import PWAInstallContextProvider from "./context/pwa-install/PWAInstallContextProvider.tsx";
 
 import App from "./App.tsx";
 import "./index.css";
@@ -30,9 +31,11 @@ if (rootElement) {
   root.render(
     <StrictMode>
       <BrowserRouter>
-        <TrackerContextProvider>
-          <App />
-        </TrackerContextProvider>
+        <EventTrackerContextProvider>
+          <PWAInstallContextProvider>
+            <App />
+          </PWAInstallContextProvider>
+        </EventTrackerContextProvider>
       </BrowserRouter>
     </StrictMode>
   );

@@ -17,7 +17,7 @@ import { postViewContent, postFirstOpen } from "../api/events";
 import { parseURLParams } from "../helpers/parseURLParams";
 import { saveData } from "../helpers/idbStorage";
 
-export interface TrackerState {
+export interface EventTrackerState {
   trackerData: TrackerData | null;
   redirectUrl?: string | null;
 
@@ -33,22 +33,22 @@ export interface TrackerState {
   error: string | null;
 }
 
-const persistState = (state: TrackerState) => {
+const persistState = (state: EventTrackerState) => {
   if (state.pixelId) localStorage.setItem(PIXEL_ID_KEY, state.pixelId);
   if (state.fbclId) localStorage.setItem(FBCLID_KEY, state.fbclId);
   if (state.sessionId) localStorage.setItem(SESSION_ID_KEY, state.sessionId);
 };
 
-const restoreState = (): Partial<TrackerState> => ({
+const restoreState = (): Partial<EventTrackerState> => ({
   fbclId: localStorage.getItem(FBCLID_KEY),
   pixelId: localStorage.getItem(PIXEL_ID_KEY),
   sessionId: localStorage.getItem(SESSION_ID_KEY),
 });
 
-export const useTracker = () => {
+export const useEventTracker = () => {
   const { isPWA } = useIsPWA();
 
-  const [state, setState] = useState<TrackerState>({
+  const [state, setState] = useState<EventTrackerState>({
     trackerData: null,
     ...restoreState(),
 
@@ -63,7 +63,7 @@ export const useTracker = () => {
   const initializedRef = useRef(false);
   const initializedPWARef = useRef(false);
 
-  const updateState = useCallback((callback: (prev: TrackerState) => TrackerState) => {
+  const updateState = useCallback((callback: (prev: EventTrackerState) => EventTrackerState) => {
     setState((prev) => {
       const updatedState = callback(prev);
       persistState(updatedState);
@@ -73,7 +73,7 @@ export const useTracker = () => {
   }, []);
 
   const setLoading = useCallback(
-    (key: keyof TrackerState["loading"], value: boolean) => {
+    (key: keyof EventTrackerState["loading"], value: boolean) => {
       updateState((prev) => ({
         ...prev,
         loading: {
