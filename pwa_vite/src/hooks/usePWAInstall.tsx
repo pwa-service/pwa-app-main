@@ -17,6 +17,7 @@ export const usePWAInstall = () => {
     window.deferredPrompt || null
   );
 
+  const [isPrompting, setIsPrompting] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(getIsInstalled());
 
   const { isInstalling, progress, startProgress } = useInstallProgress();
@@ -55,6 +56,7 @@ export const usePWAInstall = () => {
     }
 
     try {
+      setIsPrompting(true);
       await promptEvent.prompt();
       const { outcome } = await promptEvent.userChoice;
 
@@ -67,6 +69,8 @@ export const usePWAInstall = () => {
       }
     } catch (error) {
       console.error("Error when calling the setup window:", error);
+    } finally {
+      setIsPrompting(false);
     }
 
     return false;
@@ -76,6 +80,7 @@ export const usePWAInstall = () => {
     canInstall: !!deferredPrompt,
     promptInstall,
     isInstalling,
+    isPrompting,
     progress,
     isInstalled,
   };
