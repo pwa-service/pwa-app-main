@@ -114,11 +114,11 @@ export class PixelTokenRepository {
 
         const teamUser = await this.prisma.teamUser.findFirst({
             where: { userProfileId: userId },
-            select: { teamId: true }
+            select: { teamId: true, team: { select: { campaignId: true } } }
         });
 
         return {
-            campaignId: campaignUser?.campaignId || null,
+            campaignId: campaignUser?.campaignId || teamUser?.team?.campaignId || null,
             teamId: teamUser?.teamId || null,
         };
     }

@@ -14,14 +14,14 @@ export class PixelTokenService {
     async create(dto: CreatePixelTokenDto, user: UserPayload) {
         const membership = await this.repository.findUserMembership(user.id);
 
-        if (!membership.campaignId) {
-            throw new RpcException({ code: 9, message: 'User does not belong to any campaign' });
+        if (!membership.campaignId && !membership.teamId) {
+            throw new RpcException({ code: 9, message: 'User does not belong to any campaign or team' });
         }
 
         return this.repository.create({
             ...dto,
             ownerId: user.id,
-            campaignId: membership.campaignId,
+            campaignId: membership.campaignId || undefined,
             teamId: membership.teamId || undefined,
         });
     }
