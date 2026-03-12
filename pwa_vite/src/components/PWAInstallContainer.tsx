@@ -1,50 +1,36 @@
+import { useState, useEffect } from "react";
 import { useIsWebView } from "../hooks/useIsWebView";
-import { usePWAInstall } from "../hooks/usePWAInstall";
+import { usePWAInstallContext } from "../context/pwa-install/PWAInstallContext";
 
 import { redirectFromWebView } from "../helpers/redirectFromWebView";
 import { getQueryTail } from "../helpers/getQueryTail";
 
-import { classNames } from "../utils/classNames";
-
 import InstallButton from "./markets/InstallButton";
 
 const PWAInstallContainer = () => {
-  const { canInstall, promptInstall, isInstalling, isInstalled } = usePWAInstall();
+  const { promptInstall, isInstalling, isInstalled } = usePWAInstallContext();
   const { isWebView } = useIsWebView();
+  const [appUrl, setAppUrl] = useState<string>("");
 
-  const handleInstall = () => {
-    if (isWebView) {
-      redirectFromWebView();
-      return;
-    }
+  useEffect(() => {
+    getQueryTail().then((query) => {
+      setAppUrl(`${window.location.origin}/${query}&data=from-browser`);
+    });
+  }, []);
 
-    promptInstall();
-  };
+  const handleInstall = () => (isWebView ? redirectFromWebView() : promptInstall());
 
-  const handleOpenPWA = async () => {
-    const queryTail = await getQueryTail();
-    const url = `${window.location.origin}/${queryTail}&data=from-browser`;
-    window.open(url, "_blank", "noopener");
-  };
+  const handleOpenPWA = () => appUrl && window.open(appUrl, "_blank", "noopener");
 
-  if (isInstalling) return null;
+  if (isInstalling) {
+    return <div className="h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full mt-6 md:mt-10" />;
+  }
 
   if (isInstalled) {
     return <InstallButton label="Open" onClick={handleOpenPWA} />;
   }
 
-  if (canInstall || isWebView) {
-    return <InstallButton label="Install" onClick={handleInstall} />;
-  }
-
-  return (
-    <div
-      className={classNames(
-        "h-9 xl:h-11 sm:max-w-[160px] xl:max-w-[200px] w-full",
-        "mt-6 md:mt-10"
-      )}
-    />
-  );
+  return <InstallButton label="Install" onClick={handleInstall} />;
 };
 
 export default PWAInstallContainer;
