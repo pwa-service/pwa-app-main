@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useIsWebView } from "../../../hooks/useIsWebView";
 import { usePWAInstallContext } from "../context/PWAInstallContext";
 
+import { getQueryTail } from "../../../modules/event-tracking";
 import { redirectFromWebView } from "../../../helpers/redirectFromWebView";
-import { getQueryTail } from "../../../helpers/getQueryTail";
 
 import InstallButton from "../../../components/markets/InstallButton";
 

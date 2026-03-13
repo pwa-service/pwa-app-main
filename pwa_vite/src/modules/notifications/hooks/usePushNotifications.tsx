@@ -4,7 +4,8 @@ import {
   requestNotificationPermission,
   saveTokenToLocalStorage,
   getTokenFromLocalStorage,
-} from "../../../utils/notifications";
+} from "../helpers";
+
 import { getFirebaseToken, removeFirebaseToken } from "../api";
 
 interface PushNotificationState {

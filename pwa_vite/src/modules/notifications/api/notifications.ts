@@ -1,6 +1,7 @@
 import { getToken, deleteToken } from "firebase/messaging";
 import { messaging } from "../../../firebase/config";
-import { removeTokenFromLocalStorage } from "../../../utils/notifications";
+
+import { getTokenFromLocalStorage, removeTokenFromLocalStorage } from "../helpers/storage";
 
 export const getFirebaseToken = async (vapidKey: string): Promise<string> => {
   const token = await getToken(messaging, { vapidKey });
@@ -14,7 +15,7 @@ export const getFirebaseToken = async (vapidKey: string): Promise<string> => {
 
 export const removeFirebaseToken = async (): Promise<void> => {
   try {
-    const token = localStorage.getItem("firebase_token");
+    const token = getTokenFromLocalStorage();
 
     if (!token) {
       throw new Error("No Firebase token found in localStorage");

@@ -1,9 +1,9 @@
-import { FIRST_VISITE_PWA_KEY, SESSION_ID_KEY } from "../modules/event-tracking/constants/storage";
-import { checkIfStandalone } from "../helpers/checkIfStandalone";
-import { loadData, saveData } from "../modules/event-tracking/helpers/idbStorage";
-import { getQueryTail } from "../helpers/getQueryTail";
-import { getPWAData } from "../helpers/getPWAData";
-import { postFirstOpen } from "../modules/event-tracking/api/events";
+import { FIRST_VISITE_PWA_KEY, SESSION_ID_KEY } from "../constants/storage";
+import { checkIfStandalone } from "../../../helpers/checkIfStandalone";
+import { loadData, saveData } from "./idbStorage";
+import { getQueryTail } from "./getQueryTail";
+import { getPWAData } from "../../../helpers/getPWAData";
+import { postFirstOpen } from "../api/events";
 
 export const redirectOnLaunch = () => {
   if (typeof window === "undefined") return;
