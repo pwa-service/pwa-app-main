@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { copyToClipboard } from "../helpers/copyToClipboard";
-import { usePushNotifications } from "../hooks/usePushNotifications";
+import { usePushNotifications } from "../modules/notifications/hooks";
 
 import { ToastContainer } from "react-toastify";
-import Notifications from "../components/notification/Notifications";
-import SubscribeButton from "../components/notification/SubscribeButton";
+import Notifications from "../modules/notifications/components/Notifications";
+import SubscribeButton from "../modules/notifications/components/SubscribeButton";
 import Card from "../ui/Card";
 
 const ProductPage = () => {

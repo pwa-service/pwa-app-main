@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dataRaw from "../pwa-data.json";
-import type { PwaAppData } from "../types/app";
+import type { PwaAppData } from "../types/pwa-app";
 
 const data = dataRaw as PwaAppData;
 
