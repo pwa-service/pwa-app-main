@@ -1,5 +1,5 @@
-import { QUERY_TAIL_KEY, SESSION_ID_KEY } from "../constants/storage";
-import { loadData, saveData } from "./idbStorage";
+import { QUERY_TAIL_KEY, SESSION_ID_KEY } from "../modules/event-tracking/constants/storage";
+import { loadData, saveData } from "../modules/event-tracking/helpers/idbStorage";
 
 export const getQueryTail = async () => {
   const search = window.location.search;
