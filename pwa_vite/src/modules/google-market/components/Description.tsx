@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { usePWAInstallContext } from "../../../modules/pwa-installation/context/PWAInstallContext";
+import { usePWAInstallContext } from "../../pwa-installation/context/PWAInstallContext";
 
 import { classNames } from "../../../utils/classNames";
 import { getPWAData } from "../../../helpers/getPWAData";
@@ -9,9 +9,9 @@ import { FaFileDownload } from "react-icons/fa";
 import { TbRating21Plus } from "react-icons/tb";
 import { MdOutlineVerifiedUser, MdStar } from "react-icons/md";
 
-import CircularProgress from "../CircularProgress";
-import SmartImage from "../../SmartImage";
-import PWAInstallContainer from "../../../modules/pwa-installation/components/PWAInstallContainer";
+import CircularProgress from "./CircularProgress";
+import SmartImage from "./SmartImage";
+import PWAInstallContainer from "../../pwa-installation/components/PWAInstallContainer";
 
 const Description = () => {
   const { isInstalling, progress } = usePWAInstallContext();

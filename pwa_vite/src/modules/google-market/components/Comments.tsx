@@ -17,7 +17,6 @@ const Comments = memo(() => {
 
             <div className="flex items-center gap-2 mb-2">
               <Stars size={12} className="gap-0.5 text-[#3B8562]" />
-              {/* <p className="text-xs text-zinc-600">{date}</p> */}
             </div>
 
             <p className="text-zinc-600 text-sm">{text}</p>

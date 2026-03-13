@@ -1,6 +1,6 @@
 import { memo, useRef, Fragment } from "react";
 
-import SmartImage from "../../SmartImage";
+import SmartImage from "./SmartImage";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 
 interface ImageSliderProps {

@@ -1,8 +1,8 @@
-import { instructions } from "../../constants/instructions";
+import { instructions } from "../constants";
 
-import Modal from "../../ui/Modal";
-import Card from "../../ui/Card";
 import { MdClose } from "react-icons/md";
+import Modal from "../../../ui/Modal";
+import Card from "../../../ui/Card";
 
 const InstructionsModal = () => {
   const handleClose = () => {};

@@ -1,20 +1,20 @@
 import { lazy, Suspense, useState, useCallback, useMemo } from "react";
-import { useIsPWA } from "../hooks/useIsPWA";
 
-import { getPWAData } from "../helpers/getPWAData";
+import { useIsPWA } from "../../../hooks/useIsPWA";
+import { getPWAData } from "../../../helpers/getPWAData";
 
-import Loader from "../ui/Loader";
-import Description from "../components/markets/google/Description";
+import Loader from "../../../ui/Loader";
+import Description from "../components/Description";
 
-import SectionContainer from "../components/markets/google/SectionContainer";
-import About from "../components/markets/google/About";
-import TagsList from "../components/markets/google/TagsList";
-import DataSafetyList from "../components/markets/google/DataSafetyList";
+import SectionContainer from "../components/SectionContainer";
+import About from "../components/About";
+import TagsList from "../components/About";
+import DataSafetyList from "../components/DataSafetyList";
 
-const ImageSlider = lazy(() => import("../components/markets/google/ImageSlider"));
-const ExpandedGallery = lazy(() => import("../components/markets/ExpandedGallery"));
-const Reviews = lazy(() => import("../components/markets/google/Reviews"));
-const Comments = lazy(() => import("../components/markets/google/Comments"));
+const ImageSlider = lazy(() => import("../components/ImageSlider"));
+const ExpandedGallery = lazy(() => import("../components/ExpandedGallery"));
+const Reviews = lazy(() => import("../components/Reviews"));
+const Comments = lazy(() => import("../components/Comments"));
 
 const GoogleMarketPage = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);

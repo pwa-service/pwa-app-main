@@ -1,5 +1,6 @@
 import { type ImgHTMLAttributes, useState, useEffect } from "react";
-import { isValidImageUrl } from "../helpers/isValidImageUrl";
+
+import { isValidImageUrl } from "../../../helpers/isValidImageUrl";
 
 interface SmartImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   src: string | undefined;

@@ -5,7 +5,7 @@ import { usePWAInstallContext } from "../context/PWAInstallContext";
 import { getQueryTail } from "../../../modules/event-tracking";
 import { redirectFromWebView } from "../../../helpers/redirectFromWebView";
 
-import InstallButton from "../../../components/markets/InstallButton";
+import { InstallButton } from "../../../modules/google-market";
 
 const PWAInstallContainer = () => {
   const { promptInstall, isInstalling, isInstalled } = usePWAInstallContext();

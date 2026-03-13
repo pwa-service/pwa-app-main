@@ -1,9 +1,9 @@
 import ReactDOM from "react-dom";
 import { useRef, useEffect, useCallback } from "react";
-import { classNames } from "../../utils/classNames";
+import { classNames } from "../../../utils/classNames";
 
 import { MdArrowBack, MdChevronLeft, MdChevronRight } from "react-icons/md";
-import SmartImage from "../SmartImage";
+import SmartImage from "./SmartImage";
 
 interface ExpandedGalleryProps {
   images: string[];

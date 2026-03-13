@@ -1,6 +1,7 @@
 import { memo } from "react";
 
-import { reviews } from "../../../constants/market";
+import { reviews } from "../constants";
+
 import { classNames } from "../../../utils/classNames";
 import { getPWAData } from "../../../helpers/getPWAData";
 
